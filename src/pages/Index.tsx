@@ -30,7 +30,7 @@ const Index = () => {
           Eclipse Tattoo & Piercings
         </h1>
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-light">
-          Precision. Permanence. Presence.
+          Perfection is the aim
         </p>
         
         <Button 
