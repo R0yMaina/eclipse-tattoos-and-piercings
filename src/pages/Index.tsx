@@ -33,13 +33,23 @@ const Index = () => {
           Perfection is the aim
         </p>
         
-        <Button 
-          onClick={() => navigate('/contact')}
-          size="lg"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 gold-glow transition-smooth rounded-full px-8 py-6 text-base font-semibold"
-        >
-          Book Your Session
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button 
+            onClick={() => navigate('/contact')}
+            size="lg"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 gold-glow transition-smooth rounded-full px-8 py-6 text-base font-semibold"
+          >
+            Book Your Session
+          </Button>
+          <Button 
+            onClick={() => navigate('/about')}
+            variant="outline"
+            size="lg"
+            className="border-primary text-foreground hover:bg-primary/10 rounded-full px-8 py-6 text-base transition-smooth"
+          >
+            Learn Our Story
+          </Button>
+        </div>
       </div>
     </div>
   );
