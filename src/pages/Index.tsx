@@ -42,6 +42,14 @@ const Index = () => {
             Book Your Session
           </Button>
           <Button 
+            onClick={() => navigate('/services')}
+            variant="outline"
+            size="lg"
+            className="border-primary text-foreground hover:bg-primary/10 rounded-full px-8 py-6 text-base transition-smooth"
+          >
+            View Services
+          </Button>
+          <Button 
             onClick={() => navigate('/about')}
             variant="outline"
             size="lg"
