@@ -1,1 +1,13 @@
 project_id = "cafuseuxbixttnlixhxq"
+
+[functions.chat]
+verify_jwt = false
+
+[functions.rag-search]
+verify_jwt = false
+
+[functions.rag-ingest]
+verify_jwt = false
+
+[functions.rag-reindex]
+verify_jwt = false

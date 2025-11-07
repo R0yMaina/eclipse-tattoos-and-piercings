@@ -14,13 +14,184 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          citations: Json | null
+          content: string
+          created_at: string | null
+          id: string
+          role: string
+          session_id: string | null
+          tokens: number | null
+        }
+        Insert: {
+          citations?: Json | null
+          content: string
+          created_at?: string | null
+          id?: string
+          role: string
+          session_id?: string | null
+          tokens?: number | null
+        }
+        Update: {
+          citations?: Json | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          session_id?: string | null
+          tokens?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          client_token: string
+          created_at: string | null
+          id: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_token: string
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_token?: string
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          document_id: string | null
+          embedding: string | null
+          id: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          document_id?: string | null
+          embedding?: string | null
+          id?: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          document_id?: string | null
+          embedding?: string | null
+          id?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          chunk_count: number | null
+          hash: string | null
+          id: string
+          title: string | null
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          chunk_count?: number | null
+          hash?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          chunk_count?: number | null
+          hash?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
+      message_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          message_id: string | null
+          rating: number | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          rating?: number | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_feedback_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_chunks: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          document_id: string
+          id: string
+          similarity: number
+          url: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
