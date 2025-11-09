@@ -10,13 +10,13 @@ export const ChatLauncher = () => {
       {/* Floating launcher button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full glass-panel-elevated flex items-center justify-center transition-smooth hover:scale-103 gold-glow"
+        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-primary/90 backdrop-blur-xl shadow-2xl flex items-center justify-center transition-smooth hover:scale-105 hover:shadow-primary/50"
         aria-label="Open chat"
       >
         {isOpen ? (
-          <X className="h-6 w-6 text-primary" />
+          <X className="h-6 w-6 text-primary-foreground" />
         ) : (
-          <MessageCircle className="h-6 w-6 text-primary" />
+          <MessageCircle className="h-6 w-6 text-primary-foreground" />
         )}
       </button>
 

@@ -147,9 +147,9 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
   };
 
   return (
-    <div className="h-full flex flex-col glass-panel overflow-hidden">
+    <div className="h-full flex flex-col bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-primary/5">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           <div>

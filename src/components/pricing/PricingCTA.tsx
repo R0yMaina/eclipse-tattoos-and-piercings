@@ -31,7 +31,7 @@ export const PricingCTA = () => {
               asChild
               className="border-primary text-foreground hover:bg-primary/10 rounded-full px-8 py-6 text-base transition-smooth"
             >
-              <a href="tel:+15555550142">
+              <a href="tel:0705025961">
                 <Phone className="mr-2 h-5 w-5" />
                 Talk to an Artist
               </a>

@@ -1,4 +1,4 @@
-import { Phone, Mail, Clock, MapPin } from 'lucide-react';
+import { Phone, Mail, Clock, MapPin, Instagram } from 'lucide-react';
 
 export const ContactDetails = () => {
   return (
@@ -15,10 +15,10 @@ export const ContactDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Phone</p>
               <a 
-                href="tel:+15555550142" 
+                href="tel:0705025961" 
                 className="text-foreground hover:text-primary transition-smooth font-medium"
               >
-                +1 (555) 555‑0142
+                0705025961
               </a>
             </div>
           </div>
@@ -31,10 +31,10 @@ export const ContactDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Email</p>
               <a 
-                href="mailto:bookings@eclipse-ink.com" 
+                href="mailto:roymaina395@gmail.com" 
                 className="text-foreground hover:text-primary transition-smooth font-medium break-all"
               >
-                bookings@eclipse‑ink.com
+                roymaina395@gmail.com
               </a>
             </div>
           </div>
@@ -66,6 +66,36 @@ export const ContactDetails = () => {
                 Studio District<br />
                 Los Angeles, CA 90028
               </p>
+            </div>
+          </div>
+
+          {/* Social Media */}
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Instagram className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground mb-2">Follow Us</p>
+              <div className="space-y-1">
+                <a 
+                  href="https://www.tiktok.com/@eclipsetattoosnpiercing" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground hover:text-primary transition-smooth font-medium flex items-center gap-2"
+                >
+                  <span className="text-xs">TikTok:</span>
+                  <span className="text-sm">@eclipsetattoosnpiercing</span>
+                </a>
+                <a 
+                  href="https://www.instagram.com/eclipse__tattoos" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground hover:text-primary transition-smooth font-medium flex items-center gap-2"
+                >
+                  <span className="text-xs">Instagram:</span>
+                  <span className="text-sm">@eclipse__tattoos</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

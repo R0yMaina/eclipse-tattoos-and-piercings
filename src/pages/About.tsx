@@ -40,8 +40,8 @@ const About = () => {
       "name": "Eclipse Tattoo & Piercings",
       "url": "https://eclipse-tattoo-and-piercings.lovable.app",
       "foundingDate": "2017",
-      "telephone": "+1-555-555-0142",
-      "email": "bookings@eclipse-ink.com",
+      "telephone": "0705025961",
+      "email": "roymaina395@gmail.com",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "123 Eclipse Boulevard",
