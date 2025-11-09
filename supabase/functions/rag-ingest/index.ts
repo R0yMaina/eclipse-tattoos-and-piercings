@@ -127,7 +127,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'nomic-ai/nomic-embed-text-v1.5',
+            model: 'openai/text-embedding-3-small',
             input: chunk,
           }),
         });
