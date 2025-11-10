@@ -15,10 +15,10 @@ export const ContactDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Phone</p>
               <a 
-                href="tel:0705025961" 
+                href="tel:+254758366452" 
                 className="text-foreground hover:text-primary transition-smooth font-medium"
               >
-                0705025961
+                +254 758 366 452
               </a>
             </div>
           </div>
@@ -31,10 +31,10 @@ export const ContactDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Email</p>
               <a 
-                href="mailto:roymaina395@gmail.com" 
+                href="mailto:jamingtonbuluma17@gmail.com" 
                 className="text-foreground hover:text-primary transition-smooth font-medium break-all"
               >
-                roymaina395@gmail.com
+                jamingtonbuluma17@gmail.com
               </a>
             </div>
           </div>
@@ -62,9 +62,9 @@ export const ContactDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Location</p>
               <p className="text-foreground font-medium">
-                123 Eclipse Boulevard<br />
-                Studio District<br />
-                Los Angeles, CA 90028
+                THE BAZAAR<br />
+                Floor M4, Suite 6, Room 6<br />
+                Nairobi, Kenya
               </p>
             </div>
           </div>

@@ -2,11 +2,10 @@ import { useEffect } from 'react';
 import { AboutHero } from '@/components/about/AboutHero';
 import { StoryValues } from '@/components/about/StoryValues';
 import { HygieneEthos } from '@/components/about/HygieneEthos';
-import { ArtistsGrid } from '@/components/about/ArtistsGrid';
 import { ProcessTimeline } from '@/components/about/ProcessTimeline';
 import { AwardsPress } from '@/components/about/AwardsPress';
 import { Testimonials } from '@/components/about/Testimonials';
-import { StudioGallery } from '@/components/about/StudioGallery';
+import { InstagramGallery } from '@/components/about/InstagramGallery';
 import { CTASection } from '@/components/about/CTASection';
 
 const About = () => {
@@ -40,19 +39,19 @@ const About = () => {
       "name": "Eclipse Tattoo & Piercings",
       "url": "https://eclipse-tattoo-and-piercings.lovable.app",
       "foundingDate": "2017",
-      "telephone": "0705025961",
-      "email": "roymaina395@gmail.com",
+      "telephone": "+254758366452",
+      "email": "jamingtonbuluma17@gmail.com",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "123 Eclipse Boulevard",
-        "addressLocality": "Los Angeles",
-        "addressRegion": "CA",
-        "postalCode": "90028",
-        "addressCountry": "US"
+        "streetAddress": "THE BAZAAR, Floor M4, Suite 6, Room 6",
+        "addressLocality": "Nairobi",
+        "addressRegion": "Nairobi",
+        "postalCode": "",
+        "addressCountry": "KE"
       },
       "sameAs": [
-        "https://instagram.com/eclipsetattoo",
-        "https://facebook.com/eclipsetattoo"
+        "https://www.instagram.com/eclipse__tattoos",
+        "https://www.tiktok.com/@eclipsetattoosnpiercing"
       ]
     });
 
@@ -93,11 +92,10 @@ const About = () => {
       <AboutHero />
       <StoryValues />
       <HygieneEthos />
-      <ArtistsGrid />
+      <InstagramGallery />
       <ProcessTimeline />
       <AwardsPress />
       <Testimonials />
-      <StudioGallery />
       <CTASection />
     </div>
   );

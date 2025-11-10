@@ -27,15 +27,15 @@ const Contact = () => {
       "@type": "TattooParlor",
       "name": "Eclipse Tattoo & Piercings",
       "url": "https://eclipse-tattoo-and-piercings.lovable.app/contact",
-      "telephone": "0705025961",
-      "email": "roymaina395@gmail.com",
+      "telephone": "+254758366452",
+      "email": "jamingtonbuluma17@gmail.com",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "123 Eclipse Boulevard",
-        "addressLocality": "Los Angeles",
-        "addressRegion": "CA",
-        "postalCode": "90028",
-        "addressCountry": "US"
+        "streetAddress": "THE BAZAAR, Floor M4, Suite 6, Room 6",
+        "addressLocality": "Nairobi",
+        "addressRegion": "Nairobi",
+        "postalCode": "",
+        "addressCountry": "KE"
       },
       "openingHoursSpecification": [
         {
