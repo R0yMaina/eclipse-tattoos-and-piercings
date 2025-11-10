@@ -19,9 +19,9 @@ export const CTAFooter = () => {
               asChild
               className="bg-primary text-primary-foreground hover:bg-primary/90 gold-glow transition-smooth rounded-full px-8 py-6 text-base font-semibold"
             >
-              <a href="tel:+254758366452">
+              <a href="tel:+254705025961">
                 <Phone className="mr-2 h-5 w-5" />
-                +254 758 366 452
+                +254 705 025 961
               </a>
             </Button>
             <Button

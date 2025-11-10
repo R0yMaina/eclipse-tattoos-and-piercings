@@ -27,7 +27,7 @@ const Contact = () => {
       "@type": "TattooParlor",
       "name": "Eclipse Tattoo & Piercings",
       "url": "https://eclipse-tattoo-and-piercings.lovable.app/contact",
-      "telephone": "+254758366452",
+      "telephone": "+254705025961",
       "email": "jamingtonbuluma17@gmail.com",
       "address": {
         "@type": "PostalAddress",

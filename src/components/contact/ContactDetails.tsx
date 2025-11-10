@@ -15,10 +15,10 @@ export const ContactDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Phone</p>
               <a 
-                href="tel:+254758366452" 
+                href="tel:+254705025961" 
                 className="text-foreground hover:text-primary transition-smooth font-medium"
               >
-                +254 758 366 452
+                +254 705 025 961
               </a>
             </div>
           </div>
