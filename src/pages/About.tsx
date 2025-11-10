@@ -50,8 +50,8 @@ const About = () => {
         "addressCountry": "KE"
       },
       "sameAs": [
-        "https://www.instagram.com/eclipse__tattoos",
-        "https://www.tiktok.com/@eclipsetattoosnpiercing"
+        "https://www.instagram.com/eclipse__tattoos?igsh=MTRxOXM2Nzk4dmhjZg==",
+        "https://www.tiktok.com/@eclipse_tattoos?_r=1&_t=ZM-91I3dITpdDH"
       ]
     });
 

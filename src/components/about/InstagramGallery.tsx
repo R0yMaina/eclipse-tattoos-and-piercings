@@ -27,7 +27,7 @@ export const InstagramGallery = () => {
             Follow us on Instagram for the latest work and studio updates
           </p>
           <a
-            href="https://www.instagram.com/eclipse__tattoos"
+            href="https://www.instagram.com/eclipse__tattoos?igsh=MTRxOXM2Nzk4dmhjZg=="
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-smooth font-semibold"

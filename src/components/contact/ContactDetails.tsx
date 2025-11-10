@@ -78,16 +78,16 @@ export const ContactDetails = () => {
               <p className="text-sm text-muted-foreground mb-2">Follow Us</p>
               <div className="space-y-1">
                 <a 
-                  href="https://www.tiktok.com/@eclipsetattoosnpiercing" 
+                  href="https://www.tiktok.com/@eclipse_tattoos?_r=1&_t=ZM-91I3dITpdDH" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-primary transition-smooth font-medium flex items-center gap-2"
                 >
                   <span className="text-xs">TikTok:</span>
-                  <span className="text-sm">@eclipsetattoosnpiercing</span>
+                  <span className="text-sm">@eclipse_tattoos</span>
                 </a>
                 <a 
-                  href="https://www.instagram.com/eclipse__tattoos" 
+                  href="https://www.instagram.com/eclipse__tattoos?igsh=MTRxOXM2Nzk4dmhjZg==" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-primary transition-smooth font-medium flex items-center gap-2"
