@@ -64,23 +64,32 @@ export const ContactForm = () => {
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        formData.append(key, String(value));
-      });
+      const { supabase } = await import('@/integrations/supabase/client');
       
-      files.forEach((file) => {
-        formData.append('files', file);
+      const submissionData = {
+        name: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        serviceType: data.serviceType,
+        projectDetails: `Placement: ${data.placement || 'N/A'}, Size: ${data.size || 'N/A'}, Budget: ${data.budget || 'N/A'}, Preferred Artist: ${data.preferredArtist || 'N/A'}, How heard: ${data.howDidYouHear || 'N/A'}`,
+        preferredContact: data.preferredContact,
+        message: data.message,
+        consent: data.consent,
+      };
+
+      const { data: result, error } = await supabase.functions.invoke('submit-contact-form', {
+        body: submissionData,
       });
 
-      // For now, just simulate submission
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (error) throw error;
       
       toast.success('Thank you—your request has been received. We\'ll reply shortly.');
       
       // Reset form
       setFiles([]);
+      window.location.reload();
     } catch (error) {
+      console.error('Form submission error:', error);
       toast.error('We couldn\'t send your request. Please try again or call the studio.');
     } finally {
       setIsSubmitting(false);

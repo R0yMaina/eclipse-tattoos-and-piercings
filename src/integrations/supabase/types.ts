@@ -114,6 +114,45 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          consent: boolean
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          preferred_contact: string | null
+          project_details: string | null
+          service_type: string | null
+        }
+        Insert: {
+          consent?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          preferred_contact?: string | null
+          project_details?: string | null
+          service_type?: string | null
+        }
+        Update: {
+          consent?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          preferred_contact?: string | null
+          project_details?: string | null
+          service_type?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           chunk_count: number | null
