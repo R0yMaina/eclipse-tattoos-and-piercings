@@ -8,9 +8,7 @@ export interface Package {
 
 export interface ArtistTier {
   tier: string;
-  hourly_usd: [number, number];
-  half_day_usd: [number, number];
-  day_session_usd: [number, number];
+  price_description: string;
   notes: string;
 }
 
@@ -29,31 +27,35 @@ export interface PiercingFee {
 
 export interface JewelryRange {
   material: string;
-  price_from_usd: number;
+  price_from_kes: number;
   notes: string;
 }
 
 export const artistTiers: ArtistTier[] = [
   {
-    tier: "Standard",
-    hourly_usd: [200, 240],
-    half_day_usd: [650, 800],
-    day_session_usd: [1200, 1400],
-    notes: "Ideal for fine line, script, and small-to-medium pieces."
+    tier: "Fine Line & Script",
+    price_description: "Based on size and complexity",
+    notes: "Small delicate designs, minimalist work, and custom lettering."
   },
   {
-    tier: "Senior",
-    hourly_usd: [240, 280],
-    half_day_usd: [800, 1000],
-    day_session_usd: [1400, 1650],
-    notes: "Advanced techniques, complex black & grey, and medium-to-large pieces."
+    tier: "Traditional & Neo-Traditional",
+    price_description: "Based on size and complexity",
+    notes: "Bold lines, classic designs, and vibrant color work."
   },
   {
-    tier: "Lead",
-    hourly_usd: [280, 320],
-    half_day_usd: [950, 1150],
-    day_session_usd: [1600, 1900],
-    notes: "Specialty work, color realism, cover-ups, and large-scale projects."
+    tier: "Black & Grey Realism",
+    price_description: "Based on size and complexity",
+    notes: "Portrait work, detailed shading, and photorealistic designs."
+  },
+  {
+    tier: "Color Realism",
+    price_description: "Based on size and complexity",
+    notes: "Full color portraits, nature scenes, and complex color blending."
+  },
+  {
+    tier: "Cover-Ups & Rework",
+    price_description: "Based on existing tattoo and new design",
+    notes: "Transforming old tattoos into new masterpieces."
   }
 ];
 
@@ -101,9 +103,9 @@ export const piercingFees: PiercingFee[] = [
 ];
 
 export const jewelryRanges: JewelryRange[] = [
-  { material: "Titanium (ASTM F-136)", price_from_usd: 40, notes: "Polished or PVD gold tones." },
-  { material: "14k/18k Solid Gold", price_from_usd: 120, notes: "Yellow, white, or rose." },
-  { material: "Gems & Diamonds", price_from_usd: 90, notes: "Ethically sourced stones." }
+  { material: "Titanium (ASTM F-136)", price_from_kes: 5200, notes: "Polished or PVD gold tones." },
+  { material: "14k/18k Solid Gold", price_from_kes: 15600, notes: "Yellow, white, or rose." },
+  { material: "Gems & Diamonds", price_from_kes: 11700, notes: "Ethically sourced stones." }
 ];
 
 export const packages: Package[] = [

@@ -7,6 +7,7 @@ import { PricingSection } from '@/components/services/PricingSection';
 import { ProcessTimeline } from '@/components/services/ProcessTimeline';
 import { ServicesFAQ } from '@/components/services/ServicesFAQ';
 import { ServicesCTA } from '@/components/services/ServicesCTA';
+import { StudioGallery } from '@/components/about/StudioGallery';
 
 const Services = () => {
   return (
@@ -16,6 +17,7 @@ const Services = () => {
       <TattooServices />
       <PiercingServices />
       <JewelryAftercare />
+      <StudioGallery />
       <PricingSection />
       <ProcessTimeline />
       <ServicesFAQ />

@@ -10,6 +10,10 @@ const galleryImages = [
   { src: studio3, alt: "Sterilization area with medical-grade equipment" },
 ];
 
+const videoLinks = [
+  { url: "https://vm.tiktok.com/ZMAWpFvph/", title: "Studio Work Showcase" }
+];
+
 export const StudioGallery = () => {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
 
@@ -40,6 +44,26 @@ export const StudioGallery = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-smooth" />
               </button>
+            ))}
+            
+            {videoLinks.map((video, index) => (
+              <a
+                key={`video-${index}`}
+                href={video.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative aspect-[4/3] overflow-hidden rounded-[20px] border border-border hover:border-primary/40 transition-smooth flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5"
+              >
+                <div className="text-center p-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-smooth">
+                    <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-foreground">{video.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1">View on TikTok</p>
+                </div>
+              </a>
             ))}
           </div>
         </div>

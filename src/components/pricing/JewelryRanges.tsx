@@ -51,7 +51,7 @@ export const JewelryRanges = () => {
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-semibold text-foreground">{range.material}</h4>
                     <span className="text-sm font-semibold text-primary whitespace-nowrap ml-4">
-                      From ${range.price_from_usd}
+                      From KES {range.price_from_kes.toLocaleString()}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">{range.notes}</p>
@@ -68,11 +68,11 @@ export const JewelryRanges = () => {
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex justify-between">
                     <span>Tattoo aftercare kit</span>
-                    <span className="font-semibold text-foreground">$15</span>
+                    <span className="font-semibold text-foreground">KES 4,550</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Piercing saline spray</span>
-                    <span className="font-semibold text-foreground">$12</span>
+                    <span className="font-semibold text-foreground">KES 1,560</span>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-4 italic">

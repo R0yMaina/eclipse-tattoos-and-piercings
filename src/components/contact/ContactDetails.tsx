@@ -44,12 +44,10 @@ export const ContactDetails = () => {
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Clock className="h-5 w-5 text-primary" />
             </div>
-            <div className="flex-1">
+          <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-2">Hours</p>
               <div className="space-y-1 text-foreground">
-                <p className="text-sm">Mon–Thu: 11:00–19:00</p>
-                <p className="text-sm">Fri–Sat: 11:00–21:00</p>
-                <p className="text-sm">Sun: 12:00–18:00</p>
+                <p className="text-sm">Monday–Saturday: 10:00–20:00</p>
               </div>
             </div>
           </div>

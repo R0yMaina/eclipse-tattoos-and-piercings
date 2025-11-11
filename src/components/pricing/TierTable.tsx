@@ -32,10 +32,10 @@ export const TierTable = () => {
       <div className="container max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-heading font-semibold mb-4">
-            Artist Tiers
+            Tattoo Styles & Pricing
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Transparent rates by experience level and session type.
+            Pricing based on tattoo type, size, and complexity. Book a consultation for an accurate quote.
           </p>
         </div>
 
@@ -45,46 +45,35 @@ export const TierTable = () => {
               key={index}
               className="tier-row glass-panel-elevated glass-highlight rounded-[20px] p-6 md:p-8 hover:scale-[1.01] transition-all duration-300"
             >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-2xl font-heading font-semibold text-primary">
-                      {tier.tier}
-                    </h3>
-                    {tier.tier === 'Senior' && (
-                      <Badge variant="outline" className="border-primary/40 text-primary">
-                        Popular
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {tier.notes}
-                  </p>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-2xl font-heading font-semibold text-primary">
+                    {tier.tier}
+                  </h3>
+                  {tier.tier === 'Color Realism' && (
+                    <Badge variant="outline" className="border-primary/40 text-primary">
+                      Popular
+                    </Badge>
+                  )}
                 </div>
-
-                <div className="grid grid-cols-3 gap-4 md:gap-6">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Hourly</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      ${tier.hourly_usd[0]}–${tier.hourly_usd[1]}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Half Day</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      ${tier.half_day_usd[0]}–${tier.half_day_usd[1]}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Full Day</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      ${tier.day_session_usd[0]}–${tier.day_session_usd[1]}
-                    </p>
-                  </div>
+                <p className="text-sm text-muted-foreground">
+                  {tier.notes}
+                </p>
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Pricing:</span>
+                  <span className="text-sm font-semibold text-primary">
+                    {tier.price_description}
+                  </span>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-8 glass-panel-elevated rounded-[20px] p-6 text-sm text-muted-foreground">
+          <p className="leading-relaxed">
+            All tattoo pricing is determined during your free consultation. We'll discuss your vision, provide recommendations, and give you an accurate quote based on your specific design.
+          </p>
         </div>
       </div>
     </section>
