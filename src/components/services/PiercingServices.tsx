@@ -71,7 +71,7 @@ export const PiercingServices = () => {
                 {service.price_from_usd && (
                   <div className="flex items-center gap-2 text-sm">
                     <DollarSign className="w-4 h-4 text-primary" />
-                    <span className="font-semibold text-foreground">From ${service.price_from_usd}</span>
+                    <span className="font-semibold text-foreground">From KES{service.price_from_usd}</span>
                   </div>
                 )}
               </div>
