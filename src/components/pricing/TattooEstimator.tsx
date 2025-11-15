@@ -143,11 +143,11 @@ export const TattooEstimator = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Estimated Price</span>
-                <span className="font-bold text-primary text-lg">${estimate.priceLow}–${estimate.priceHigh}</span>
+                <span className="font-bold text-primary text-lg">KES{estimate.priceLow}–${estimate.priceHigh}</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-border/30">
                 <span className="text-sm text-muted-foreground">Suggested Deposit (20%)</span>
-                <span className="font-semibold text-foreground">${estimate.deposit}</span>
+                <span className="font-semibold text-foreground">KES{estimate.deposit}</span>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-4 italic">
