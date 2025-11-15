@@ -1,4 +1,4 @@
-import { artists } from '@/data/artists';
+/*import { artists } from '@/data/artists';
 import { Button } from '@/components/ui/button';
 import { Calendar, Instagram } from 'lucide-react';
 import novaImg from '@/assets/artists/nova.jpg';
@@ -31,7 +31,7 @@ export const ArtistsGrid = () => {
               className="glass-panel glass-highlight rounded-[28px] p-6 transition-smooth hover:scale-[1.02] group"
             >
               {/* Headshot */}
-              <div className="relative mb-6 overflow-hidden rounded-[20px]">
+            /*  <div className="relative mb-6 overflow-hidden rounded-[20px]">
                 <div className="aspect-square relative">
                   <img 
                     src={artistImages[artist.headshot]}
@@ -42,7 +42,7 @@ export const ArtistsGrid = () => {
                 </div>
                 
                 {/* Availability Badge */}
-                <div className="absolute top-4 right-4">
+                /*<div className="absolute top-4 right-4">
                   <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
                     artist.availability === 'Books open' 
                       ? 'bg-success/20 text-success border border-success/30' 
@@ -54,14 +54,14 @@ export const ArtistsGrid = () => {
               </div>
 
               {/* Info */}
-              <div className="space-y-4">
+            /*  <div className="space-y-4">
                 <div>
                   <h3 className="text-2xl font-heading font-semibold mb-1">{artist.name}</h3>
                   <p className="text-sm text-muted-foreground">{artist.pronouns} • {artist.role}</p>
                 </div>
 
                 {/* Styles */}
-                <div className="flex flex-wrap gap-2">
+             /*   <div className="flex flex-wrap gap-2">
                   {artist.styles.map((style, idx) => (
                     <span 
                       key={idx}
@@ -73,12 +73,12 @@ export const ArtistsGrid = () => {
                 </div>
 
                 {/* Experience */}
-                <p className="text-sm text-muted-foreground">
+              /*  <p className="text-sm text-muted-foreground">
                   {artist.experienceYears} years of experience
                 </p>
 
                 {/* CTAs */}
-                <div className="flex gap-3 pt-2">
+               /* <div className="flex gap-3 pt-2">
                   <Button
                     size="sm"
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full transition-smooth"
@@ -106,3 +106,4 @@ export const ArtistsGrid = () => {
     </section>
   );
 };
+*/
