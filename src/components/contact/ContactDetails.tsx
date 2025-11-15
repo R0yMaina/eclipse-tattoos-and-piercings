@@ -103,7 +103,7 @@ export const ContactDetails = () => {
       <div className="glass-panel rounded-[20px] p-6">
         <h4 className="font-heading font-semibold mb-3">Walk-ins Welcome</h4>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Subject to artist availability. Appointments recommended for custom work to ensure dedicated time with your preferred artist.
+          Subject to session booking. Appointments recommended for custom work to ensure dedicated time with eclipse's artist.
         </p>
       </div>
     </div>
