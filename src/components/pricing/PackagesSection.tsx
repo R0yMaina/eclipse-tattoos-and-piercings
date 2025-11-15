@@ -45,7 +45,7 @@ export const PackagesSection = () => {
           {packages.map((pkg, index) => (
             <div 
               key={index}
-              className={`glass-panel-elevated glass-highlight rounded-[24px] p-8 relative hover:scale-[1.02] transition-all duration-300 ${
+              className={`glass-panel-elevated glass-highlight rounded-[24px] p-8 relative hover:scale-[1.02] transition-all duration-300 KES{
                 pkg.popular ? 'ring-2 ring-primary/30' : ''
               }`}
             >
@@ -64,7 +64,7 @@ export const PackagesSection = () => {
 
               <div className="mb-6">
                 <span className="text-3xl font-bold text-primary">
-                  ${pkg.price_from_usd}
+                  KES{pkg.price_from_usd}
                 </span>
                 <span className="text-sm text-muted-foreground ml-1">from</span>
               </div>
