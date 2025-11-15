@@ -53,7 +53,7 @@ export const PricingSection = () => {
                 <div className="flex justify-between">
                   <span className="text-foreground">Hourly Rate</span>
                   <span className="font-semibold text-primary">
-                    ${pricingInfo.tattoo_hourly_usd_range[0]}–${pricingInfo.tattoo_hourly_usd_range[1]}/hr
+                    ${pricingInfo.tattoo_hourly_usd_range[0]}–KES{pricingInfo.tattoo_hourly_usd_range[1]}/hr
                   </span>
                 </div>
                 <div className="flex justify-between">
