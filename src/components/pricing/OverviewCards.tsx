@@ -43,7 +43,7 @@ export const OverviewCards = () => {
           <div className="glass-panel-elevated glass-highlight rounded-[24px] p-8 text-center">
             <DollarSign className="w-12 h-12 text-primary mx-auto mb-4" />
             <h3 className="text-3xl font-heading font-bold text-primary mb-2">
-              ${pricingInfo.shop_minimum_usd}
+              KES{pricingInfo.shop_minimum_usd}
             </h3>
             <p className="text-sm text-muted-foreground">
               Shop Minimum
