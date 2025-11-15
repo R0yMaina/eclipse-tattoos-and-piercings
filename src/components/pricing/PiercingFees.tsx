@@ -67,7 +67,7 @@ export const PiercingFees = () => {
               </div>
               <div className="text-right ml-4">
                 <span className="text-lg font-semibold text-primary">
-                  ${fee.fee_from}+
+                  kes{fee.fee_from}+
                 </span>
               </div>
             </div>
@@ -83,7 +83,7 @@ export const PiercingFees = () => {
           </p>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">From</span>
-            <span className="text-2xl font-bold text-primary">$120</span>
+            <span className="text-2xl font-bold text-primary">kes120</span>
           </div>
           <p className="text-xs text-muted-foreground mt-2 italic">
             Plan & consultation; piercings and jewelry priced separately.
