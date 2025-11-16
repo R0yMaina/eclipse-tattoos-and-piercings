@@ -15,11 +15,19 @@ const Index = () => {
                 <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 0.6 }} />
               </linearGradient>
             </defs>
+              <image 
+    href="././limit.png" 
+    x="0" 
+    y="0" 
+    width="200" 
+    height="200"
+    preserveAspectRatio="xMidYMid slice"
+  />
             <circle 
               cx="100" 
               cy="100" 
               r="80" 
-              fill="url(././limit.png)"
+              fill="none"
               stroke="url(#logo-gradient)" 
               strokeWidth="3"
             />
