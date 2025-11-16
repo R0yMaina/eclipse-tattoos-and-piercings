@@ -19,7 +19,7 @@ const Index = () => {
               cx="100" 
               cy="100" 
               r="80" 
-              background="url(././limit.png)"
+              background="url(.././limit.png)"
               stroke="url(#logo-gradient)" 
               strokeWidth="3"
             />
