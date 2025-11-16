@@ -112,11 +112,11 @@ export const PiercingEstimator = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Jewelry (est.)</span>
-                <span className="font-semibold text-foreground">KES{estimate.jewelryLow}–${estimate.jewelryHigh}</span>
+                <span className="font-semibold text-foreground">KES{estimate.jewelryLow}–KES{estimate.jewelryHigh}</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-border/30">
                 <span className="text-sm text-muted-foreground">Estimated Total</span>
-                <span className="font-bold text-primary text-lg">KES{estimate.totalLow}–${estimate.totalHigh}</span>
+                <span className="font-bold text-primary text-lg">KES{estimate.totalLow}–KES{estimate.totalHigh}</span>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-4 italic">
