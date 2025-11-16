@@ -67,7 +67,7 @@ export const PricingFAQ = () => {
         <div ref={contentRef} className="glass-panel-elevated rounded-[24px] p-8">
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
+              <AccordionItem key={index} value={`item-KES{index}`}>
                 <AccordionTrigger className="text-left font-semibold text-foreground hover:text-primary transition-colors">
                   {faq.q}
                 </AccordionTrigger>
