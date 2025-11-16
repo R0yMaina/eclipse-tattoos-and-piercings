@@ -16,7 +16,7 @@ const Index = () => {
               </linearGradient>
             </defs>
                <image 
-    href="././limit.png"
+    href="../../limit.png"
     x="0"
     y="0"
     width="200"
