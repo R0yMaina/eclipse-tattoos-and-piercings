@@ -67,7 +67,7 @@ export const TattooExamples = () => {
                     <span className="text-sm">Price</span>
                   </div>
                   <span className="text-sm font-semibold text-primary">
-                    ${example.estimated_usd[0]}–${example.estimated_usd[1]}
+                    KES{example.estimated_usd[0]}KES{example.estimated_usd[1]}
                   </span>
                 </div>
               </div>
