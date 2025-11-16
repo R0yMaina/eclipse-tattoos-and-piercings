@@ -112,7 +112,7 @@ export const packages: Package[] = [
   {
     title: "Small Tattoo Bundle",
     description: "3 fine-line pieces up to 2 inches each.",
-    price_from_usd: 500,
+    price_from_usd: kes 500,
     notes: "Single session; design approval required."
   },
   {
