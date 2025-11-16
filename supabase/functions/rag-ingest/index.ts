@@ -15,7 +15,7 @@ const SITE_URLS = [
   'https://eclipse-tattoo-and-piercings.lovable.app/contact',
 ];
 
-function chunkText(text: string, maxTokens = 500, overlap = 50): string[] {
+function chunkText(text: string, maxTokens = 900, overlap = 50): string[] {
   const words = text.split(/\s+/);
   const chunks: string[] = [];
   let i = 0;
