@@ -112,20 +112,20 @@ export const packages: Package[] = [
   {
     title: "Small Tattoo Bundle",
     description: "3 fine-line pieces up to 2 inches each.",
-    price_from_usd: "kes" 500,
+    price_from_usd: 500,
     notes: "Single session; design approval required."
   },
   {
     title: "Curated Ear Package",
     description: "Plan, 2-4 piercings, and jewelry credit.",
-    price_from_usd:'kes' 280,
+    price_from_usd: 280,
     notes: "Anatomy dependent; jewelry selection varies.",
     popular: true
   },
   {
     title: "Day Session",
     description: "Extended tattoo session for larger work.",
-    price_from_usd:'kes' 1200,
+    price_from_usd: 1200,
     notes: "Includes breaks and aftercare kit."
   }
 ];
