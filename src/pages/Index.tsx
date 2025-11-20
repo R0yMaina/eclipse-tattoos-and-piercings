@@ -38,9 +38,9 @@ const Index = () => {
     preserveAspectRatio="xMidYMid slice"
   />
             <circle 
-              cx="150" 
-              cy="150" 
-              r="80" 
+              cx="100" 
+              cy="100" 
+              r="150" 
               fill="none"
               stroke="url(#logo-gradient)" 
               strokeWidth="3"
