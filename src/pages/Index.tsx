@@ -13,7 +13,7 @@ const Index = () => {
             <canvas 
               width="754" 
               height="1065" 
-              style={{ display: "block", width: "754px", height: "1065px", position: "relative" }}
+              style={{ display: "block", width: "754px", height: "1065px", position: "absolute" }}
             />
           </div>
           <div className="hero-content"></div>
