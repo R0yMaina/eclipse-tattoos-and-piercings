@@ -40,7 +40,7 @@ const Index = () => {
             <circle 
               cx="100" 
               cy="100" 
-              r="150" 
+              r="80" 
               fill="none"
               stroke="url(#logo-gradient)" 
               strokeWidth="3"
