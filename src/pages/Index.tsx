@@ -6,6 +6,11 @@ const Index = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
+       {/* Hero Section with 3D Container */}
+      <section className="hero relative w-full h-full">
+        {/* 3D Animation Container */}
+        <div id="three-container" className="absolute top-0 left-0 w-full h-full"></div>
+        
       <div className="text-center space-y-6 max-w-2xl mx-auto px-4">
         <div className="mb-8">
           <svg viewBox="0 0 200 200" className="w-32 h-32 mx-auto mb-6 opacity-50">
@@ -39,7 +44,7 @@ const Index = () => {
           Eclipse Tattoo & Piercings
         </h1>
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-light">
-          Perfection is the aim waa
+          Perfection is the aim 
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
