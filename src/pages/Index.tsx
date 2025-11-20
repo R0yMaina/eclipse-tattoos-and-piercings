@@ -39,7 +39,7 @@ const Index = () => {
           Eclipse Tattoo & Piercings
         </h1>
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-light">
-          Perfection is the aim
+          Perfection is the aim waa
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
