@@ -7,6 +7,19 @@ const Index = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center space-y-6 max-w-2xl mx-auto px-4">
+         {/* --- YOUR HERO SECTION INSERTED HERE --- */}
+        <section className="hero" id="home">
+          <div id="three-container">
+            <canvas 
+              width="754" 
+              height="1065" 
+              style={{ display: "block", width: "754px", height: "1065px" }}
+            />
+          </div>
+          <div className="hero-content"></div>
+        </section>
+        {/* --------------------------------------- */}
+
         <div className="mb-8">
           <svg viewBox="0 0 200 200" className="w-32 h-32 mx-auto mb-6 opacity-50">
             <defs>
