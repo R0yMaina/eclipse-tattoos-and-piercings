@@ -1,6 +1,7 @@
 import { artists } from '@/data/artists';
 import { Button } from '@/components/ui/button';
 import { Calendar, Instagram } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import novaImg from '@/assets/artists/nova.jpg';
 import orionImg from '@/assets/artists/orion.jpg';
 import vegaImg from '@/assets/artists/vega.jpg';
@@ -32,14 +33,14 @@ export const ArtistsGrid = () => {
             >
               {/* Headshot */}
               <div className="relative mb-4 md:mb-6 overflow-hidden rounded-[16px] md:rounded-[20px]">
-                <div className="aspect-square relative">
-                  <img 
-                    src={artistImages[artist.headshot]}
-                    alt={`${artist.name} - ${artist.role}`}
-                    className="w-full h-full object-cover transition-smooth group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 border border-primary/20 rounded-[16px] md:rounded-[20px] group-hover:border-primary/40 transition-smooth" />
-                </div>
+                <OptimizedImage 
+                  src={artistImages[artist.headshot]}
+                  alt={`${artist.name} - ${artist.role}`}
+                  aspectRatio="square"
+                  className="w-full h-full object-cover transition-smooth group-hover:scale-105"
+                  containerClassName="w-full"
+                />
+                <div className="absolute inset-0 border border-primary/20 rounded-[16px] md:rounded-[20px] group-hover:border-primary/40 transition-smooth" />
                 
                 {/* Availability Badge */}
                 <div className="absolute top-3 right-3 md:top-4 md:right-4">
