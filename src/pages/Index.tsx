@@ -5,38 +5,26 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center space-y-6 max-w-2xl mx-auto px-4">
-         {/* --- YOUR HERO SECTION INSERTED HERE --- */}
-        <section className="hero" id="home">
-          <div id="three-container">
-            <canvas 
-              width="754" 
-              height="1065" 
-              style={{ display: "block", width: "754px", height: "1065px", position: "absolute" }}
-            />
-          </div>
-          <div className="hero-content"></div>
-        </section>
-        {/* --------------------------------------- */}
-
-        <div className="mb-8">
-          <svg viewBox="0 0 200 200" className="w-32 h-32 mx-auto mb-6 opacity-50">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-8 md:py-0">
+      <div className="text-center space-y-4 md:space-y-6 max-w-2xl mx-auto w-full">
+        {/* Logo */}
+        <div className="mb-4 md:mb-8">
+          <svg viewBox="0 0 200 200" className="w-20 h-20 md:w-32 md:h-32 mx-auto mb-4 md:mb-6 opacity-50">
             <defs>
               <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
                 <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 0.6 }} />
               </linearGradient>
             </defs>
-               <image 
-    href="../limit.png"
-    x="0"
-    y="0"
-    width="200"
-    height="200"
-    clipPath="url(#circle-clip)"
-    preserveAspectRatio="xMidYMid slice"
-  />
+            <image 
+              href="../limit.png"
+              x="0"
+              y="0"
+              width="200"
+              height="200"
+              clipPath="url(#circle-clip)"
+              preserveAspectRatio="xMidYMid slice"
+            />
             <circle 
               cx="100" 
               cy="100" 
@@ -48,18 +36,18 @@ const Index = () => {
           </svg>
         </div>
         
-        <h1 className="text-5xl md:text-6xl font-heading font-bold text-foreground mb-4">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-foreground mb-2 md:mb-4 leading-tight">
           Eclipse Tattoo & Piercings
         </h1>
-        <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-light">
+        <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 md:mb-8 font-light">
           Perfection is the aim 
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col gap-3 md:gap-4 w-full max-w-md mx-auto sm:max-w-none sm:flex-row sm:justify-center">
           <Button 
             onClick={() => navigate('/contact')}
             size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 gold-glow transition-smooth rounded-full px-8 py-6 text-base font-semibold"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 gold-glow transition-smooth rounded-full px-6 md:px-8 py-5 md:py-6 text-sm md:text-base font-semibold w-full sm:w-auto"
           >
             Book Your Session
           </Button>
@@ -67,7 +55,7 @@ const Index = () => {
             onClick={() => navigate('/services')}
             variant="outline"
             size="lg"
-            className="border-primary text-foreground hover:bg-primary/10 rounded-full px-8 py-6 text-base transition-smooth"
+            className="border-primary text-foreground hover:bg-primary/10 rounded-full px-6 md:px-8 py-5 md:py-6 text-sm md:text-base transition-smooth w-full sm:w-auto"
           >
             View Services
           </Button>
@@ -75,7 +63,7 @@ const Index = () => {
             onClick={() => navigate('/about')}
             variant="outline"
             size="lg"
-            className="border-primary text-foreground hover:bg-primary/10 rounded-full px-8 py-6 text-base transition-smooth"
+            className="border-primary text-foreground hover:bg-primary/10 rounded-full px-6 md:px-8 py-5 md:py-6 text-sm md:text-base transition-smooth w-full sm:w-auto"
           >
             Learn Our Story
           </Button>

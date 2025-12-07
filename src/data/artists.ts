@@ -1,4 +1,4 @@
-/*export interface Artist {
+export interface Artist {
   name: string;
   pronouns: string;
   role: string;
@@ -45,4 +45,3 @@ export const artists: Artist[] = [
     headshot: "vega"
   }
 ];
-*/
