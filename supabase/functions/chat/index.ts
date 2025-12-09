@@ -6,12 +6,117 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_REQUESTS = 20; // Max requests per window
+const RATE_LIMIT_WINDOW_SECONDS = 60; // Window in seconds
+
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number; resetIn: number }> {
+  const upstashUrl = Deno.env.get('UPSTASH_REDIS_REST_URL');
+  const upstashToken = Deno.env.get('UPSTASH_REDIS_REST_TOKEN');
+
+  if (!upstashUrl || !upstashToken) {
+    console.warn('Upstash Redis not configured, skipping rate limiting');
+    return { allowed: true, remaining: RATE_LIMIT_REQUESTS, resetIn: 0 };
+  }
+
+  const key = `ratelimit:chat:${ip}`;
+  
+  try {
+    // Get current count
+    const getResponse = await fetch(`${upstashUrl}/get/${key}`, {
+      headers: { Authorization: `Bearer ${upstashToken}` },
+    });
+    const getData = await getResponse.json();
+    const currentCount = parseInt(getData.result || '0', 10);
+
+    if (currentCount >= RATE_LIMIT_REQUESTS) {
+      // Get TTL to know when limit resets
+      const ttlResponse = await fetch(`${upstashUrl}/ttl/${key}`, {
+        headers: { Authorization: `Bearer ${upstashToken}` },
+      });
+      const ttlData = await ttlResponse.json();
+      const resetIn = Math.max(0, parseInt(ttlData.result || '0', 10));
+      
+      return { allowed: false, remaining: 0, resetIn };
+    }
+
+    // Increment counter with pipeline
+    const newCount = currentCount + 1;
+    
+    if (currentCount === 0) {
+      // First request in window - set with expiry
+      await fetch(`${upstashUrl}/setex/${key}/${RATE_LIMIT_WINDOW_SECONDS}/${newCount}`, {
+        headers: { Authorization: `Bearer ${upstashToken}` },
+      });
+    } else {
+      // Increment existing key
+      await fetch(`${upstashUrl}/incr/${key}`, {
+        headers: { Authorization: `Bearer ${upstashToken}` },
+      });
+    }
+
+    return { 
+      allowed: true, 
+      remaining: RATE_LIMIT_REQUESTS - newCount,
+      resetIn: RATE_LIMIT_WINDOW_SECONDS 
+    };
+  } catch (error) {
+    console.error('Rate limit check failed:', error);
+    // Fail open - allow request if Redis is unavailable
+    return { allowed: true, remaining: RATE_LIMIT_REQUESTS, resetIn: 0 };
+  }
+}
+
+function getClientIP(req: Request): string {
+  // Check various headers for the real IP
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  
+  const cfIP = req.headers.get('cf-connecting-ip');
+  if (cfIP) {
+    return cfIP;
+  }
+  
+  return 'unknown';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Check rate limit first
+    const clientIP = getClientIP(req);
+    const rateLimit = await checkRateLimit(clientIP);
+    
+    if (!rateLimit.allowed) {
+      console.log(`Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Too many requests. Please wait before sending more messages.',
+          retryAfter: rateLimit.resetIn 
+        }), 
+        {
+          status: 429,
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimit.resetIn),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(rateLimit.resetIn)
+          },
+        }
+      );
+    }
+
     const { message, sessionId, clientToken } = await req.json();
 
     if (!message || typeof message !== 'string') {
