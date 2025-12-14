@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { AnalyticsOverview } from "@/components/admin/AnalyticsOverview";
 import { PopularQuestions } from "@/components/admin/PopularQuestions";
 import { FeedbackList } from "@/components/admin/FeedbackList";
-import { Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw } from "lucide-react";
+import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
+import { Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 
@@ -152,10 +153,14 @@ export default function Admin() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg">
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4" />
+              Security
             </TabsTrigger>
             <TabsTrigger value="questions" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
@@ -169,6 +174,10 @@ export default function Admin() {
 
           <TabsContent value="analytics" className="space-y-6">
             <AnalyticsOverview />
+          </TabsContent>
+
+          <TabsContent value="security" className="space-y-6">
+            <SecurityMonitor />
           </TabsContent>
 
           <TabsContent value="questions" className="space-y-6">

@@ -1,6 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+
+// Log security events for monitoring
+const logAuthEvent = async (
+  eventType: string,
+  severity: 'info' | 'warn' | 'error',
+  details: Record<string, unknown>
+) => {
+  try {
+    await supabase.from('security_events').insert({
+      event_type: eventType,
+      severity,
+      details
+    } as any);
+  } catch (error) {
+    console.error('Failed to log auth event:', error);
+  }
+};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,6 +107,12 @@ export default function Auth() {
     });
 
     if (error) {
+      // Log failed sign-in attempt
+      await logAuthEvent('auth_signin_failed', 'warn', {
+        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Partially mask email
+        error_code: error.message
+      });
+      
       toast({
         title: "Sign in failed",
         description: error.message,
@@ -117,6 +140,12 @@ export default function Auth() {
     });
 
     if (error) {
+      // Log failed sign-up attempt
+      await logAuthEvent('auth_signup_failed', 'warn', {
+        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        error_code: error.message
+      });
+      
       toast({
         title: "Sign up failed",
         description: error.message,

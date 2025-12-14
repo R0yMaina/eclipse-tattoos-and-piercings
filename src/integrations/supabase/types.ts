@@ -212,6 +212,36 @@ export type Database = {
           },
         ]
       }
+      security_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          severity?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          severity?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -264,6 +294,16 @@ export type Database = {
           id: string
           message_content: string
           rating: number
+        }[]
+      }
+      get_security_summary: {
+        Args: { hours_back?: number }
+        Returns: {
+          count: number
+          event_type: string
+          latest_at: string
+          severity: string
+          unique_ips: number
         }[]
       }
       has_role: {
