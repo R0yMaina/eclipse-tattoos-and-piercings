@@ -6,11 +6,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Overview", href: "#overview" },
-  { label: "Artist Tiers", href: "#tiers" },
   { label: "Tattoos", href: "#tattoos" },
   { label: "Piercings", href: "#piercings" },
-  { label: "Jewelry", href: "#jewelry" },
   { label: "Packages", href: "#packages" },
   { label: "Estimators", href: "#estimators" },
   { label: "Policies", href: "#policies" },
