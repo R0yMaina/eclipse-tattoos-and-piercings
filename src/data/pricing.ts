@@ -6,106 +6,30 @@ export interface Package {
   popular?: boolean;
 }
 
-export interface ArtistTier {
-  tier: string;
-  price_description: string;
-  notes: string;
-}
-
-export interface TattooExample {
-  name: string;
-  estimated_hours: [number, number];
-  estimated_usd: [number, number];
-  notes: string;
-}
-
 export interface PiercingFee {
   area: string;
-  fee_from: number;
-  notes: string;
+  price_kes: number;
 }
-
-export interface JewelryRange {
-  material: string;
-  price_from_kes: number;
-  notes: string;
-}
-
-export const artistTiers: ArtistTier[] = [
-  {
-    tier: "Fine Line & Script",
-    price_description: "Based on size and complexity",
-    notes: "Small delicate designs, minimalist work, and custom lettering."
-  },
-  {
-    tier: "Traditional & Neo-Traditional",
-    price_description: "Based on size and complexity",
-    notes: "Bold lines, classic designs, and vibrant color work."
-  },
-  {
-    tier: "Black & Grey Realism",
-    price_description: "Based on size and complexity",
-    notes: "Portrait work, detailed shading, and photorealistic designs."
-  },
-  {
-    tier: "Color Realism",
-    price_description: "Based on size and complexity",
-    notes: "Full color portraits, nature scenes, and complex color blending."
-  },
-  {
-    tier: "Cover-Ups & Rework",
-    price_description: "Based on existing tattoo and new design",
-    notes: "Transforming old tattoos into new masterpieces."
-  }
-];
-
-export const tattooExamples: TattooExample[] = [
-  {
-    name: "Fine-line wrist (≈2\")",
-    estimated_hours: [1.0, 1.5],
-    estimated_usd: [180, 240],
-    notes: "Simple linework; placement and detail can affect time."
-  },
-  {
-    name: "Script forearm (≈4\")",
-    estimated_hours: [1.5, 2.0],
-    estimated_usd: [220, 320],
-    notes: "Custom lettering and spacing."
-  },
-  {
-    name: "Palm-size B&G (≈6\")",
-    estimated_hours: [2.0, 4.0],
-    estimated_usd: [400, 700],
-    notes: "Soft shading; skin and reference quality matter."
-  },
-  {
-    name: "Color floral (≈8\")",
-    estimated_hours: [4.0, 6.0],
-    estimated_usd: [700, 1200],
-    notes: "Multi-color layering and saturation."
-  },
-  {
-    name: "Neo-traditional calf (≈10\")",
-    estimated_hours: [5.0, 8.0],
-    estimated_usd: [900, 1600],
-    notes: "Bold lines, saturated color, larger coverage."
-  }
-];
 
 export const piercingFees: PiercingFee[] = [
-  { area: "Lobe (single/pair)", fee_from: 40, notes: "Fee per piercing; jewelry separate." },
-  { area: "Cartilage (helix/tragus/conch/rook/daith)", fee_from: 55, notes: "Jewelry separate." },
-  { area: "Nostril/Septum", fee_from: 60, notes: "Jewelry separate." },
-  { area: "Eyebrow/Lip", fee_from: 60, notes: "Jewelry separate." },
-  { area: "Navel", fee_from: 65, notes: "Jewelry separate." },
-  { area: "Nipple (single/pair)", fee_from: 70, notes: "Jewelry separate." },
-  { area: "Jewelry Change/Downsize", fee_from: 15, notes: "Complimentary with jewelry purchase (policy dependent)." }
-];
-
-export const jewelryRanges: JewelryRange[] = [
-  { material: "Titanium (ASTM F-136)", price_from_kes: 5200, notes: "Polished or PVD gold tones." },
-  { material: "14k/18k Solid Gold", price_from_kes: 15600, notes: "Yellow, white, or rose." },
-  { material: "Gems & Diamonds", price_from_kes: 11700, notes: "Ethically sourced stones." }
+  { area: "Earlobe", price_kes: 500 },
+  { area: "Nose", price_kes: 500 },
+  { area: "Septum", price_kes: 500 },
+  { area: "Smiley", price_kes: 500 },
+  { area: "Helix", price_kes: 500 },
+  { area: "Tragus", price_kes: 500 },
+  { area: "Rook", price_kes: 1000 },
+  { area: "Medusa", price_kes: 800 },
+  { area: "Conch", price_kes: 500 },
+  { area: "Flat", price_kes: 500 },
+  { area: "Industrial", price_kes: 1500 },
+  { area: "Tongue", price_kes: 1000 },
+  { area: "Frog Eyes", price_kes: 1500 },
+  { area: "Navel (Belly)", price_kes: 1000 },
+  { area: "Nipple", price_kes: 2000 },
+  { area: "Dermals", price_kes: 4000 },
+  { area: "Surface Dermals", price_kes: 6000 },
+  { area: "Surface Tragus", price_kes: 1000 },
 ];
 
 export const packages: Package[] = [
