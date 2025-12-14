@@ -53,7 +53,7 @@ export const JewelryAftercare = () => {
                 <div key={index} className="border-b border-border/30 pb-4 last:border-0 last:pb-0">
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-semibold text-foreground">{option.title}</h4>
-                    <span className="text-sm font-semibold text-primary">From ${option.price_from_usd}</span>
+                    <span className="text-sm font-semibold text-primary">From KES {option.price_from_kes.toLocaleString()}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">{option.notes}</p>
                 </div>

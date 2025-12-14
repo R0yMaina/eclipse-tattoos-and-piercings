@@ -13,7 +13,7 @@ export interface Service {
   title: string;
   description: string;
   duration_estimate?: string;
-  price_from_usd?: number;
+  price_from_kes?: number;
   price_note?: string;
   notes?: string;
   portfolio_route?: string;
@@ -25,7 +25,7 @@ export const tattooServices: Service[] = [
     title: "Custom Tattoo",
     description: "Concept to completion—designed specifically for your body and story.",
     duration_estimate: "2-6h",
-    price_from_usd: 250,
+    price_from_kes: 15000,
     notes: "Final quote after consultation based on size, placement, and complexity.",
     portfolio_route: "/portfolio/tattoos/custom",
     image: customImg
@@ -34,7 +34,7 @@ export const tattooServices: Service[] = [
     title: "Fine Line",
     description: "Crisp, minimal linework with meticulous detail and placement.",
     duration_estimate: "1-3h",
-    price_from_usd: 180,
+    price_from_kes: 8000,
     portfolio_route: "/portfolio/tattoos/fine-line",
     image: fineLineImg
   },
@@ -42,7 +42,7 @@ export const tattooServices: Service[] = [
     title: "Black & Grey",
     description: "Smooth gradients and timeless contrast for refined depth.",
     duration_estimate: "2-6h",
-    price_from_usd: 220,
+    price_from_kes: 12000,
     portfolio_route: "/portfolio/tattoos/black-and-grey",
     image: blackGreyImg
   },
@@ -50,7 +50,7 @@ export const tattooServices: Service[] = [
     title: "Color Realism",
     description: "High-fidelity color with lifelike shading and saturation.",
     duration_estimate: "3-8h",
-    price_from_usd: 300,
+    price_from_kes: 18000,
     portfolio_route: "/portfolio/tattoos/color-realism",
     image: colorRealismImg
   },
@@ -58,7 +58,7 @@ export const tattooServices: Service[] = [
     title: "Neo-traditional",
     description: "Bold lines, modern palettes, and illustrative flair.",
     duration_estimate: "2-6h",
-    price_from_usd: 240,
+    price_from_kes: 14000,
     portfolio_route: "/portfolio/tattoos/neo-traditional",
     image: neoTraditionalImg
   },
@@ -66,7 +66,7 @@ export const tattooServices: Service[] = [
     title: "Ornamental & Geometric",
     description: "Symmetry, pattern, and precision that flatter the body.",
     duration_estimate: "2-6h",
-    price_from_usd: 240,
+    price_from_kes: 14000,
     portfolio_route: "/portfolio/tattoos/ornamental",
     image: geometricImg
   },
@@ -74,7 +74,7 @@ export const tattooServices: Service[] = [
     title: "Flash",
     description: "Curated designs ready to go—limited runs, premium execution.",
     duration_estimate: "45-120m",
-    price_from_usd: 150,
+    price_from_kes: 5000,
     portfolio_route: "/portfolio/tattoos/flash",
     image: flashImg
   },
@@ -99,57 +99,63 @@ export const piercingServices: Service[] = [
   {
     title: "Ear Lobe (single/pair)",
     description: "Classic lobe piercings with careful marking and jewelry sizing.",
-    price_from_usd: 40,
-    notes: "Service fee; jewelry priced separately."
+    price_from_kes: 500,
+    notes: "Jewelry included."
   },
   {
     title: "Helix/Forward Helix/Tragus/Conch/Rook/Daith",
     description: "Cartilage placements with comfort-focused technique.",
-    price_from_usd: 55,
-    notes: "Service fee per piercing; jewelry priced separately."
+    price_from_kes: 500,
+    notes: "Rook KES 1,000. Jewelry included."
   },
   {
     title: "Nostril/Septum",
     description: "Balanced facial symmetry with flexible jewelry options.",
-    price_from_usd: 60,
-    notes: "Jewelry priced separately."
+    price_from_kes: 500,
+    notes: "Jewelry included."
   },
   {
-    title: "Eyebrow/Lip",
+    title: "Smiley/Medusa",
     description: "Precision placement for comfort and longevity.",
-    price_from_usd: 60,
-    notes: "Jewelry priced separately."
+    price_from_kes: 500,
+    notes: "Medusa KES 800. Jewelry included."
   },
   {
-    title: "Navel",
+    title: "Navel (Belly)",
     description: "Anatomy-considered placement for a clean, comfortable heal.",
-    price_from_usd: 65,
-    notes: "Jewelry priced separately."
+    price_from_kes: 1000,
+    notes: "Jewelry included."
   },
   {
-    title: "Nipple (single/pair)",
+    title: "Nipple (single)",
     description: "Expert technique with privacy and care.",
-    price_from_usd: 70,
-    notes: "Jewelry priced separately."
+    price_from_kes: 2000,
+    notes: "Jewelry included."
   },
   {
-    title: "Curated Ear Session",
-    description: "Personalized ear map and jewelry selection to fit your anatomy.",
-    price_from_usd: 120,
-    notes: "Consultation and plan; piercings and jewelry priced separately."
+    title: "Industrial",
+    description: "Connected ear piercings with a single barbell.",
+    price_from_kes: 1500,
+    notes: "Jewelry included."
   },
   {
-    title: "Jewelry Change/Downsize",
-    description: "Professional jewelry swaps and downsizing for comfort.",
-    price_from_usd: 15,
-    notes: "Free with jewelry purchase (policy dependent)."
+    title: "Tongue/Frog Eyes",
+    description: "Oral piercings with careful placement.",
+    price_from_kes: 1000,
+    notes: "Frog Eyes KES 1,500. Jewelry included."
+  },
+  {
+    title: "Dermals/Surface",
+    description: "Single-point and surface piercings.",
+    price_from_kes: 4000,
+    notes: "Surface Dermals KES 6,000. Surface Tragus KES 1,000."
   }
 ];
 
 export const jewelryOptions = [
-  { title: "Titanium (ASTM F-136)", price_from_usd: 40, notes: "Polished or PVD gold tones." },
-  { title: "14k/18k Solid Gold", price_from_usd: 120, notes: "Yellow, white, or rose gold options." },
-  { title: "Gems & Diamonds", price_from_usd: 90, notes: "Ethically sourced stones." }
+  { title: "Titanium (ASTM F-136)", price_from_kes: 500, notes: "Polished or PVD gold tones." },
+  { title: "14k/18k Solid Gold", price_from_kes: 3000, notes: "Yellow, white, or rose gold options." },
+  { title: "Gems & Diamonds", price_from_kes: 2000, notes: "Ethically sourced stones." }
 ];
 
 export const aftercareInfo = {

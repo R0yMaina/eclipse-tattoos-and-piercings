@@ -1,5 +1,6 @@
 import { PricingHero } from '@/components/pricing/PricingHero';
 import { PricingStickyNav } from '@/components/pricing/PricingStickyNav';
+import { TattooPricing } from '@/components/pricing/TattooPricing';
 import { PiercingFees } from '@/components/pricing/PiercingFees';
 import { PackagesSection } from '@/components/pricing/PackagesSection';
 import { EstimatorsSection } from '@/components/pricing/EstimatorsSection';
@@ -12,6 +13,7 @@ const Pricing = () => {
     <div className="min-h-screen bg-background">
       <PricingHero />
       <PricingStickyNav />
+      <TattooPricing />
       <PiercingFees />
       <PackagesSection />
       <EstimatorsSection />

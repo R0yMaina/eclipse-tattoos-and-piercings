@@ -68,10 +68,10 @@ export const PiercingServices = () => {
               </p>
 
               <div className="space-y-2 mb-4">
-                {service.price_from_usd && (
+                {service.price_from_kes && (
                   <div className="flex items-center gap-2 text-sm">
                     <DollarSign className="w-4 h-4 text-primary" />
-                    <span className="font-semibold text-foreground">From KES{service.price_from_usd}</span>
+                    <span className="font-semibold text-foreground">From KES {service.price_from_kes.toLocaleString()}</span>
                   </div>
                 )}
               </div>
