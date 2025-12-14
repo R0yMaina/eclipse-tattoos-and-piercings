@@ -10,6 +10,36 @@ const corsHeaders = {
 const RATE_LIMIT_REQUESTS = 20; // Max requests per window
 const RATE_LIMIT_WINDOW_SECONDS = 60; // Window in seconds
 
+async function logSecurityEvent(
+  eventType: string, 
+  severity: 'info' | 'warn' | 'error',
+  ipAddress: string,
+  details: Record<string, unknown>
+): Promise<void> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    await fetch(`${supabaseUrl}/rest/v1/security_events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': serviceRoleKey,
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        event_type: eventType,
+        severity,
+        ip_address: ipAddress,
+        details
+      })
+    });
+  } catch (error) {
+    console.error('Failed to log security event:', error);
+  }
+}
+
 async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number; resetIn: number }> {
   const upstashUrl = Deno.env.get('UPSTASH_REDIS_REST_URL');
   const upstashToken = Deno.env.get('UPSTASH_REDIS_REST_TOKEN');
@@ -99,6 +129,13 @@ serve(async (req) => {
     
     if (!rateLimit.allowed) {
       console.log(`Rate limit exceeded for IP: ${clientIP}`);
+      
+      // Log rate limit event for monitoring
+      await logSecurityEvent('rate_limit_exceeded', 'warn', clientIP, {
+        endpoint: 'chat',
+        resetIn: rateLimit.resetIn
+      });
+      
       return new Response(
         JSON.stringify({ 
           error: 'Too many requests. Please wait before sending more messages.',
