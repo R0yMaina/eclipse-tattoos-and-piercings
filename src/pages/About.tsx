@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { AboutHero } from '@/components/about/AboutHero';
 import { StoryValues } from '@/components/about/StoryValues';
 import { HygieneEthos } from '@/components/about/HygieneEthos';
@@ -7,6 +7,8 @@ import { AwardsPress } from '@/components/about/AwardsPress';
 import { Testimonials } from '@/components/about/Testimonials';
 import { InstagramGallery } from '@/components/about/InstagramGallery';
 import { CTASection } from '@/components/about/CTASection';
+
+const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
 const About = () => {
   useEffect(() => {
@@ -88,15 +90,20 @@ const About = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
-      <AboutHero />
-      <StoryValues />
-      <HygieneEthos />
-      <InstagramGallery />
-      <ProcessTimeline />
-      <AwardsPress />
-      <Testimonials />
-      <CTASection />
+    <div className="min-h-screen relative">
+      <Suspense fallback={null}>
+        <Scene3DBroad />
+      </Suspense>
+      <div className="relative z-10">
+        <AboutHero />
+        <StoryValues />
+        <HygieneEthos />
+        <InstagramGallery />
+        <ProcessTimeline />
+        <AwardsPress />
+        <Testimonials />
+        <CTASection />
+      </div>
     </div>
   );
 };
