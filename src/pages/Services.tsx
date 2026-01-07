@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { ServicesHero } from '@/components/services/ServicesHero';
 import { StickySubnav } from '@/components/services/StickySubnav';
 import { TattooServices } from '@/components/services/TattooServices';
@@ -9,19 +10,26 @@ import { ServicesFAQ } from '@/components/services/ServicesFAQ';
 import { ServicesCTA } from '@/components/services/ServicesCTA';
 import { StudioGallery } from '@/components/about/StudioGallery';
 
+const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
+
 const Services = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <ServicesHero />
-      <StickySubnav />
-      <TattooServices />
-      <PiercingServices />
-      <JewelryAftercare />
-      <StudioGallery />
-      <PricingSection />
-      <ProcessTimeline />
-      <ServicesFAQ />
-      <ServicesCTA />
+    <div className="min-h-screen bg-background relative">
+      <Suspense fallback={null}>
+        <Scene3DBroad />
+      </Suspense>
+      <div className="relative z-10">
+        <ServicesHero />
+        <StickySubnav />
+        <TattooServices />
+        <PiercingServices />
+        <JewelryAftercare />
+        <StudioGallery />
+        <PricingSection />
+        <ProcessTimeline />
+        <ServicesFAQ />
+        <ServicesCTA />
+      </div>
     </div>
   );
 };

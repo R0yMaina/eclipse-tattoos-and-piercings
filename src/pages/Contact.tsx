@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { ContactHero } from '@/components/contact/ContactHero';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { ContactDetails } from '@/components/contact/ContactDetails';
 import { MapSection } from '@/components/contact/MapSection';
 import { FAQ } from '@/components/contact/FAQ';
 import { CTAFooter } from '@/components/contact/CTAFooter';
+
+const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
 const Contact = () => {
   useEffect(() => {
@@ -68,28 +70,33 @@ const Contact = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
-      <ContactHero />
-      
-      <section className="py-16">
-        <div className="container max-w-7xl mx-auto px-4">
-          <div className="grid lg:grid-cols-5 gap-8">
-            {/* Form - Takes 3 columns */}
-            <div className="lg:col-span-3">
-              <ContactForm />
-            </div>
-            
-            {/* Details - Takes 2 columns */}
-            <div className="lg:col-span-2">
-              <ContactDetails />
+    <div className="min-h-screen relative">
+      <Suspense fallback={null}>
+        <Scene3DBroad />
+      </Suspense>
+      <div className="relative z-10">
+        <ContactHero />
+        
+        <section className="py-16">
+          <div className="container max-w-7xl mx-auto px-4">
+            <div className="grid lg:grid-cols-5 gap-8">
+              {/* Form - Takes 3 columns */}
+              <div className="lg:col-span-3">
+                <ContactForm />
+              </div>
+              
+              {/* Details - Takes 2 columns */}
+              <div className="lg:col-span-2">
+                <ContactDetails />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <MapSection />
-      <FAQ />
-      <CTAFooter />
+        <MapSection />
+        <FAQ />
+        <CTAFooter />
+      </div>
     </div>
   );
 };
