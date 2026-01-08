@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { DollarSign, Info } from 'lucide-react';
 import { piercingServices } from '@/data/services';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import piercingMenuImg from '@/assets/piercing-menu.jpg';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,7 +19,7 @@ export const PiercingServices = () => {
       y: 30,
       opacity: 0,
       duration: 0.8,
-      stagger: 0.1,
+      stagger: 0.05,
       ease: 'power3.out',
       scrollTrigger: {
         trigger: sectionRef.current,
@@ -40,57 +40,44 @@ export const PiercingServices = () => {
           </p>
         </div>
 
-        <div className="glass-panel-elevated rounded-[20px] p-6 mb-8 max-w-3xl mx-auto">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-muted-foreground">
-              <p className="mb-2">
-                <strong className="text-foreground">18+</strong> for most piercings. Select piercings available for <strong className="text-foreground">16+</strong> with parent/guardian and valid ID.
-              </p>
-              <p>
-                Service fees listed below. <strong className="text-foreground">Jewelry priced separately</strong> based on metal and design.
-              </p>
-            </div>
+        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+          {/* Piercing Menu Image */}
+          <div className="glass-panel-elevated rounded-[20px] overflow-hidden">
+            <OptimizedImage
+              src={piercingMenuImg}
+              alt="Eclipse Tattoo Studio Piercing Price Menu"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Piercing List */}
+          <div ref={cardsRef} className="grid grid-cols-2 gap-3">
+            {piercingServices.map((service, index) => (
+              <div 
+                key={index}
+                className="glass-panel rounded-xl p-4 hover:scale-[1.02] transition-all duration-300"
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <h3 className="text-sm font-heading font-semibold text-foreground">
+                    {service.title}
+                  </h3>
+                  <span className="text-primary font-bold text-sm whitespace-nowrap">
+                    KES {service.price_from_kes?.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div ref={cardsRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {piercingServices.map((service, index) => (
-            <div 
-              key={index}
-              className="glass-panel-elevated glass-highlight rounded-[20px] p-6 hover:scale-[1.01] transition-all duration-300"
-            >
-              <h3 className="text-xl font-heading font-semibold mb-3">
-                {service.title}
-              </h3>
-              <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
-                {service.description}
-              </p>
-
-              <div className="space-y-2 mb-4">
-                {service.price_from_kes && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <DollarSign className="w-4 h-4 text-primary" />
-                    <span className="font-semibold text-foreground">From KES {service.price_from_kes.toLocaleString()}</span>
-                  </div>
-                )}
-              </div>
-
-              {service.notes && (
-                <p className="text-xs text-muted-foreground mb-4 italic">
-                  {service.notes}
-                </p>
-              )}
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-primary/40 hover:border-primary hover:bg-primary/10 transition-smooth"
-              >
-                Book Now
-              </Button>
-            </div>
-          ))}
+        <div className="glass-panel-elevated rounded-[20px] p-6 max-w-3xl mx-auto text-center">
+          <p className="text-muted-foreground text-sm">
+            <strong className="text-foreground">18+</strong> for most piercings. Select piercings available for <strong className="text-foreground">16+</strong> with parent/guardian and valid ID.
+            All prices include jewelry.
+          </p>
+          <p className="text-primary font-semibold mt-3">
+            Call/txt: 0769138198 / 0705025961
+          </p>
         </div>
       </div>
     </section>
