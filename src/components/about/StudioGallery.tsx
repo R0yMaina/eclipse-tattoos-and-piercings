@@ -1,20 +1,25 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import studio1 from '@/assets/gallery/studio-1.jpg';
-import studio2 from '@/assets/gallery/studio-2.jpg';
-import studio3 from '@/assets/gallery/studio-3.jpg';
+import tattoo1 from '@/assets/gallery/tattoo-1.jpg';
+import tattoo2 from '@/assets/gallery/tattoo-2.jpg';
+import tattoo3 from '@/assets/gallery/tattoo-3.jpg';
+import tattoo4 from '@/assets/gallery/tattoo-4.jpg';
+import tattoo5 from '@/assets/gallery/tattoo-5.jpg';
+import tattoo6 from '@/assets/gallery/tattoo-6.jpg';
 
 const galleryImages = [
-  { src: studio1, alt: "Luxury lobby with gold accents and comfortable seating" },
-  { src: studio2, alt: "Private tattoo bay with pristine professional setup" },
-  { src: studio3, alt: "Sterilization area with medical-grade equipment" },
+  { src: tattoo1, alt: "Intricate spiral tribal tattoo design" },
+  { src: tattoo2, alt: "Rose with butterflies tattoo" },
+  { src: tattoo3, alt: "Lioness with flowers tattoo" },
+  { src: tattoo4, alt: "Koi fish with stars tattoo" },
+  { src: tattoo5, alt: "Ankh symbol back tattoo" },
+  { src: tattoo6, alt: "Clover and script tattoo" },
 ];
 
 const videoLinks = [
   { url: "https://vm.tiktok.com/ZMAWpFvph/", title: "Studio Work Showcase" }
 ];
-
 export const StudioGallery = () => {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
 
