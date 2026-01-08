@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { ServicesHero } from '@/components/services/ServicesHero';
 import { StickySubnav } from '@/components/services/StickySubnav';
-import { TattooServices } from '@/components/services/TattooServices';
 import { PiercingServices } from '@/components/services/PiercingServices';
 import { JewelryAftercare } from '@/components/services/JewelryAftercare';
 import { ProcessTimeline } from '@/components/services/ProcessTimeline';
@@ -20,7 +19,6 @@ const Services = () => {
       <div className="relative z-10">
         <ServicesHero />
         <StickySubnav />
-        <TattooServices />
         <PiercingServices />
         <JewelryAftercare />
         <StudioGallery />

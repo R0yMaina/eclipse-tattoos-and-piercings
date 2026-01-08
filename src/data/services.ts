@@ -96,60 +96,24 @@ export const tattooServices: Service[] = [
 ];
 
 export const piercingServices: Service[] = [
-  {
-    title: "Ear Lobe (single/pair)",
-    description: "Classic lobe piercings with careful marking and jewelry sizing.",
-    price_from_kes: 500,
-    notes: "Jewelry included."
-  },
-  {
-    title: "Helix/Forward Helix/Tragus/Conch/Rook/Daith",
-    description: "Cartilage placements with comfort-focused technique.",
-    price_from_kes: 500,
-    notes: "Rook KES 1,000. Jewelry included."
-  },
-  {
-    title: "Nostril/Septum",
-    description: "Balanced facial symmetry with flexible jewelry options.",
-    price_from_kes: 500,
-    notes: "Jewelry included."
-  },
-  {
-    title: "Smiley/Medusa",
-    description: "Precision placement for comfort and longevity.",
-    price_from_kes: 500,
-    notes: "Medusa KES 800. Jewelry included."
-  },
-  {
-    title: "Navel (Belly)",
-    description: "Anatomy-considered placement for a clean, comfortable heal.",
-    price_from_kes: 1000,
-    notes: "Jewelry included."
-  },
-  {
-    title: "Nipple (single)",
-    description: "Expert technique with privacy and care.",
-    price_from_kes: 2000,
-    notes: "Jewelry included."
-  },
-  {
-    title: "Industrial",
-    description: "Connected ear piercings with a single barbell.",
-    price_from_kes: 1500,
-    notes: "Jewelry included."
-  },
-  {
-    title: "Tongue/Frog Eyes",
-    description: "Oral piercings with careful placement.",
-    price_from_kes: 1000,
-    notes: "Frog Eyes KES 1,500. Jewelry included."
-  },
-  {
-    title: "Dermals/Surface",
-    description: "Single-point and surface piercings.",
-    price_from_kes: 4000,
-    notes: "Surface Dermals KES 6,000. Surface Tragus KES 1,000."
-  }
+  { title: "Earlobe", description: "Classic lobe piercing with careful marking.", price_from_kes: 500 },
+  { title: "Nose", description: "Nostril piercing with balanced placement.", price_from_kes: 500 },
+  { title: "Septum", description: "Centered septum piercing.", price_from_kes: 500 },
+  { title: "Smiley", description: "Upper lip frenulum piercing.", price_from_kes: 500 },
+  { title: "Helix", description: "Upper ear cartilage piercing.", price_from_kes: 500 },
+  { title: "Tragus", description: "Small cartilage flap piercing.", price_from_kes: 500 },
+  { title: "Rook", description: "Inner ear ridge cartilage piercing.", price_from_kes: 1000 },
+  { title: "Medusa", description: "Philtrum/upper lip piercing.", price_from_kes: 800 },
+  { title: "Conch", description: "Inner ear cartilage piercing.", price_from_kes: 500 },
+  { title: "Flat", description: "Flat area of upper ear cartilage.", price_from_kes: 500 },
+  { title: "Industrial", description: "Two connected ear piercings with barbell.", price_from_kes: 1500 },
+  { title: "Tongue", description: "Oral tongue piercing.", price_from_kes: 1000 },
+  { title: "Frogeyes", description: "Double tongue piercing.", price_from_kes: 1500 },
+  { title: "Navel (Belly)", description: "Belly button piercing.", price_from_kes: 1000 },
+  { title: "Nipple", description: "Nipple piercing with expert technique.", price_from_kes: 2000 },
+  { title: "Dermals", description: "Single-point anchor piercings.", price_from_kes: 4000 },
+  { title: "Surface Dermals", description: "Surface anchor piercings.", price_from_kes: 6000 },
+  { title: "Surface Tragus", description: "Surface tragus piercing.", price_from_kes: 1000 }
 ];
 
 export const jewelryOptions = [
