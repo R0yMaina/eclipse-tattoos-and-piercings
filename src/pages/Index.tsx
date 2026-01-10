@@ -45,10 +45,10 @@ const Index = () => {
           </svg>
         </div>
         
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-foreground mb-2 md:mb-4 leading-tight drop-shadow-lg">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-foreground mb-2 md:mb-4 leading-tight [text-shadow:_0_2px_12px_rgba(0,0,0,0.8),_0_4px_24px_rgba(0,0,0,0.6)]">
           Eclipse Tattoo & Piercings
         </h1>
-        <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 md:mb-8 font-light drop-shadow-md">
+        <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 md:mb-8 font-light [text-shadow:_0_2px_8px_rgba(0,0,0,0.7)]">
           Perfection is the aim 
         </p>
         
