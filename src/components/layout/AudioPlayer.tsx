@@ -3,25 +3,41 @@ import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 
-// Using a royalty-free jazz instrumental loop
-const MUSIC_URL = 'https://cdn.pixabay.com/audio/2024/11/04/audio_de96e44ff0.mp3';
+// Using a reliable free jazz loop from Internet Archive
+const MUSIC_URL = 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Dee_Yan-Key/lullabies/Dee_Yan-Key_-_06_-_Lullaby.mp3';
 
 export const AudioPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(30);
   const [isMuted, setIsMuted] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio(MUSIC_URL);
-    audioRef.current.loop = true;
-    audioRef.current.volume = volume / 100;
+    const audio = new Audio();
+    audio.loop = true;
+    audio.volume = volume / 100;
+    audio.preload = 'auto';
+    
+    audio.addEventListener('canplaythrough', () => {
+      setIsLoaded(true);
+      setHasError(false);
+    });
+    
+    audio.addEventListener('error', () => {
+      console.error('Audio failed to load');
+      setHasError(true);
+      setIsLoaded(false);
+    });
+
+    audio.src = MUSIC_URL;
+    audioRef.current = audio;
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audio.pause();
+      audio.src = '';
+      audioRef.current = null;
     };
   }, []);
 
@@ -31,15 +47,21 @@ export const AudioPlayer = () => {
     }
   }, [volume, isMuted]);
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
+  const togglePlay = async () => {
+    if (!audioRef.current || hasError) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(console.error);
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Playback failed:', error);
+      setHasError(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
@@ -67,7 +89,7 @@ export const AudioPlayer = () => {
                 Evening Jazz Vibes
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                Ambient Jazz Loop
+                {hasError ? 'Audio unavailable' : isLoaded ? 'Ready to play' : 'Loading...'}
               </p>
             </div>
           </div>
@@ -79,7 +101,8 @@ export const AudioPlayer = () => {
               variant="outline"
               size="icon"
               onClick={togglePlay}
-              className="h-10 w-10 rounded-full border-primary/50 hover:bg-primary/20 hover:border-primary"
+              disabled={hasError || !isLoaded}
+              className="h-10 w-10 rounded-full border-primary/50 hover:bg-primary/20 hover:border-primary disabled:opacity-50"
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4 text-primary" />
