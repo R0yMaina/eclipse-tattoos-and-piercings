@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ChatLauncher } from "./components/chat/ChatLauncher";
 import { WhatsAppButton } from "./components/chat/WhatsAppButton";
 import { Navbar } from "./components/layout/Navbar";
+import { AudioPlayer } from "./components/layout/AudioPlayer";
 import Index from "./pages/Index";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
@@ -25,7 +26,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Navbar />
-        <div className="pt-16">
+        <div className="pt-16 pb-16">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/contact" element={<Contact />} />
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
+        <AudioPlayer />
         <ChatLauncher />
         <WhatsAppButton />
       </BrowserRouter>

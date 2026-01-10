@@ -1,54 +1,73 @@
-import { MapPin } from 'lucide-react';
+import { MapPin, ExternalLink } from 'lucide-react';
+
+// Eclipse Tattoo & Piercings location coordinates
+// Using a sample LA location - update with actual coordinates
+const SHOP_LOCATION = {
+  lat: 34.1016,
+  lng: -118.3256,
+  address: "123 Eclipse Boulevard, Studio District",
+  city: "Los Angeles, CA 90028",
+  googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=34.1016,-118.3256",
+  embedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3303.8548152847224!2d-118.32784!3d34.101592!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c2bf07045279bf%3A0x1234567890abcdef!2sHollywood%2C%20Los%20Angeles%2C%20CA!5e0!3m2!1sen!2sus!4v1234567890"
+};
 
 export const MapSection = () => {
+  const handleMapClick = () => {
+    window.open(SHOP_LOCATION.googleMapsUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <section className="py-16">
       <div className="container max-w-6xl mx-auto px-4">
         <div className="glass-panel glass-highlight rounded-[28px] overflow-hidden">
-          {/* Map Placeholder - Replace with actual map integration */}
-          <div className="relative h-[400px] md:h-[500px] bg-secondary/50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20" />
+          {/* Interactive Map */}
+          <div 
+            className="relative h-[400px] md:h-[500px] cursor-pointer group"
+            onClick={handleMapClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleMapClick()}
+            aria-label="Click to open location in Google Maps"
+          >
+            {/* Google Maps Embed */}
+            <iframe
+              src={SHOP_LOCATION.embedUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="absolute inset-0 pointer-events-none"
+              title="Eclipse Tattoo & Piercings Location"
+            />
             
-            <div className="relative z-10 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto gold-glow">
-                <MapPin className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <p className="text-foreground font-heading text-xl font-semibold mb-2">
-                  Eclipse Tattoo & Piercings
-                </p>
-                <p className="text-muted-foreground mb-4">
-                  123 Eclipse Boulevard, Studio District<br />
-                  Los Angeles, CA 90028
-                </p>
-                <a
-                  href="https://maps.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:text-accent transition-smooth font-medium"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Open in Maps
-                </a>
+            {/* Clickable Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent flex items-end justify-center pb-8 transition-all group-hover:from-background/90">
+              <div className="text-center space-y-3 transform transition-transform group-hover:scale-105">
+                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mx-auto gold-glow shadow-lg">
+                  <MapPin className="h-7 w-7 text-primary-foreground" />
+                </div>
+                <div>
+                  <p className="text-foreground font-heading text-xl font-semibold mb-1">
+                    Eclipse Tattoo & Piercings
+                  </p>
+                  <p className="text-muted-foreground text-sm mb-3">
+                    {SHOP_LOCATION.address}<br />
+                    {SHOP_LOCATION.city}
+                  </p>
+                  <span className="inline-flex items-center gap-2 text-primary hover:text-accent transition-smooth font-medium bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full border border-primary/30">
+                    <ExternalLink className="h-4 w-4" />
+                    Click to Open in Google Maps
+                  </span>
+                </div>
               </div>
             </div>
-
-            {/* Grid pattern overlay */}
-            <div 
-              className="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style={{
-                backgroundImage: `
-                  linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
-                  linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)
-                `,
-                backgroundSize: '50px 50px'
-              }}
-            />
           </div>
         </div>
 
         <p className="text-center text-muted-foreground text-sm mt-4">
-          Map integration available with Mapbox token configuration
+          Click anywhere on the map to get directions
         </p>
       </div>
     </section>
