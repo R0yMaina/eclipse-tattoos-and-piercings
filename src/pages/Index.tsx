@@ -8,7 +8,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative flex min-h-[100dvh] items-center justify-center bg-background overflow-hidden">
+    <div className="relative flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background overflow-hidden">
       {/* 3D Background */}
       <Suspense fallback={<div className="absolute inset-0 bg-background" />}>
         <Scene3D />
