@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_slots: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          slot_date: string
+          slot_number: number
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          slot_date: string
+          slot_number: number
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          slot_date?: string
+          slot_number?: number
+          start_time?: string
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          admin_notes: string | null
+          client_name: string
+          confirmation_sent: boolean | null
+          created_at: string
+          id: string
+          inspiration_image_url: string | null
+          late_warning_sent: boolean | null
+          notes: string | null
+          phone_number: string
+          price_charged: number | null
+          reminder_sent: boolean | null
+          slot_id: string
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+        }
+        Insert: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          admin_notes?: string | null
+          client_name: string
+          confirmation_sent?: boolean | null
+          created_at?: string
+          id?: string
+          inspiration_image_url?: string | null
+          late_warning_sent?: boolean | null
+          notes?: string | null
+          phone_number: string
+          price_charged?: number | null
+          reminder_sent?: boolean | null
+          slot_id: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Update: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          admin_notes?: string | null
+          client_name?: string
+          confirmation_sent?: boolean | null
+          created_at?: string
+          id?: string
+          inspiration_image_url?: string | null
+          late_warning_sent?: boolean | null
+          notes?: string | null
+          phone_number?: string
+          price_charged?: number | null
+          reminder_sent?: boolean | null
+          slot_id?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "booking_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           citations: Json | null
@@ -212,6 +304,106 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          template_content: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          template_content: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          template_content?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      review_queue: {
+        Row: {
+          booking_id: string
+          client_phone: string
+          created_at: string
+          id: string
+          request_sent: boolean | null
+        }
+        Insert: {
+          booking_id: string
+          client_phone: string
+          created_at?: string
+          id?: string
+          request_sent?: boolean | null
+        }
+        Update: {
+          booking_id?: string
+          client_phone?: string
+          created_at?: string
+          id?: string
+          request_sent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_queue_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          client_name: string | null
+          created_at: string
+          id: string
+          is_anonymous: boolean | null
+          is_approved: boolean | null
+          rating: number
+          review_text: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean | null
+          is_approved?: boolean | null
+          rating: number
+          review_text?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean | null
+          is_approved?: boolean | null
+          rating?: number
+          review_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           created_at: string
@@ -242,6 +434,36 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_configuration: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          is_active: boolean | null
+          slot_number: number
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          slot_number: number
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          slot_number?: number
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -268,6 +490,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_slots_for_date: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
       get_chat_analytics: {
         Args: never
         Returns: {
@@ -306,6 +532,17 @@ export type Database = {
           unique_ips: number
         }[]
       }
+      get_slot_availability: {
+        Args: { target_date: string }
+        Returns: {
+          client_name: string
+          end_time: string
+          slot_id: string
+          slot_number: number
+          start_time: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -330,6 +567,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      booking_status:
+        | "upcoming"
+        | "ongoing"
+        | "completed"
+        | "cancelled"
+        | "no_show"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -458,6 +701,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      booking_status: [
+        "upcoming",
+        "ongoing",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
     },
   },
 } as const
