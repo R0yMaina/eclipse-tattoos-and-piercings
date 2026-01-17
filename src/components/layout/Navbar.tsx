@@ -9,6 +9,7 @@ const navLinks = [
   { name: 'Gallery', path: '/gallery' },
   { name: 'Services', path: '/services' },
   { name: 'Pricing', path: '/pricing' },
+  { name: 'Book Now', path: '/booking' },
   { name: 'About', path: '/about' },
   { name: 'Contact', path: '/contact' },
 ];
@@ -25,6 +26,9 @@ export const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">E</span>
+            </div>
             <span className="text-xl font-heading font-bold text-foreground">
               Eclipse
             </span>
