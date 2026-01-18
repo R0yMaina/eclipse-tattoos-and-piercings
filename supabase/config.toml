@@ -14,3 +14,9 @@ verify_jwt = true
 
 [functions.submit-contact-form]
 verify_jwt = false
+
+[functions.generate-slots]
+verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = true
