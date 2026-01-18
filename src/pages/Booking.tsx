@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format, addDays, isBefore, startOfDay } from 'date-fns';
+import { format, addDays, isBefore, startOfDay, isSunday, getDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -271,9 +271,12 @@ const Booking = () => {
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                disabled={(date) => isBefore(date, startOfDay(new Date()))}
+                disabled={(date) => isBefore(date, startOfDay(new Date())) || isSunday(date)}
                 className="rounded-md border border-border/50"
               />
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Mon-Fri: 10am - 6:30pm | Sat: 11am - 5:30pm | Closed Sundays
+              </p>
             </CardContent>
           </Card>
 
