@@ -1,14 +1,13 @@
 import { MapPin, ExternalLink } from 'lucide-react';
 
-// Eclipse Tattoo & Piercings location coordinates
-// Using a sample LA location - update with actual coordinates
+// Eclipse Tattoo & Piercings location - The Bazaar House, Nairobi
 const SHOP_LOCATION = {
-  lat: 34.1016,
-  lng: -118.3256,
-  address: "123 Eclipse Boulevard, Studio District",
-  city: "Los Angeles, CA 90028",
-  googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=34.1016,-118.3256",
-  embedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3303.8548152847224!2d-118.32784!3d34.101592!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c2bf07045279bf%3A0x1234567890abcdef!2sHollywood%2C%20Los%20Angeles%2C%20CA!5e0!3m2!1sen!2sus!4v1234567890"
+  lat: -1.2864,
+  lng: 36.8172,
+  address: "The Bazaar House, Suite M4",
+  city: "Nairobi, Kenya",
+  googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=The+Bazaar+Nairobi+Kenya",
+  embedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8176!2d36.8172!3d-1.2864!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sThe%20Bazaar%20Nairobi!5e0!3m2!1sen!2ske!4v1234567890"
 };
 
 export const MapSection = () => {

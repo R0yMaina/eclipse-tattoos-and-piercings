@@ -437,6 +437,8 @@ export type Database = {
       slot_configuration: {
         Row: {
           created_at: string
+          day_of_week: number
+          duration_minutes: number
           end_time: string
           id: string
           is_active: boolean | null
@@ -446,6 +448,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          day_of_week?: number
+          duration_minutes?: number
           end_time: string
           id?: string
           is_active?: boolean | null
@@ -455,6 +459,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          day_of_week?: number
+          duration_minutes?: number
           end_time?: string
           id?: string
           is_active?: boolean | null
