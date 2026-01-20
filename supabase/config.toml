@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.send-reminders]
 verify_jwt = false
+
+[functions.check-late-arrivals]
+verify_jwt = false
