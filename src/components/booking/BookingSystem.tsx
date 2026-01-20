@@ -43,20 +43,20 @@ export const BookingSystem = () => {
   const fetchSlots = async (date: Date) => {
     setLoading(true);
     setSelectedSlot(null);
-    
+
     try {
       const formattedDate = format(date, 'yyyy-MM-dd');
-      
+
       // First, ensure slots exist for this date
       await supabase.functions.invoke('generate-slots', {
         body: { date: formattedDate }
       });
-      
+
       // Then fetch availability
       const { data, error } = await supabase.rpc('get_slot_availability', {
         target_date: formattedDate
       });
-      
+
       if (error) throw error;
       setSlots(data || []);
     } catch (error: any) {
@@ -83,7 +83,7 @@ export const BookingSystem = () => {
         });
         return;
       }
-      
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast({
@@ -93,7 +93,7 @@ export const BookingSystem = () => {
         });
         return;
       }
-      
+
       setInspirationImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
@@ -103,7 +103,7 @@ export const BookingSystem = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedSlot || !clientName.trim() || !phoneNumber.trim()) {
       toast({
         title: 'Missing information',
@@ -125,66 +125,66 @@ export const BookingSystem = () => {
     }
 
     setSubmitting(true);
-    
+
     try {
       let imageUrl = null;
-      
+
       // Upload inspiration image if provided
       if (inspirationImage) {
         const fileExt = inspirationImage.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        
+
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('inspiration-images')
           .upload(fileName, inspirationImage);
-        
+
         if (uploadError) throw uploadError;
-        
+
         const { data: { publicUrl } } = supabase.storage
           .from('inspiration-images')
           .getPublicUrl(fileName);
-        
+
         imageUrl = publicUrl;
       }
-      
+
       // Create booking
-      const { data: booking, error: bookingError } = await supabase
+      const newBookingId = crypto.randomUUID();
+      const { error: bookingError } = await supabase
         .from('bookings')
         .insert({
+          id: newBookingId,
           slot_id: selectedSlot.slot_id,
           client_name: clientName.trim(),
           phone_number: phoneNumber.trim(),
           inspiration_image_url: imageUrl,
           notes: notes.trim() || null,
           status: 'upcoming'
-        })
-        .select()
-        .single();
-      
+        });
+
       if (bookingError) {
         if (bookingError.message.includes('duplicate') || bookingError.message.includes('already exists')) {
           throw new Error('This slot has already been booked. Please select another time.');
         }
         throw bookingError;
       }
-      
+
       // Send confirmation message
       await supabase.functions.invoke('send-whatsapp', {
         body: {
           type: 'confirmation',
-          bookingId: booking.id,
+          bookingId: newBookingId,
           clientName: clientName.trim(),
           phoneNumber: phoneNumber.trim(),
           date: format(selectedDate!, 'MMMM d, yyyy'),
           time: formatTime(selectedSlot.start_time)
         }
       });
-      
+
       toast({
         title: 'Booking confirmed!',
         description: 'You will receive a confirmation message shortly.',
       });
-      
+
       // Reset form
       setClientName('');
       setPhoneNumber('');
@@ -192,12 +192,12 @@ export const BookingSystem = () => {
       setInspirationImage(null);
       setImagePreview(null);
       setSelectedSlot(null);
-      
+
       // Refresh slots
       if (selectedDate) {
         fetchSlots(selectedDate);
       }
-      
+
     } catch (error: any) {
       console.error('Booking error:', error);
       toast({
@@ -274,9 +274,9 @@ export const BookingSystem = () => {
               className="rounded-md border border-border/50"
             />
           </CardContent>
-             <p className="text-xs text-muted-foreground mt-2 text-center pb-4">
-              Mon-Fri: 10am - 6:30pm | Sat: 11am - 5:30pm | Closed Sundays
-            </p>
+          <p className="text-xs text-muted-foreground mt-2 text-center pb-4">
+            Mon-Fri: 10am - 6:30pm | Sat: 11am - 5:30pm | Closed Sundays
+          </p>
         </Card>
 
         {/* Slots Section */}
@@ -287,7 +287,7 @@ export const BookingSystem = () => {
               Available Slots
             </CardTitle>
             <CardDescription>
-              {selectedDate 
+              {selectedDate
                 ? `Showing availability for ${format(selectedDate, 'MMMM d, yyyy')}`
                 : 'Select a date to view available slots'}
             </CardDescription>
@@ -323,7 +323,7 @@ export const BookingSystem = () => {
                     <span>Booked</span>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {slots.map((slot) => (
                     <button
@@ -380,7 +380,7 @@ export const BookingSystem = () => {
                     maxLength={100}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="phoneNumber" className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
@@ -412,9 +412,9 @@ export const BookingSystem = () => {
                   />
                   {imagePreview && (
                     <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
                         className="w-full h-full object-cover"
                       />
                       <button
