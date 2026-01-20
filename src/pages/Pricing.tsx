@@ -4,7 +4,6 @@ import { PricingStickyNav } from '@/components/pricing/PricingStickyNav';
 import { TattooPricing } from '@/components/pricing/TattooPricing';
 import { PiercingFees } from '@/components/pricing/PiercingFees';
 import { PackagesSection } from '@/components/pricing/PackagesSection';
-import { EstimatorsSection } from '@/components/pricing/EstimatorsSection';
 import { PoliciesSection } from '@/components/pricing/PoliciesSection';
 import { PricingFAQ } from '@/components/pricing/PricingFAQ';
 import { PricingCTA } from '@/components/pricing/PricingCTA';
@@ -23,7 +22,7 @@ const Pricing = () => {
         <TattooPricing />
         <PiercingFees />
         <PackagesSection />
-        <EstimatorsSection />
+
         <PoliciesSection />
         <PricingFAQ />
         <PricingCTA />

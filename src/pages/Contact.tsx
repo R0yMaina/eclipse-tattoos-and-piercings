@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { ContactHero } from '@/components/contact/ContactHero';
-import { ContactForm } from '@/components/contact/ContactForm';
+import { BookingSystem } from '@/components/booking/BookingSystem';
 import { ContactDetails } from '@/components/contact/ContactDetails';
 import { MapSection } from '@/components/contact/MapSection';
 import { FAQ } from '@/components/contact/FAQ';
@@ -12,7 +12,7 @@ const Contact = () => {
   useEffect(() => {
     // Update page title and meta description
     document.title = 'Contact | Eclipse Tattoo & Piercings';
-    
+
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute(
@@ -76,19 +76,33 @@ const Contact = () => {
       </Suspense>
       <div className="relative z-10">
         <ContactHero />
-        
+
         <section className="py-16">
           <div className="container max-w-7xl mx-auto px-4">
-            <div className="grid lg:grid-cols-5 gap-8">
-              {/* Form - Takes 3 columns */}
-              <div className="lg:col-span-3">
-                <ContactForm />
-              </div>
-              
-              {/* Details - Takes 2 columns */}
-              <div className="lg:col-span-2">
+            {/* Booking System Section */}
+            <div className="mb-16">
+              <BookingSystem />
+            </div>
+
+            <div className="my-12 h-px bg-border/50" />
+
+            {/* Contact Details Section */}
+            <div className="grid lg:grid-cols-2 gap-12 items-start">
+              <div className="space-y-6">
+                <h2 className="text-3xl font-heading font-bold">Get In Touch</h2>
+                <p className="text-muted-foreground text-lg">
+                  Have questions? We're here to help. Reach out to us directly or visit our studio.
+                </p>
                 <ContactDetails />
               </div>
+              {/* Simplified Contact Form for general inquiries if needed, or we can just leave ContactDetails. 
+                   The user said merge them. Having Booking + Details is good. 
+                   If the user wants a general contact form, I should probably keep it but renaming it 'General Inquiries'.
+                   For now, the BookingSystem is the main focus. I will re-add ContactForm as a secondary option "Send a Message" side-by-side with details?
+                   Let's just keep ContactDetails and maybe the Map is enough. 
+                   Wait, ContactDetails handles listing address/phone. 
+                   I will just display ContactDetails.
+               */}
             </div>
           </div>
         </section>

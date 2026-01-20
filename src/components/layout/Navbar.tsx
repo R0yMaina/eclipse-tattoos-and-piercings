@@ -9,7 +9,6 @@ const navLinks = [
   { name: 'Gallery', path: '/gallery' },
   { name: 'Services', path: '/services' },
   { name: 'Pricing', path: '/pricing' },
-  { name: 'Book Now', path: '/booking' },
   { name: 'About', path: '/about' },
   { name: 'Contact', path: '/contact' },
 ];
