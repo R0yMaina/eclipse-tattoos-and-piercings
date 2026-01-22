@@ -194,8 +194,59 @@ const BookingsManagement = () => {
     );
   };
 
+  // Calculate daily revenue summary
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+  const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.price_charged || 0), 0);
+  const sessionsCompleted = completedBookings.length;
+  const avgSessionValue = sessionsCompleted > 0 ? totalRevenue / sessionsCompleted : 0;
+
   return (
     <div className="space-y-6">
+      {/* Daily Revenue Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Today's Revenue</p>
+                <p className="text-3xl font-bold text-green-500">${totalRevenue.toFixed(2)}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Sessions Completed</p>
+                <p className="text-3xl font-bold text-primary">{sessionsCompleted}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Avg Session Value</p>
+                <p className="text-3xl font-bold text-yellow-500">${avgSessionValue.toFixed(2)}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <Star className="h-6 w-6 text-yellow-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Calendar */}
         <Card className="bg-card/50">
