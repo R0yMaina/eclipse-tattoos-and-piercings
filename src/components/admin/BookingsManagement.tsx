@@ -334,48 +334,86 @@ const BookingsManagement = () => {
                                   Complete
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent>
+                              <DialogContent className="sm:max-w-md">
                                 <DialogHeader>
-                                  <DialogTitle>Complete Session</DialogTitle>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                    Complete Session & Checkout
+                                  </DialogTitle>
                                 </DialogHeader>
-                                <div className="space-y-4 pt-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor="price">Price Charged ($)</Label>
-                                    <Input
-                                      id="price"
-                                      type="number"
-                                      step="0.01"
-                                      value={priceCharged}
-                                      onChange={(e) => setPriceCharged(e.target.value)}
-                                      placeholder="0.00"
-                                    />
+                                <div className="space-y-5 pt-4">
+                                  {/* Client Info Summary */}
+                                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-muted-foreground">Client</span>
+                                      <span className="font-medium">{selectedBooking?.client_name}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-muted-foreground">Started At</span>
+                                      <span className="font-medium">
+                                        {selectedBooking?.actual_start_time 
+                                          ? format(new Date(selectedBooking.actual_start_time), 'h:mm a')
+                                          : formatTime(booking.booking_slots.start_time)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-muted-foreground">Finishing At</span>
+                                      <span className="font-medium text-green-500">
+                                        {format(new Date(), 'h:mm a')}
+                                      </span>
+                                    </div>
                                   </div>
+
+                                  {/* Price Input */}
+                                  <div className="space-y-2">
+                                    <Label htmlFor="price" className="flex items-center gap-2">
+                                      <DollarSign className="h-4 w-4 text-primary" />
+                                      Price Charged
+                                    </Label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                      <Input
+                                        id="price"
+                                        type="number"
+                                        step="0.01"
+                                        value={priceCharged}
+                                        onChange={(e) => setPriceCharged(e.target.value)}
+                                        placeholder="0.00"
+                                        className="pl-7"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Admin Notes */}
                                   <div className="space-y-2">
                                     <Label htmlFor="adminNotes">Internal Notes</Label>
                                     <Textarea
                                       id="adminNotes"
                                       value={adminNotes}
                                       onChange={(e) => setAdminNotes(e.target.value)}
-                                      placeholder="Session notes..."
+                                      placeholder="Session notes, work done, etc..."
                                       rows={3}
                                     />
                                   </div>
-                                  <div className="flex items-center gap-2">
+
+                                  {/* Review Queue Toggle */}
+                                  <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
                                     <input
                                       type="checkbox"
                                       id="reviewQueue"
                                       checked={addToReviewQueue}
                                       onChange={(e) => setAddToReviewQueue(e.target.checked)}
-                                      className="rounded border-border"
+                                      className="h-5 w-5 rounded border-primary text-primary focus:ring-primary"
                                     />
-                                    <Label htmlFor="reviewQueue" className="text-sm flex items-center gap-1">
-                                      <Star className="h-4 w-4" />
-                                      Add to review request queue
+                                    <Label htmlFor="reviewQueue" className="text-sm flex items-center gap-2 cursor-pointer">
+                                      <Star className="h-4 w-4 text-primary" />
+                                      <span>Send review request to client</span>
                                     </Label>
                                   </div>
-                                  <Button onClick={handleCompleteSession} className="w-full">
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Mark Complete
+
+                                  <Button onClick={handleCompleteSession} className="w-full" size="lg">
+                                    <CheckCircle className="h-5 w-5 mr-2" />
+                                    Complete & Checkout
                                   </Button>
                                 </div>
                               </DialogContent>
