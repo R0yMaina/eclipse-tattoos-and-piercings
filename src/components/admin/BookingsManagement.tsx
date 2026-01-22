@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
+import { useState, useEffect, useMemo } from 'react';
+import { format, parseISO, differenceInMinutes } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -362,6 +362,25 @@ const BookingsManagement = () => {
                                         {format(new Date(), 'h:mm a')}
                                       </span>
                                     </div>
+                                    {/* Session Duration */}
+                                    {selectedBooking?.actual_start_time && (
+                                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                                        <span className="text-sm text-muted-foreground">Session Duration</span>
+                                        <span className="font-semibold text-primary">
+                                          {(() => {
+                                            const startTime = new Date(selectedBooking.actual_start_time);
+                                            const now = new Date();
+                                            const totalMinutes = differenceInMinutes(now, startTime);
+                                            const hours = Math.floor(totalMinutes / 60);
+                                            const minutes = totalMinutes % 60;
+                                            if (hours > 0) {
+                                              return `${hours}h ${minutes}m`;
+                                            }
+                                            return `${minutes} min`;
+                                          })()}
+                                        </span>
+                                      </div>
+                                    )}
                                   </div>
 
                                   {/* Price Input */}
