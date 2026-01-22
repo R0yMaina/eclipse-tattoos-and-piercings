@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Phone, Clock, User, FileImage, Play, Square, CheckCircle, DollarSign, Star } from 'lucide-react';
+import { Loader2, Phone, Clock, User, FileImage, Play, Square, CheckCircle, DollarSign, Star, UserCheck, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Booking {
@@ -284,7 +284,7 @@ const BookingsManagement = () => {
                         
                         <div className="flex items-center gap-2">
                           {booking.status === 'upcoming' && (
-                            <>
+                            <div className="flex flex-wrap items-center gap-2">
                               <Button
                                 size="sm"
                                 onClick={() => handleStartSession(booking)}
@@ -293,18 +293,33 @@ const BookingsManagement = () => {
                                 <Play className="h-4 w-4 mr-1" />
                                 Start
                               </Button>
-                              <Select
-                                onValueChange={(value) => updateBookingStatus(booking.id, value)}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateBookingStatus(booking.id, 'ongoing')}
+                                className="border-green-500 text-green-500 hover:bg-green-500/10"
                               >
-                                <SelectTrigger className="w-32">
-                                  <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="cancelled">Cancel</SelectItem>
-                                  <SelectItem value="no_show">No Show</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </>
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                Arrived
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateBookingStatus(booking.id, 'no_show')}
+                                className="border-destructive text-destructive hover:bg-destructive/10"
+                              >
+                                <UserX className="h-4 w-4 mr-1" />
+                                No-Show
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => updateBookingStatus(booking.id, 'cancelled')}
+                                className="text-muted-foreground hover:text-destructive"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
                           )}
                           
                           {booking.status === 'ongoing' && (
