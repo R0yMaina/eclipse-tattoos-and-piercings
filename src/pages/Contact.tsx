@@ -80,7 +80,7 @@ const Contact = () => {
         <section className="py-16">
           <div className="container max-w-7xl mx-auto px-4">
             {/* Booking System Section */}
-            <div className="mb-16">
+            <div id="contact-form" className="mb-16 scroll-mt-24">
               <BookingSystem />
             </div>
 
