@@ -25,9 +25,15 @@ export const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">E</span>
-            </div>
+            <img
+              src="/eclipselogo.png"
+              alt="Eclipse Logo"
+              className="w-10 h-10 object-contain"
+              onError={(e) => {
+                // Fallback to placeholder if image fails
+                e.currentTarget.outerHTML = '<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="text-primary-foreground font-bold text-sm">E</span></div>';
+              }}
+            />
             <span className="text-xl font-heading font-bold text-foreground">
               Eclipse
             </span>
