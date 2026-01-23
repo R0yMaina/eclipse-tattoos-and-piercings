@@ -200,47 +200,76 @@ const BookingsManagement = () => {
   const sessionsCompleted = completedBookings.length;
   const avgSessionValue = sessionsCompleted > 0 ? totalRevenue / sessionsCompleted : 0;
 
+  // Count bookings by status
+  const upcomingCount = bookings.filter(b => b.status === 'upcoming').length;
+  const ongoingCount = bookings.filter(b => b.status === 'ongoing').length;
+
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            Bookings Management
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">Manage daily appointments and sessions</p>
+        </div>
+      </div>
+
       {/* Daily Revenue Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="glass-panel bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Today's Revenue</p>
-                <p className="text-3xl font-bold text-green-500">${totalRevenue.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Today's Revenue</p>
+                <p className="text-2xl font-bold text-green-500">${totalRevenue.toFixed(2)}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-500" />
+              <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-green-500" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="glass-panel bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Sessions Completed</p>
-                <p className="text-3xl font-bold text-primary">{sessionsCompleted}</p>
+                <p className="text-xs text-muted-foreground">Completed</p>
+                <p className="text-2xl font-bold text-primary">{sessionsCompleted}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-primary" />
+              <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Upcoming</p>
+                <p className="text-2xl font-bold text-blue-500">{upcomingCount}</p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-blue-500" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
+        <Card className="glass-panel bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Avg Session Value</p>
-                <p className="text-3xl font-bold text-yellow-500">${avgSessionValue.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Avg Value</p>
+                <p className="text-2xl font-bold text-yellow-500">${avgSessionValue.toFixed(2)}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                <Star className="h-6 w-6 text-yellow-500" />
+              <div className="h-10 w-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                <Star className="h-5 w-5 text-yellow-500" />
               </div>
             </div>
           </CardContent>
@@ -249,9 +278,12 @@ const BookingsManagement = () => {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Calendar */}
-        <Card className="bg-card/50">
+        <Card className="glass-panel-elevated">
           <CardHeader>
-            <CardTitle className="text-lg">Select Date</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              Select Date
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Calendar
@@ -264,11 +296,20 @@ const BookingsManagement = () => {
         </Card>
 
         {/* Bookings List */}
-        <Card className="lg:col-span-2 bg-card/50">
+        <Card className="lg:col-span-2 glass-panel-elevated">
           <CardHeader>
             <CardTitle className="text-lg flex items-center justify-between">
-              <span>Bookings for {format(selectedDate, 'MMMM d, yyyy')}</span>
-              <Badge variant="outline">{bookings.length} bookings</Badge>
+              <span className="flex items-center gap-2">
+                Bookings for {format(selectedDate, 'MMMM d, yyyy')}
+              </span>
+              <div className="flex items-center gap-2">
+                {ongoingCount > 0 && (
+                  <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 animate-pulse">
+                    {ongoingCount} in progress
+                  </Badge>
+                )}
+                <Badge variant="outline">{bookings.length} total</Badge>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -282,9 +323,15 @@ const BookingsManagement = () => {
                 <p>No bookings for this date</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {bookings.map((booking) => (
-                  <Card key={booking.id} className="bg-background/50">
+                  <Card key={booking.id} className={`border transition-all duration-300 hover:border-primary/20 ${
+                    booking.status === 'ongoing' 
+                      ? 'bg-yellow-500/5 border-yellow-500/30' 
+                      : booking.status === 'completed'
+                      ? 'bg-green-500/5 border-green-500/30'
+                      : 'bg-card/50 border-border/50'
+                  }`}>
                     <CardContent className="p-4">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1 space-y-2">

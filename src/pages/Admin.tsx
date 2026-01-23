@@ -11,7 +11,10 @@ import BookingsManagement from "@/components/admin/BookingsManagement";
 import SlotConfiguration from "@/components/admin/SlotConfiguration";
 import MessageTemplates from "@/components/admin/MessageTemplates";
 import ReviewsManagement from "@/components/admin/ReviewsManagement";
-import { Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw, ShieldAlert, Calendar, Clock, Mail } from "lucide-react";
+import { 
+  Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw, 
+  ShieldAlert, Calendar, Clock, Mail, Sparkles
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 
@@ -92,8 +95,14 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+            <Sparkles className="absolute inset-0 m-auto h-6 w-6 text-primary animate-pulse" />
+          </div>
+          <p className="text-muted-foreground animate-pulse">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -102,22 +111,41 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-6">
+      {/* Premium Header with Glass Effect */}
+      <header className="sticky top-16 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg gold-glow">
+                  <Shield className="h-6 w-6 text-primary-foreground" />
+                </div>
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Admin Dashboard</h1>
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  {user?.email}
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleReindex} disabled={reindexing}>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleReindex} 
+                disabled={reindexing}
+                className="glass-panel hover:gold-glow transition-all duration-300"
+              >
                 <RefreshCw className={`h-4 w-4 mr-2 ${reindexing ? "animate-spin" : ""}`} />
-                Reindex
+                Reindex KB
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -127,26 +155,80 @@ export default function Admin() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="bookings" className="space-y-6">
-          <TabsList className="flex flex-wrap gap-1">
-            <TabsTrigger value="bookings"><Calendar className="h-4 w-4 mr-1" />Bookings</TabsTrigger>
-            <TabsTrigger value="slots"><Clock className="h-4 w-4 mr-1" />Slots</TabsTrigger>
-            <TabsTrigger value="messages"><Mail className="h-4 w-4 mr-1" />Messages</TabsTrigger>
-            <TabsTrigger value="reviews"><Star className="h-4 w-4 mr-1" />Reviews</TabsTrigger>
-            <TabsTrigger value="analytics"><TrendingUp className="h-4 w-4 mr-1" />Analytics</TabsTrigger>
-            <TabsTrigger value="security"><ShieldAlert className="h-4 w-4 mr-1" />Security</TabsTrigger>
-            <TabsTrigger value="questions"><MessageSquare className="h-4 w-4 mr-1" />Questions</TabsTrigger>
-            <TabsTrigger value="feedback"><Star className="h-4 w-4 mr-1" />Feedback</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="bookings" className="space-y-8">
+          {/* Modern Tab Navigation */}
+          <div className="glass-panel rounded-2xl p-2">
+            <TabsList className="w-full flex flex-wrap gap-1 bg-transparent h-auto p-0">
+              <TabsTrigger 
+                value="bookings" 
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Bookings</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="slots"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Slots</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="messages"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Messages</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reviews"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Star className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Reviews</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="analytics"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="security"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <ShieldAlert className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Security</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="questions"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Questions</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="feedback"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Star className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Feedback</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="bookings"><BookingsManagement /></TabsContent>
-          <TabsContent value="slots"><SlotConfiguration /></TabsContent>
-          <TabsContent value="messages"><MessageTemplates /></TabsContent>
-          <TabsContent value="reviews"><ReviewsManagement /></TabsContent>
-          <TabsContent value="analytics"><AnalyticsOverview /></TabsContent>
-          <TabsContent value="security"><SecurityMonitor /></TabsContent>
-          <TabsContent value="questions"><PopularQuestions /></TabsContent>
-          <TabsContent value="feedback"><FeedbackList /></TabsContent>
+          {/* Tab Content with Animation */}
+          <div className="animate-fade-in">
+            <TabsContent value="bookings" className="mt-0"><BookingsManagement /></TabsContent>
+            <TabsContent value="slots" className="mt-0"><SlotConfiguration /></TabsContent>
+            <TabsContent value="messages" className="mt-0"><MessageTemplates /></TabsContent>
+            <TabsContent value="reviews" className="mt-0"><ReviewsManagement /></TabsContent>
+            <TabsContent value="analytics" className="mt-0"><AnalyticsOverview /></TabsContent>
+            <TabsContent value="security" className="mt-0"><SecurityMonitor /></TabsContent>
+            <TabsContent value="questions" className="mt-0"><PopularQuestions /></TabsContent>
+            <TabsContent value="feedback" className="mt-0"><FeedbackList /></TabsContent>
+          </div>
         </Tabs>
       </main>
     </div>
