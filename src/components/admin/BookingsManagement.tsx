@@ -432,16 +432,18 @@ const BookingsManagement = () => {
                                   Complete
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="sm:max-w-md">
+                              <DialogContent className="sm:max-w-md glass-panel-elevated border-primary/20">
                                 <DialogHeader>
                                   <DialogTitle className="flex items-center gap-2">
-                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                    <div className="h-8 w-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                    </div>
                                     Complete Session & Checkout
                                   </DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-5 pt-4">
                                   {/* Client Info Summary */}
-                                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                                  <div className="glass-panel rounded-xl p-4 space-y-3">
                                     <div className="flex items-center justify-between">
                                       <span className="text-sm text-muted-foreground">Client</span>
                                       <span className="font-medium">{selectedBooking?.client_name}</span>
@@ -462,7 +464,7 @@ const BookingsManagement = () => {
                                     </div>
                                     {/* Session Duration */}
                                     {selectedBooking?.actual_start_time && (
-                                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                                      <div className="flex items-center justify-between pt-3 border-t border-border/30">
                                         <span className="text-sm text-muted-foreground">Session Duration</span>
                                         <span className="font-semibold text-primary">
                                           {(() => {
@@ -483,7 +485,7 @@ const BookingsManagement = () => {
 
                                   {/* Price Input */}
                                   <div className="space-y-2">
-                                    <Label htmlFor="price" className="flex items-center gap-2">
+                                    <Label htmlFor="price" className="flex items-center gap-2 text-sm">
                                       <DollarSign className="h-4 w-4 text-primary" />
                                       Price Charged
                                     </Label>
@@ -496,25 +498,26 @@ const BookingsManagement = () => {
                                         value={priceCharged}
                                         onChange={(e) => setPriceCharged(e.target.value)}
                                         placeholder="0.00"
-                                        className="pl-7"
+                                        className="pl-7 bg-background/50 border-border/50 focus:border-primary/50"
                                       />
                                     </div>
                                   </div>
 
                                   {/* Admin Notes */}
                                   <div className="space-y-2">
-                                    <Label htmlFor="adminNotes">Internal Notes</Label>
+                                    <Label htmlFor="adminNotes" className="text-sm">Internal Notes</Label>
                                     <Textarea
                                       id="adminNotes"
                                       value={adminNotes}
                                       onChange={(e) => setAdminNotes(e.target.value)}
                                       placeholder="Session notes, work done, etc..."
                                       rows={3}
+                                      className="bg-background/50 border-border/50 focus:border-primary/50"
                                     />
                                   </div>
 
                                   {/* Review Queue Toggle */}
-                                  <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                                  <div className="flex items-center gap-3 p-4 glass-panel rounded-xl border-primary/20">
                                     <input
                                       type="checkbox"
                                       id="reviewQueue"
@@ -528,7 +531,7 @@ const BookingsManagement = () => {
                                     </Label>
                                   </div>
 
-                                  <Button onClick={handleCompleteSession} className="w-full" size="lg">
+                                  <Button onClick={handleCompleteSession} className="w-full bg-green-500 hover:bg-green-600" size="lg">
                                     <CheckCircle className="h-5 w-5 mr-2" />
                                     Complete & Checkout
                                   </Button>
