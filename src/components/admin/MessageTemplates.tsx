@@ -110,74 +110,111 @@ const MessageTemplates = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card/50 border-primary/20">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            Message Templates
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">Configure automated WhatsApp messages</p>
+        </div>
+      </div>
+
+      {/* Info Card */}
+      <Card className="glass-panel border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3 text-sm">
-            <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+            <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Info className="h-5 w-5 text-primary" />
+            </div>
             <div>
-              <p className="font-medium mb-1">Available Variables</p>
+              <p className="font-medium mb-1 text-foreground">Available Variables</p>
               <p className="text-muted-foreground">
                 Use these placeholders in your templates:
               </p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <Badge variant="outline">{'{{client_name}}'}</Badge>
-                <Badge variant="outline">{'{{date}}'}</Badge>
-                <Badge variant="outline">{'{{time}}'}</Badge>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Badge variant="outline" className="bg-background/50 border-primary/30 text-primary">{'{{client_name}}'}</Badge>
+                <Badge variant="outline" className="bg-background/50 border-primary/30 text-primary">{'{{date}}'}</Badge>
+                <Badge variant="outline" className="bg-background/50 border-primary/30 text-primary">{'{{time}}'}</Badge>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {templates.map((template) => (
-        <Card key={template.id} className="bg-card/50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MessageSquare className="h-5 w-5 text-primary" />
-                  {getTemplateLabel(template.template_type)}
-                </CardTitle>
-                <CardDescription>
-                  {getTemplateDescription(template.template_type)}
-                </CardDescription>
+      {/* Templates Grid */}
+      <div className="grid gap-4">
+        {templates.map((template) => (
+          <Card key={template.id} className="glass-panel-elevated hover:border-primary/20 transition-all duration-300">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                    template.is_active 
+                      ? 'bg-primary/20' 
+                      : 'bg-muted'
+                  }`}>
+                    <MessageSquare className={`h-5 w-5 ${template.is_active ? 'text-primary' : 'text-muted-foreground'}`} />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">
+                      {getTemplateLabel(template.template_type)}
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-0.5">
+                      {getTemplateDescription(template.template_type)}
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor={`active-${template.id}`} className="text-xs text-muted-foreground">
+                    {template.is_active ? 'Active' : 'Inactive'}
+                  </Label>
+                  <Switch
+                    id={`active-${template.id}`}
+                    checked={template.is_active}
+                    onCheckedChange={(checked) => updateTemplate(template.id, 'is_active', checked)}
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor={`active-${template.id}`} className="text-sm">
-                  Active
-                </Label>
-                <Switch
-                  id={`active-${template.id}`}
-                  checked={template.is_active}
-                  onCheckedChange={(checked) => updateTemplate(template.id, 'is_active', checked)}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              value={template.template_content}
-              onChange={(e) => updateTemplate(template.id, 'template_content', e.target.value)}
-              rows={4}
-              className="font-mono text-sm"
-              disabled={!template.is_active}
-            />
-            
-            <Button
-              onClick={() => saveTemplate(template)}
-              disabled={saving === template.id}
-              size="sm"
-            >
-              {saving === template.id ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save Template
-            </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                value={template.template_content}
+                onChange={(e) => updateTemplate(template.id, 'template_content', e.target.value)}
+                rows={4}
+                className={`font-mono text-sm bg-background/50 border-border/50 focus:border-primary/50 transition-colors ${
+                  !template.is_active ? 'opacity-50' : ''
+                }`}
+                disabled={!template.is_active}
+              />
+              
+              <Button
+                onClick={() => saveTemplate(template)}
+                disabled={saving === template.id}
+                size="sm"
+                className="bg-primary hover:bg-primary/90"
+              >
+                {saving === template.id ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save Template
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {templates.length === 0 && (
+        <Card className="glass-panel">
+          <CardContent className="py-12 text-center">
+            <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-muted-foreground">No message templates configured</p>
           </CardContent>
         </Card>
-      ))}
+      )}
     </div>
   );
 };
