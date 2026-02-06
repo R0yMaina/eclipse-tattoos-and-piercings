@@ -26,3 +26,12 @@ verify_jwt = false
 
 [functions.check-late-arrivals]
 verify_jwt = false
+
+[functions.mpesa-stk-push]
+verify_jwt = false
+
+[functions.mpesa-callback]
+verify_jwt = false
+
+[functions.cancel-unpaid-bookings]
+verify_jwt = false
