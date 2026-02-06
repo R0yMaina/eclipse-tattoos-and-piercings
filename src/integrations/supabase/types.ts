@@ -46,13 +46,20 @@ export type Database = {
           actual_end_time: string | null
           actual_start_time: string | null
           admin_notes: string | null
+          agreed_price: number | null
           client_name: string
           confirmation_sent: boolean | null
           created_at: string
+          deposit_amount: number | null
+          deposit_paid: boolean | null
           id: string
           inspiration_image_url: string | null
           late_warning_sent: boolean | null
+          mpesa_checkout_id: string | null
+          mpesa_receipt: string | null
           notes: string | null
+          payment_expires_at: string | null
+          payment_status: string | null
           phone_number: string
           price_charged: number | null
           reminder_sent: boolean | null
@@ -64,13 +71,20 @@ export type Database = {
           actual_end_time?: string | null
           actual_start_time?: string | null
           admin_notes?: string | null
+          agreed_price?: number | null
           client_name: string
           confirmation_sent?: boolean | null
           created_at?: string
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
           id?: string
           inspiration_image_url?: string | null
           late_warning_sent?: boolean | null
+          mpesa_checkout_id?: string | null
+          mpesa_receipt?: string | null
           notes?: string | null
+          payment_expires_at?: string | null
+          payment_status?: string | null
           phone_number: string
           price_charged?: number | null
           reminder_sent?: boolean | null
@@ -82,13 +96,20 @@ export type Database = {
           actual_end_time?: string | null
           actual_start_time?: string | null
           admin_notes?: string | null
+          agreed_price?: number | null
           client_name?: string
           confirmation_sent?: boolean | null
           created_at?: string
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
           id?: string
           inspiration_image_url?: string | null
           late_warning_sent?: boolean | null
+          mpesa_checkout_id?: string | null
+          mpesa_receipt?: string | null
           notes?: string | null
+          payment_expires_at?: string | null
+          payment_status?: string | null
           phone_number?: string
           price_charged?: number | null
           reminder_sent?: boolean | null
