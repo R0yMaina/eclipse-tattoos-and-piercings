@@ -44,6 +44,9 @@ export const BookingSystem = () => {
   useEffect(() => {
     if (selectedDate) {
       fetchSlots(selectedDate);
+    } else {
+      setSlots([]);
+      setSelectedSlot(null);
     }
   }, [selectedDate, fetchSlots]);
 
