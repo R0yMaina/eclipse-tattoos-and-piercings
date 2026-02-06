@@ -84,7 +84,15 @@ const Contact = () => {
           <div className="container max-w-7xl mx-auto px-4">
             {/* Booking System Section */}
             <div id="contact-form" className="mb-16 scroll-mt-24">
-              <ErrorBoundary fallback={<div className="p-8 border border-destructive rounded-lg text-center text-destructive">Unable to load Booking System. Please try refreshing or contact support.</div>}>
+              <ErrorBoundary fallback={(error) => (
+                <div className="p-8 border border-destructive rounded-lg text-center bg-destructive/10">
+                  <h3 className="text-lg font-semibold text-destructive mb-2">Unavailable</h3>
+                  <p className="text-muted-foreground mb-4">The booking system could not be loaded.</p>
+                  <div className="bg-background/50 p-4 rounded text-xs font-mono text-left overflow-auto max-h-40 border border-border">
+                    {error.message}
+                  </div>
+                </div>
+              )}>
                 <BookingSystem />
               </ErrorBoundary>
             </div>
