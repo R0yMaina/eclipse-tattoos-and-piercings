@@ -482,7 +482,7 @@ export const BookingSystem = () => {
           </div>
 
           {/* Booking Form */}
-          {selectedSlot && (
+          {selectedDate && selectedSlot && (
             <Card className="mt-8 bg-card/50 backdrop-blur-sm border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
