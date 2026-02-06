@@ -6,11 +6,17 @@ import { TypingIndicator } from './TypingIndicator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+interface Citation {
+  index: number;
+  url: string;
+  title: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  citations?: any[];
+  citations?: Citation[];
 }
 
 interface ChatPanelProps {
@@ -28,7 +34,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
     localStorage.setItem('chat_client_token', newToken);
     return newToken;
   });
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -54,7 +60,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
 
     try {
       abortControllerRef.current = new AbortController();
-      
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
@@ -76,7 +82,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantContent = '';
-      let assistantId = crypto.randomUUID();
+      const assistantId = crypto.randomUUID();
 
       if (reader) {
         while (true) {
@@ -97,10 +103,10 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
               try {
                 const parsed = JSON.parse(data);
                 const content = parsed.choices?.[0]?.delta?.content;
-                
+
                 if (content) {
                   assistantContent += content;
-                  
+
                   setMessages(prev => {
                     const lastMessage = prev[prev.length - 1];
                     if (lastMessage?.role === 'assistant' && lastMessage.id === assistantId) {
@@ -122,7 +128,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.name === 'AbortError') {
         console.log('Request aborted');
       } else {
@@ -193,20 +199,20 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
             </div>
           </div>
         )}
-        
+
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
-        
+
         {isLoading && <TypingIndicator />}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Composer */}
       <div className="p-4 border-t border-border">
-        <Composer 
-          onSend={sendMessage} 
+        <Composer
+          onSend={sendMessage}
           isLoading={isLoading}
           onStop={stopGeneration}
         />

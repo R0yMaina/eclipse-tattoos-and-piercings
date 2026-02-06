@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -10,8 +11,21 @@ const corsHeaders = {
 const RATE_LIMIT_REQUESTS = 20; // Max requests per window
 const RATE_LIMIT_WINDOW_SECONDS = 60; // Window in seconds
 
+interface Citation {
+  index: number;
+  url: string;
+  title: string;
+  snippet: string;
+}
+
+interface Chunk {
+  url: string;
+  title?: string;
+  content: string;
+}
+
 async function logSecurityEvent(
-  eventType: string, 
+  eventType: string,
   severity: 'info' | 'warn' | 'error',
   ipAddress: string,
   details: Record<string, unknown>
@@ -19,7 +33,7 @@ async function logSecurityEvent(
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     await fetch(`${supabaseUrl}/rest/v1/security_events`, {
       method: 'POST',
       headers: {
@@ -50,7 +64,7 @@ async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining
   }
 
   const key = `ratelimit:chat:${ip}`;
-  
+
   try {
     // Get current count
     const getResponse = await fetch(`${upstashUrl}/get/${key}`, {
@@ -66,13 +80,13 @@ async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining
       });
       const ttlData = await ttlResponse.json();
       const resetIn = Math.max(0, parseInt(ttlData.result || '0', 10));
-      
+
       return { allowed: false, remaining: 0, resetIn };
     }
 
     // Increment counter with pipeline
     const newCount = currentCount + 1;
-    
+
     if (currentCount === 0) {
       // First request in window - set with expiry
       await fetch(`${upstashUrl}/setex/${key}/${RATE_LIMIT_WINDOW_SECONDS}/${newCount}`, {
@@ -85,10 +99,10 @@ async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining
       });
     }
 
-    return { 
-      allowed: true, 
+    return {
+      allowed: true,
       remaining: RATE_LIMIT_REQUESTS - newCount,
-      resetIn: RATE_LIMIT_WINDOW_SECONDS 
+      resetIn: RATE_LIMIT_WINDOW_SECONDS
     };
   } catch (error) {
     console.error('Rate limit check failed:', error);
@@ -103,21 +117,21 @@ function getClientIP(req: Request): string {
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  
+
   const realIP = req.headers.get('x-real-ip');
   if (realIP) {
     return realIP;
   }
-  
+
   const cfIP = req.headers.get('cf-connecting-ip');
   if (cfIP) {
     return cfIP;
   }
-  
+
   return 'unknown';
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -126,25 +140,25 @@ serve(async (req) => {
     // Check rate limit first
     const clientIP = getClientIP(req);
     const rateLimit = await checkRateLimit(clientIP);
-    
+
     if (!rateLimit.allowed) {
       console.log(`Rate limit exceeded for IP: ${clientIP}`);
-      
+
       // Log rate limit event for monitoring
       await logSecurityEvent('rate_limit_exceeded', 'warn', clientIP, {
         endpoint: 'chat',
         resetIn: rateLimit.resetIn
       });
-      
+
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Too many requests. Please wait before sending more messages.',
-          retryAfter: rateLimit.resetIn 
-        }), 
+          retryAfter: rateLimit.resetIn
+        }),
         {
           status: 429,
-          headers: { 
-            ...corsHeaders, 
+          headers: {
+            ...corsHeaders,
             'Content-Type': 'application/json',
             'Retry-After': String(rateLimit.resetIn),
             'X-RateLimit-Remaining': '0',
@@ -186,7 +200,7 @@ serve(async (req) => {
         .insert({ client_token: clientToken, title: message.substring(0, 50) })
         .select()
         .single();
-      
+
       if (error) throw error;
       session = data;
     }
@@ -244,10 +258,10 @@ serve(async (req) => {
 
     // Build context
     let context = '';
-    const citations: any[] = [];
-    
+    const citations: Citation[] = [];
+
     if (chunks && chunks.length > 0) {
-      context = chunks.map((c: any, idx: number) => {
+      context = (chunks as Chunk[]).map((c: Chunk, idx: number) => {
         citations.push({
           index: idx + 1,
           url: c.url,
@@ -289,7 +303,7 @@ ${context ? `\n\nCONTEXT from Eclipse's site:\n${context}` : '\n\nNo specific co
 
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...(history || []).slice(0, -1).map((h: any) => ({
+      ...(history || []).slice(0, -1).map((h: { role: string; content: string }) => ({
         role: h.role,
         content: h.content,
       })),
@@ -361,7 +375,7 @@ ${context ? `\n\nCONTEXT from Eclipse's site:\n${context}` : '\n\nNo specific co
                 try {
                   const parsed = JSON.parse(data);
                   const content = parsed.choices?.[0]?.delta?.content;
-                  
+
                   if (content) {
                     fullResponse += content;
                     controller.enqueue(encoder.encode(`data: ${data}\n\n`));

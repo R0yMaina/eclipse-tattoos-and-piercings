@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
@@ -56,7 +57,7 @@ serve(async (req: Request) => {
     }
 
     // Replace placeholders
-    let message = template.template_content
+    const message = template.template_content
       .replace(/\{\{client_name\}\}/g, body.clientName)
       .replace(/\{\{date\}\}/g, body.date || '')
       .replace(/\{\{time\}\}/g, body.time || '');
@@ -96,13 +97,13 @@ serve(async (req: Request) => {
 
     // Update booking flags if applicable
     if (body.bookingId) {
-      const updateField = body.type === 'confirmation' 
+      const updateField = body.type === 'confirmation'
         ? { confirmation_sent: true }
         : body.type === 'reminder'
-        ? { reminder_sent: true }
-        : body.type === 'late_warning'
-        ? { late_warning_sent: true }
-        : {};
+          ? { reminder_sent: true }
+          : body.type === 'late_warning'
+            ? { late_warning_sent: true }
+            : {};
 
       if (Object.keys(updateField).length > 0) {
         await supabase
@@ -116,10 +117,11 @@ serve(async (req: Request) => {
       JSON.stringify({ success: true, messageId: whatsappResult.messages?.[0]?.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-whatsapp function:", error);
+    const message = error instanceof Error ? error.message : "An unknown error occurred";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

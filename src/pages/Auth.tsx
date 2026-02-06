@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 // Log security events for monitoring
 const logAuthEvent = async (
@@ -12,8 +13,8 @@ const logAuthEvent = async (
     await supabase.from('security_events').insert({
       event_type: eventType,
       severity,
-      details
-    } as any);
+      details: details as Json
+    });
   } catch (error) {
     console.error('Failed to log auth event:', error);
   }
@@ -39,6 +40,25 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
+  const checkAdminAndRedirect = useCallback(async (userId: string) => {
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .single();
+
+    if (roleData?.role === "admin") {
+      navigate("/admin");
+    } else {
+      toast({
+        title: "Access Denied",
+        description: "You don't have admin privileges.",
+        variant: "destructive",
+      });
+      await supabase.auth.signOut();
+    }
+  }, [navigate, toast]);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -57,40 +77,21 @@ export default function Auth() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  const checkAdminAndRedirect = async (userId: string) => {
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .single();
-
-    if (roleData?.role === "admin") {
-      navigate("/admin");
-    } else {
-      toast({
-        title: "Access Denied",
-        description: "You don't have admin privileges.",
-        variant: "destructive",
-      });
-      await supabase.auth.signOut();
-    }
-  };
+  }, [checkAdminAndRedirect]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
-    
+
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
       newErrors.email = emailResult.error.errors[0].message;
     }
-    
+
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -98,9 +99,9 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -112,25 +113,25 @@ export default function Auth() {
         email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Partially mask email
         error_code: error.message
       });
-      
+
       toast({
         title: "Sign in failed",
         description: error.message,
         variant: "destructive",
       });
     }
-    
+
     setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+
     const redirectUrl = `${window.location.origin}/admin`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -145,7 +146,7 @@ export default function Auth() {
         email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
         error_code: error.message
       });
-      
+
       toast({
         title: "Sign up failed",
         description: error.message,
@@ -157,21 +158,21 @@ export default function Auth() {
         description: "We've sent you a confirmation link to complete your registration.",
       });
     }
-    
+
     setIsLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to home
         </Link>
-        
+
         <Card className="border-border/50 bg-card/50 backdrop-blur">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -190,7 +191,7 @@ export default function Auth() {
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
@@ -233,7 +234,7 @@ export default function Auth() {
                   </Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">

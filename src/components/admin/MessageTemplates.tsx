@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,19 +22,15 @@ const MessageTemplates = () => {
   const [saving, setSaving] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('message_templates')
         .select('*')
         .order('template_type');
-      
+
       if (error) throw error;
-      setTemplates(data || []);
+      setTemplates((data as MessageTemplate[]) || []);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -45,10 +41,14 @@ const MessageTemplates = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const updateTemplate = (id: string, field: keyof MessageTemplate, value: any) => {
-    setTemplates(prev => prev.map(t => 
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  const updateTemplate = (id: string, field: keyof MessageTemplate, value: string | boolean) => {
+    setTemplates(prev => prev.map(t =>
       t.id === id ? { ...t, [field]: value } : t
     ));
   };
@@ -63,9 +63,9 @@ const MessageTemplates = () => {
           is_active: template.is_active
         })
         .eq('id', template.id);
-      
+
       if (error) throw error;
-      
+
       toast({
         title: 'Template saved',
         description: `${getTemplateLabel(template.template_type)} template updated.`,
@@ -150,11 +150,10 @@ const MessageTemplates = () => {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                    template.is_active 
-                      ? 'bg-primary/20' 
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${template.is_active
+                      ? 'bg-primary/20'
                       : 'bg-muted'
-                  }`}>
+                    }`}>
                     <MessageSquare className={`h-5 w-5 ${template.is_active ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                   <div>
@@ -183,12 +182,11 @@ const MessageTemplates = () => {
                 value={template.template_content}
                 onChange={(e) => updateTemplate(template.id, 'template_content', e.target.value)}
                 rows={4}
-                className={`font-mono text-sm bg-background/50 border-border/50 focus:border-primary/50 transition-colors ${
-                  !template.is_active ? 'opacity-50' : ''
-                }`}
+                className={`font-mono text-sm bg-background/50 border-border/50 focus:border-primary/50 transition-colors ${!template.is_active ? 'opacity-50' : ''
+                  }`}
                 disabled={!template.is_active}
               />
-              
+
               <Button
                 onClick={() => saveTemplate(template)}
                 disabled={saving === template.id}

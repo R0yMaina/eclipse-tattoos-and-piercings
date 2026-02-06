@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,8 +11,8 @@ import BookingsManagement from "@/components/admin/BookingsManagement";
 import SlotConfiguration from "@/components/admin/SlotConfiguration";
 import MessageTemplates from "@/components/admin/MessageTemplates";
 import ReviewsManagement from "@/components/admin/ReviewsManagement";
-import { 
-  Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw, 
+import {
+  Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
   ShieldAlert, Calendar, Clock, Mail, Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,27 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [reindexing, setReindexing] = useState(false);
+
+  const checkAdminAccess = useCallback(async (userId: string) => {
+    try {
+      const { data: roleData, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .single();
+
+      if (error || roleData?.role !== "admin") {
+        toast({ title: "Access Denied", description: "You don't have admin privileges.", variant: "destructive" });
+        navigate("/auth");
+        return;
+      }
+      setIsAdmin(true);
+    } catch (error) {
+      navigate("/auth");
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate, toast]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -48,28 +69,7 @@ export default function Admin() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  const checkAdminAccess = async (userId: string) => {
-    try {
-      const { data: roleData, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .single();
-
-      if (error || roleData?.role !== "admin") {
-        toast({ title: "Access Denied", description: "You don't have admin privileges.", variant: "destructive" });
-        navigate("/auth");
-        return;
-      }
-      setIsAdmin(true);
-    } catch (error) {
-      navigate("/auth");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [navigate, checkAdminAccess]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -86,8 +86,9 @@ export default function Admin() {
       });
       if (error) throw error;
       toast({ title: "Reindex started", description: "The knowledge base is being reindexed." });
-    } catch (error: any) {
-      toast({ title: "Reindex failed", description: error.message || "Failed to trigger reindex", variant: "destructive" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to trigger reindex";
+      toast({ title: "Reindex failed", description: message, variant: "destructive" });
     } finally {
       setReindexing(false);
     }
@@ -130,19 +131,19 @@ export default function Admin() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleReindex} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReindex}
                 disabled={reindexing}
                 className="glass-panel hover:gold-glow transition-all duration-300"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${reindexing ? "animate-spin" : ""}`} />
                 Reindex KB
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleSignOut}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -159,56 +160,56 @@ export default function Admin() {
           {/* Modern Tab Navigation */}
           <div className="glass-panel rounded-2xl p-2">
             <TabsList className="w-full flex flex-wrap gap-1 bg-transparent h-auto p-0">
-              <TabsTrigger 
-                value="bookings" 
+              <TabsTrigger
+                value="bookings"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <Calendar className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Bookings</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="slots"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <Clock className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Slots</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="messages"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <Mail className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Messages</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="reviews"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <Star className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Reviews</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="analytics"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <TrendingUp className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Analytics</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="security"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <ShieldAlert className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Security</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="questions"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Questions</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="feedback"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >

@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@4.0.0";
@@ -42,15 +43,15 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const rawData = await req.json();
-    
+
     // Validate input with zod
     const validationResult = contactFormSchema.safeParse(rawData);
-    
+
     if (!validationResult.success) {
       console.error("Validation error:", validationResult.error.flatten());
       return new Response(
-        JSON.stringify({ 
-          success: false, 
+        JSON.stringify({
+          success: false,
           error: "Validation failed",
           details: validationResult.error.flatten().fieldErrors
         }),
@@ -60,12 +61,12 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
-    
+
     const formData = validationResult.data;
-    
-    console.log("Received valid contact form submission:", { 
-      name: formData.name, 
-      email: formData.email 
+
+    console.log("Received valid contact form submission:", {
+      name: formData.name,
+      email: formData.email
     });
 
     // Initialize Supabase client
@@ -181,10 +182,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: "Form submitted successfully",
-        submissionId: submission.id 
+        submissionId: submission.id
       }),
       {
         status: 200,
@@ -194,18 +195,19 @@ const handler = async (req: Request): Promise<Response> => {
         },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to submit form";
     console.error("Error in submit-contact-form function:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Failed to submit form" 
+      JSON.stringify({
+        success: false,
+        error: error.message || "Failed to submit form"
       }),
       {
         status: 500,
-        headers: { 
-          "Content-Type": "application/json", 
-          ...corsHeaders 
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
         },
       }
     );

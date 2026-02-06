@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { format, parseISO, differenceInMinutes } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,15 +46,11 @@ const BookingsManagement = () => {
   const [addToReviewQueue, setAddToReviewQueue] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchBookings();
-  }, [selectedDate]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     try {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      
+
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -68,9 +64,9 @@ const BookingsManagement = () => {
         `)
         .eq('booking_slots.slot_date', formattedDate)
         .order('booking_slots(start_time)', { ascending: true });
-      
+
       if (error) throw error;
-      setBookings(data || []);
+      setBookings((data as unknown as Booking[]) || []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -81,30 +77,40 @@ const BookingsManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, toast]);
 
-  const updateBookingStatus = async (bookingId: string, newStatus: string, additionalData?: any) => {
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+
+
+  const updateBookingStatus = async (
+    bookingId: string,
+    newStatus: Booking['status'],
+    additionalData?: Partial<Booking>
+  ) => {
     try {
-      const updateData: any = { status: newStatus, ...additionalData };
-      
+      const updateData: Partial<Booking> = { status: newStatus, ...additionalData };
+
       if (newStatus === 'ongoing') {
         updateData.actual_start_time = new Date().toISOString();
       } else if (newStatus === 'completed') {
         updateData.actual_end_time = new Date().toISOString();
       }
-      
+
       const { error } = await supabase
         .from('bookings')
         .update(updateData)
         .eq('id', bookingId);
-      
+
       if (error) throw error;
-      
+
       toast({
         title: 'Status updated',
         description: `Booking marked as ${newStatus}`,
       });
-      
+
       fetchBookings();
     } catch (error) {
       console.error('Error updating booking:', error);
@@ -118,7 +124,7 @@ const BookingsManagement = () => {
 
   const handleStartSession = async (booking: Booking) => {
     await updateBookingStatus(booking.id, 'ongoing');
-    
+
     // Send late warning check after 15 minutes
     setTimeout(async () => {
       const { data: currentBooking } = await supabase
@@ -126,7 +132,7 @@ const BookingsManagement = () => {
         .select('status, late_warning_sent')
         .eq('id', booking.id)
         .single();
-      
+
       if (currentBooking?.status === 'upcoming' && !currentBooking.late_warning_sent) {
         await supabase.functions.invoke('send-whatsapp', {
           body: {
@@ -143,12 +149,12 @@ const BookingsManagement = () => {
 
   const handleCompleteSession = async () => {
     if (!selectedBooking) return;
-    
+
     await updateBookingStatus(selectedBooking.id, 'completed', {
       price_charged: priceCharged ? parseFloat(priceCharged) : null,
       admin_notes: adminNotes || null
     });
-    
+
     if (addToReviewQueue) {
       try {
         await supabase
@@ -161,7 +167,7 @@ const BookingsManagement = () => {
         console.error('Error adding to review queue:', error);
       }
     }
-    
+
     setCompleteDialogOpen(false);
     setSelectedBooking(null);
     setPriceCharged('');
@@ -184,9 +190,9 @@ const BookingsManagement = () => {
       cancelled: { variant: 'destructive', className: '' },
       no_show: { variant: 'destructive', className: '' }
     };
-    
+
     const config = variants[status] || { variant: 'secondary', className: '' };
-    
+
     return (
       <Badge variant={config.variant} className={config.className}>
         {status.replace('_', ' ').toUpperCase()}
@@ -232,7 +238,7 @@ const BookingsManagement = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="glass-panel bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -260,7 +266,7 @@ const BookingsManagement = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="glass-panel bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -325,13 +331,12 @@ const BookingsManagement = () => {
             ) : (
               <div className="space-y-3">
                 {bookings.map((booking) => (
-                  <Card key={booking.id} className={`border transition-all duration-300 hover:border-primary/20 ${
-                    booking.status === 'ongoing' 
-                      ? 'bg-yellow-500/5 border-yellow-500/30' 
-                      : booking.status === 'completed'
+                  <Card key={booking.id} className={`border transition-all duration-300 hover:border-primary/20 ${booking.status === 'ongoing'
+                    ? 'bg-yellow-500/5 border-yellow-500/30'
+                    : booking.status === 'completed'
                       ? 'bg-green-500/5 border-green-500/30'
                       : 'bg-card/50 border-border/50'
-                  }`}>
+                    }`}>
                     <CardContent className="p-4">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1 space-y-2">
@@ -342,7 +347,7 @@ const BookingsManagement = () => {
                             </div>
                             {getStatusBadge(booking.status)}
                           </div>
-                          
+
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <User className="h-4 w-4" />
@@ -353,13 +358,13 @@ const BookingsManagement = () => {
                               {booking.phone_number}
                             </span>
                           </div>
-                          
+
                           {booking.notes && (
                             <p className="text-sm text-muted-foreground italic">
                               "{booking.notes}"
                             </p>
                           )}
-                          
+
                           {booking.inspiration_image_url && (
                             <a
                               href={booking.inspiration_image_url}
@@ -371,7 +376,7 @@ const BookingsManagement = () => {
                               View Inspiration Image
                             </a>
                           )}
-                          
+
                           {booking.price_charged && (
                             <div className="flex items-center gap-1 text-sm text-green-500">
                               <DollarSign className="h-4 w-4" />
@@ -379,7 +384,7 @@ const BookingsManagement = () => {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                           {booking.status === 'upcoming' && (
                             <div className="flex flex-wrap items-center gap-2">
@@ -419,7 +424,7 @@ const BookingsManagement = () => {
                               </Button>
                             </div>
                           )}
-                          
+
                           {booking.status === 'ongoing' && (
                             <Dialog open={completeDialogOpen && selectedBooking?.id === booking.id} onOpenChange={setCompleteDialogOpen}>
                               <DialogTrigger asChild>
@@ -451,7 +456,7 @@ const BookingsManagement = () => {
                                     <div className="flex items-center justify-between">
                                       <span className="text-sm text-muted-foreground">Started At</span>
                                       <span className="font-medium">
-                                        {selectedBooking?.actual_start_time 
+                                        {selectedBooking?.actual_start_time
                                           ? format(new Date(selectedBooking.actual_start_time), 'h:mm a')
                                           : formatTime(booking.booking_slots.start_time)}
                                       </span>
@@ -539,7 +544,7 @@ const BookingsManagement = () => {
                               </DialogContent>
                             </Dialog>
                           )}
-                          
+
                           {booking.status === 'completed' && (
                             <CheckCircle className="h-6 w-6 text-green-500" />
                           )}

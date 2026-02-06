@@ -45,7 +45,7 @@ export const BookingSystem = () => {
     if (selectedDate) {
       fetchSlots(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, fetchSlots]);
 
   // Poll for payment confirmation
   useEffect(() => {
@@ -88,7 +88,7 @@ export const BookingSystem = () => {
     return () => clearInterval(interval);
   }, [paymentPolling, currentBookingId, depositAmount, toast]);
 
-  const fetchSlots = async (date: Date) => {
+  const fetchSlots = useCallback(async (date: Date) => {
     setLoading(true);
     setSelectedSlot(null);
 
@@ -104,8 +104,8 @@ export const BookingSystem = () => {
       });
 
       if (error) throw error;
-      setSlots(data || []);
-    } catch (error: any) {
+      setSlots((data as SlotAvailability[]) || []);
+    } catch (error: unknown) {
       console.error('Error fetching slots:', error);
       toast({
         title: 'Error',
@@ -115,7 +115,7 @@ export const BookingSystem = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -231,11 +231,12 @@ export const BookingSystem = () => {
       setDepositAmount(deposit);
       setBookingStep('payment');
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Booking error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create booking. Please try again.';
       toast({
         title: 'Booking failed',
-        description: error.message || 'Failed to create booking. Please try again.',
+        description: message,
         variant: 'destructive'
       });
     } finally {
@@ -270,11 +271,12 @@ export const BookingSystem = () => {
       setBookingStep('waiting');
       setPaymentPolling(true);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to send M-Pesa prompt. Please try again.';
       toast({
         title: 'Payment initiation failed',
-        description: error.message || 'Failed to send M-Pesa prompt. Please try again.',
+        description: message,
         variant: 'destructive'
       });
     } finally {
@@ -355,10 +357,10 @@ export const BookingSystem = () => {
       <div className="flex items-center justify-center gap-2 mb-8">
         {['Select Slot', 'Your Details', 'Pay Deposit', 'Confirmed'].map((step, i) => {
           const stepIndex = i;
-          const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) : 
-                               bookingStep === 'payment' ? 2 : 
-                               bookingStep === 'waiting' ? 2 :
-                               bookingStep === 'confirmed' ? 3 : 1;
+          const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
+            bookingStep === 'payment' ? 2 :
+              bookingStep === 'waiting' ? 2 :
+                bookingStep === 'confirmed' ? 3 : 1;
           const isActive = stepIndex <= currentIndex;
           return (
             <div key={step} className="flex items-center gap-2">

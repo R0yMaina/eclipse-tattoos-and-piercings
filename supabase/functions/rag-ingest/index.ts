@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
@@ -62,7 +63,7 @@ serve(async (req) => {
       // Extract title and content
       const titleEl = doc.querySelector('title');
       const title = titleEl?.textContent?.trim() || url;
-      
+
       const mainEl = doc.querySelector('main') || doc.querySelector('body');
       const content = mainEl?.textContent?.trim() || '';
 
@@ -168,7 +169,7 @@ serve(async (req) => {
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Ingest error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {

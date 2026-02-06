@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
@@ -36,7 +37,7 @@ serve(async (req: Request) => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
+
     console.log(`Running reminder check at ${now.toISOString()}`);
     console.log(`Today: ${today}, Tomorrow: ${tomorrow}`);
 
@@ -79,7 +80,7 @@ serve(async (req: Request) => {
         if (!slot) continue;
         const appointmentDate = new Date(`${slot.slot_date}T${slot.start_time}`);
         const hoursUntilAppointment = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-        
+
         console.log(`Booking ${booking.id}: ${hoursUntilAppointment.toFixed(1)} hours until appointment`);
 
         // Send reminder if appointment is within 24 hours but more than 1 hour away
@@ -90,7 +91,7 @@ serve(async (req: Request) => {
             month: 'long',
             day: 'numeric'
           });
-          
+
           const [hours, minutes] = slot.start_time.split(':');
           const hour = parseInt(hours);
           const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -112,7 +113,7 @@ serve(async (req: Request) => {
           }
 
           // Replace placeholders
-          let message = template.template_content
+          const message = template.template_content
             .replace('{client_name}', booking.client_name)
             .replace('{date}', dateFormatted)
             .replace('{time}', timeFormatted);
@@ -120,11 +121,11 @@ serve(async (req: Request) => {
           // Send WhatsApp message
           const whatsappPhoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
           const whatsappToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-          
+
           if (whatsappPhoneId && whatsappToken) {
             // Format phone number
             const phone = booking.phone_number.replace(/[\s\-()]/g, '').replace(/^\+/, '');
-            
+
             const whatsappResponse = await fetch(
               `https://graph.facebook.com/v18.0/${whatsappPhoneId}/messages`,
               {
@@ -166,26 +167,28 @@ serve(async (req: Request) => {
             results.reminders_sent++;
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(`Error processing booking ${booking.id}:`, err);
-        results.errors.push(`Processing error for ${booking.id}: ${err.message}`);
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        results.errors.push(`Processing error for ${booking.id}: ${message}`);
       }
     }
 
     console.log(`Completed: ${results.reminders_sent} reminders sent, ${results.errors.length} errors`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         ...results,
         processed_at: now.toISOString()
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-reminders function:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

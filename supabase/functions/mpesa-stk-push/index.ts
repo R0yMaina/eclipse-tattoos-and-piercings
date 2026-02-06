@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
@@ -6,16 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// M-Pesa Daraja API endpoints (production)
-const MPESA_AUTH_URL = "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
-const MPESA_STK_URL = "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
+const MPESA_ENV = Deno.env.get("MPESA_ENVIRONMENT")?.toLowerCase() || "production";
+const IS_SANDBOX = MPESA_ENV === "sandbox";
+
+// M-Pesa Daraja API endpoints
+const MPESA_AUTH_URL = IS_SANDBOX
+  ? "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+  : "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
+
+const MPESA_STK_URL = IS_SANDBOX
+  ? "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+  : "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
 
 async function getMpesaToken(): Promise<string> {
   const consumerKey = Deno.env.get("MPESA_CONSUMER_KEY");
   const consumerSecret = Deno.env.get("MPESA_CONSUMER_SECRET");
 
   if (!consumerKey || !consumerSecret) {
-    throw new Error("M-Pesa credentials not configured");
+    throw new Error("M-Pesa credentials (MPESA_CONSUMER_KEY/SECRET) not configured");
   }
 
   const auth = btoa(`${consumerKey}:${consumerSecret}`);
@@ -28,8 +37,8 @@ async function getMpesaToken(): Promise<string> {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("M-Pesa auth failed:", errorText);
-    throw new Error(`M-Pesa authentication failed: ${response.status}`);
+    console.error(`M-Pesa auth failed (${MPESA_ENV}):`, errorText);
+    throw new Error(`M-Pesa authentication failed (${response.status}): ${errorText}`);
   }
 
   const data = await response.json();
@@ -84,15 +93,23 @@ serve(async (req: Request) => {
 
     const depositAmount = Math.ceil(agreedPrice * 0.15);
     const formattedPhone = formatPhoneNumber(phoneNumber);
-    const shortcode = Deno.env.get("MPESA_SHORTCODE")!;
-    const passkey = Deno.env.get("MPESA_PASSKEY")!;
+
+    // Check for shortcode in multiple possible env var names
+    const shortcode = Deno.env.get("MPESA_SHORTCODE") || Deno.env.get("MPESA_BUSINESS_SHORTCODE");
+    const passkey = Deno.env.get("MPESA_PASSKEY");
+
+    if (!shortcode || !passkey) {
+      console.error("Missing M-Pesa config: shortcode or passkey");
+      throw new Error(`M-Pesa configuration error: ${!shortcode ? 'Shortcode' : 'Passkey'} is missing`);
+    }
+
     const timestamp = generateTimestamp();
     const password = btoa(`${shortcode}${passkey}${timestamp}`);
 
     // Get callback URL
     const callbackUrl = `${supabaseUrl}/functions/v1/mpesa-callback`;
 
-    console.log(`Initiating STK push for booking ${bookingId}, amount: ${depositAmount} KES, phone: ${formattedPhone}`);
+    console.log(`Initiating STK push (${MPESA_ENV}) for booking ${bookingId}, amount: ${depositAmount} KES, phone: ${formattedPhone}`);
 
     // Get M-Pesa access token
     const token = await getMpesaToken();
@@ -108,7 +125,7 @@ serve(async (req: Request) => {
         BusinessShortCode: shortcode,
         Password: password,
         Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
+        TransactionType: IS_SANDBOX ? "CustomerPayBillOnline" : "CustomerPayBillOnline", // Usually same for STK push
         Amount: depositAmount,
         PartyA: formattedPhone,
         PartyB: shortcode,
@@ -122,8 +139,11 @@ serve(async (req: Request) => {
     const stkData = await stkResponse.json();
     console.log("STK Push response:", JSON.stringify(stkData));
 
+    // M-Pesa response handling
     if (stkData.ResponseCode !== "0") {
-      throw new Error(stkData.errorMessage || stkData.ResponseDescription || "STK push failed");
+      const errorMessage = stkData.errorMessage || stkData.ResponseDescription || "STK push failed";
+      console.error(`M-Pesa error (Code ${stkData.ResponseCode}): ${errorMessage}`);
+      throw new Error(`M-Pesa error: ${errorMessage} (Status: ${stkData.ResponseCode})`);
     }
 
     const checkoutRequestId = stkData.CheckoutRequestID;

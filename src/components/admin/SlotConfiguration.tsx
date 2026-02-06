@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,20 +31,16 @@ const SlotConfiguration = () => {
   const [selectedDay, setSelectedDay] = useState(1);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchSlotConfiguration();
-  }, []);
-
-  const fetchSlotConfiguration = async () => {
+  const fetchSlotConfiguration = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('slot_configuration')
         .select('*')
         .order('day_of_week', { ascending: true })
         .order('slot_number', { ascending: true });
-      
+
       if (error) throw error;
-      setSlots(data || []);
+      setSlots((data as SlotConfig[]) || []);
     } catch (error) {
       console.error('Error fetching slot configuration:', error);
       toast({
@@ -55,10 +51,14 @@ const SlotConfiguration = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const updateSlot = (id: string, field: keyof SlotConfig, value: any) => {
-    setSlots(prev => prev.map(slot => 
+  useEffect(() => {
+    fetchSlotConfiguration();
+  }, [fetchSlotConfiguration]);
+
+  const updateSlot = (id: string, field: keyof SlotConfig, value: string | boolean | number) => {
+    setSlots(prev => prev.map(slot =>
       slot.id === id ? { ...slot, [field]: value } : slot
     ));
   };
@@ -76,10 +76,10 @@ const SlotConfiguration = () => {
             duration_minutes: slot.duration_minutes
           })
           .eq('id', slot.id);
-        
+
         if (error) throw error;
       }
-      
+
       toast({
         title: 'Configuration saved',
         description: 'Slot times have been updated successfully.',
@@ -152,14 +152,14 @@ const SlotConfiguration = () => {
             <div className="glass-panel rounded-xl p-1.5 mb-6">
               <TabsList className="w-full grid grid-cols-6 bg-transparent h-auto gap-1">
                 {ACTIVE_DAYS.map(day => (
-                  <TabsTrigger 
-                    key={day} 
-                    value={day.toString()} 
+                  <TabsTrigger
+                    key={day}
+                    value={day.toString()}
                     className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all duration-200"
                   >
                     <span className="text-xs font-medium">{DAY_SHORT[day]}</span>
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className="text-[10px] h-5 data-[state=active]:bg-primary-foreground/20 data-[state=active]:text-primary-foreground data-[state=active]:border-primary-foreground/30"
                     >
                       {getActiveSlotCount(day)} slots
@@ -190,23 +190,21 @@ const SlotConfiguration = () => {
                 {/* Slots Grid */}
                 <div className="grid gap-3">
                   {getDaySlots(day).map((slot) => (
-                    <div 
+                    <div
                       key={slot.id}
-                      className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 ${
-                        slot.is_active 
-                          ? 'bg-card/50 border-border/50 hover:border-primary/30' 
+                      className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 ${slot.is_active
+                          ? 'bg-card/50 border-border/50 hover:border-primary/30'
                           : 'bg-muted/20 border-border/30 opacity-60'
-                      }`}
+                        }`}
                     >
                       {/* Slot Number */}
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                        slot.is_active 
-                          ? 'bg-primary/10 text-primary' 
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm ${slot.is_active
+                          ? 'bg-primary/10 text-primary'
                           : 'bg-muted/50 text-muted-foreground'
-                      }`}>
+                        }`}>
                         #{slot.slot_number}
                       </div>
-                      
+
                       {/* Time Inputs */}
                       <div className="flex items-center gap-3 flex-1 flex-wrap">
                         <div className="space-y-1">
@@ -219,9 +217,9 @@ const SlotConfiguration = () => {
                             disabled={!slot.is_active}
                           />
                         </div>
-                        
+
                         <span className="text-muted-foreground mt-5">→</span>
-                        
+
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">End Time</Label>
                           <Input
@@ -249,7 +247,7 @@ const SlotConfiguration = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Active Toggle */}
                       <div className="flex items-center gap-3">
                         <Label htmlFor={`active-${slot.id}`} className="text-sm text-muted-foreground">

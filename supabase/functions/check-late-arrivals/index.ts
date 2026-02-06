@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
@@ -35,14 +36,14 @@ serve(async (req: Request) => {
     // Get current time in EAT (East Africa Time, UTC+3)
     const now = new Date();
     const today = now.toISOString().split('T')[0];
-    
+
     // Calculate current time in HH:MM format (EAT is UTC+3)
     const eatOffset = 3 * 60; // 3 hours in minutes
     const eatTime = new Date(now.getTime() + (eatOffset * 60 * 1000) + (now.getTimezoneOffset() * 60 * 1000));
     const currentHour = eatTime.getHours().toString().padStart(2, '0');
     const currentMinute = eatTime.getMinutes().toString().padStart(2, '0');
     const currentTimeStr = `${currentHour}:${currentMinute}`;
-    
+
     console.log(`Checking late arrivals at ${now.toISOString()} (EAT: ${currentTimeStr})`);
 
     // Fetch today's bookings that are "upcoming" and haven't had late warning sent
@@ -85,7 +86,7 @@ serve(async (req: Request) => {
         // Parse start time and check if 15+ minutes have passed
         const [startHour, startMinute] = slot.start_time.split(':').map(Number);
         const [currentH, currentM] = [parseInt(currentHour), parseInt(currentMinute)];
-        
+
         // Calculate minutes since appointment start
         const startTotalMinutes = startHour * 60 + startMinute;
         const currentTotalMinutes = currentH * 60 + currentM;
@@ -125,11 +126,11 @@ serve(async (req: Request) => {
           // Send WhatsApp message
           const whatsappPhoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
           const whatsappToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-          
+
           if (whatsappPhoneId && whatsappToken) {
             // Format phone number
             const phone = booking.phone_number.replace(/[\s\-()]/g, '').replace(/^\+/, '');
-            
+
             const whatsappResponse = await fetch(
               `https://graph.facebook.com/v18.0/${whatsappPhoneId}/messages`,
               {
@@ -172,27 +173,29 @@ serve(async (req: Request) => {
             results.late_warnings_sent++;
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(`Error processing booking ${booking.id}:`, err);
-        results.errors.push(`Processing error for ${booking.id}: ${err.message}`);
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        results.errors.push(`Processing error for ${booking.id}: ${message}`);
       }
     }
 
     console.log(`Completed: ${results.late_warnings_sent} late warnings sent, ${results.errors.length} errors`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         ...results,
         checked_at: now.toISOString(),
         current_time_eat: currentTimeStr
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in check-late-arrivals function:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
