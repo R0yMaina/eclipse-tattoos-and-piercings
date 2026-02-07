@@ -7,8 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MPESA_ENV = Deno.env.get("MPESA_ENVIRONMENT")?.toLowerCase() || "production";
+const rawEnv = Deno.env.get("MPESA_ENVIRONMENT") || "";
+const MPESA_ENV = rawEnv.trim().toLowerCase() || "production";
 const IS_SANDBOX = MPESA_ENV === "sandbox";
+console.log(`M-Pesa environment: "${MPESA_ENV}" (raw length: ${rawEnv.length}, IS_SANDBOX: ${IS_SANDBOX})`);
 
 // M-Pesa Daraja API endpoints
 const MPESA_AUTH_URL = IS_SANDBOX
