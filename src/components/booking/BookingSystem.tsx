@@ -48,7 +48,8 @@ export const BookingSystem = () => {
       setSlots([]);
       setSelectedSlot(null);
     }
-  }, [selectedDate, fetchSlots]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
 
   // Poll for payment confirmation
   useEffect(() => {
