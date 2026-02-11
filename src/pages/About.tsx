@@ -13,7 +13,7 @@ const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 const About = () => {
   useEffect(() => {
     document.title = 'About | Eclipse Tattoo & Piercings';
-    
+
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute(
@@ -40,7 +40,7 @@ const About = () => {
       "@type": "TattooParlor",
       "name": "Eclipse Tattoo & Piercings",
       "url": "https://eclipse-tattoo-and-piercings.lovable.app",
-      "foundingDate": "2017",
+      "foundingDate": "2019",
       "telephone": "+254705025961",
       "email": "jamingtonbuluma17@gmail.com",
       "address": {

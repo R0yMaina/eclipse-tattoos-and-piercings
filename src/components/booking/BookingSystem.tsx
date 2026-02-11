@@ -434,8 +434,10 @@ export const BookingSystem = () => {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : slots.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <p>No slots available for this date</p>
+                  <div className="text-center py-12 text-muted-foreground bg-accent/5 rounded-lg border border-border/50">
+                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium text-foreground">No slots available for this date</p>
+                    <p className="text-xs mt-1">Please try selecting a different date.</p>
                   </div>
                 ) : (
                   <>
