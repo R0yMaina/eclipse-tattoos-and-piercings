@@ -129,7 +129,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
         }
       }
     } catch (error: unknown) {
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         console.log('Request aborted');
       } else {
         console.error('Send error:', error);

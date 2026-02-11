@@ -201,7 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || "Failed to submit form"
+        error: message
       }),
       {
         status: 500,
