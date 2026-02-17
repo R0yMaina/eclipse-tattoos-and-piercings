@@ -9,8 +9,7 @@ const navLinks = [
   { name: 'Gallery', path: '/gallery' },
   { name: 'Services', path: '/services' },
   { name: 'About', path: '/about' },
-  { name: 'Booking', path: '/contact' },
-  { name: 'Contact', path: '/contact' },
+  { name: 'Book & Contact', path: '/contact' },
 ];
 
 export const Navbar = () => {

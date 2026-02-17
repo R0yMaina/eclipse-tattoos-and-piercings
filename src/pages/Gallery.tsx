@@ -10,6 +10,11 @@ import tattoo3 from '@/assets/gallery/tattoo-3.jpg';
 import tattoo4 from '@/assets/gallery/tattoo-4.jpg';
 import tattoo5 from '@/assets/gallery/tattoo-5.jpg';
 import tattoo6 from '@/assets/gallery/tattoo-6.jpg';
+import tattoo7 from '@/assets/gallery/tattoo-7.jpg';
+import tattoo8 from '@/assets/gallery/tattoo-8.jpg';
+import tattoo9 from '@/assets/gallery/tattoo-9.jpg';
+import tattoo10 from '@/assets/gallery/tattoo-10.jpg';
+import tattoo11 from '@/assets/gallery/tattoo-11.jpg';
 
 const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
@@ -28,6 +33,11 @@ const galleryItems: GalleryItem[] = [
   { src: tattoo4, alt: "Koi fish with stars tattoo", style: ['realism', 'symbolic'] },
   { src: tattoo5, alt: "Ankh symbol back tattoo", style: ['symbolic', 'tribal'] },
   { src: tattoo6, alt: "Clover and script tattoo", style: ['script', 'symbolic'] },
+  { src: tattoo7, alt: "Butterfly with face and 'Born to Die' script", style: ['symbolic', 'script'] },
+  { src: tattoo8, alt: "Minimalist fairy silhouette", style: ['symbolic'] },
+  { src: tattoo9, alt: "Butterfly with laurel wreath and 'BALANCE'", style: ['symbolic', 'script'] },
+  { src: tattoo10, alt: "Elegant floral line art on hip", style: ['floral'] },
+  { src: tattoo11, alt: "Surreal geometric design with hands and faces", style: ['realism', 'symbolic'] },
 ];
 
 const styleFilters: { value: TattooStyle; label: string }[] = [
@@ -43,8 +53,8 @@ const Gallery = () => {
   const [activeFilter, setActiveFilter] = useState<TattooStyle>('all');
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
 
-  const filteredItems = activeFilter === 'all' 
-    ? galleryItems 
+  const filteredItems = activeFilter === 'all'
+    ? galleryItems
     : galleryItems.filter(item => item.style.includes(activeFilter));
 
   return (
@@ -52,7 +62,7 @@ const Gallery = () => {
       <Suspense fallback={null}>
         <Scene3DBroad />
       </Suspense>
-      
+
       <div className="relative z-10">
         {/* Hero Section */}
         <section className="pt-32 pb-16 px-4">
@@ -76,8 +86,8 @@ const Gallery = () => {
                   variant={activeFilter === filter.value ? "default" : "outline"}
                   size="sm"
                   onClick={() => setActiveFilter(filter.value)}
-                  className={activeFilter === filter.value 
-                    ? "bg-primary text-primary-foreground" 
+                  className={activeFilter === filter.value
+                    ? "bg-primary text-primary-foreground"
                     : "border-primary/40 hover:border-primary hover:bg-primary/10"
                   }
                 >
@@ -137,8 +147,8 @@ const Gallery = () => {
               <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
                 Book a consultation to discuss your vision with our artists.
               </p>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => window.location.href = '/contact'}
               >
@@ -151,7 +161,7 @@ const Gallery = () => {
 
       {/* Lightbox Modal */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
