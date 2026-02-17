@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { format, isBefore, startOfDay, isSunday } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Upload, Clock, CheckCircle, Calendar as CalendarIcon, User, Phone, DollarSign, Smartphone, AlertCircle } from 'lucide-react';
+import { Loader2, Upload, Clock, CheckCircle, Calendar as CalendarIcon, User, Phone, DollarSign, Smartphone, AlertCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import gsap from 'gsap';
+import SplitType from 'split-type';
 
 interface SlotAvailability {
   slot_id: string;
@@ -21,6 +22,18 @@ interface SlotAvailability {
 }
 
 type BookingStep = 'details' | 'payment' | 'waiting' | 'confirmed' | 'failed';
+
+/* ─── Reusable glass card ─── */
+const GlassCard = ({ children, className, elevated = false }: { children: React.ReactNode; className?: string; elevated?: boolean }) => (
+  <div className={cn(
+    "rounded-2xl backdrop-blur-xl",
+    elevated ? "glass-panel-elevated" : "glass-panel",
+    "glass-highlight",
+    className
+  )}>
+    {children}
+  </div>
+);
 
 export const BookingSystem = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -40,21 +53,62 @@ export const BookingSystem = () => {
   const [paymentPolling, setPaymentPolling] = useState(false);
   const { toast } = useToast();
 
-  // Fetch slots when date changes
+  // GSAP refs
+  const heroRef = useRef<HTMLDivElement>(null);
+  const stepRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const paymentRef = useRef<HTMLDivElement>(null);
+
+  // GSAP hero text animation
   useEffect(() => {
-    if (selectedDate) {
-      fetchSlots(selectedDate);
-    } else {
-      setSlots([]);
-      setSelectedSlot(null);
-    }
+    if (!heroRef.current) return;
+    const heading = heroRef.current.querySelector('.booking-hero-title');
+    const subtitle = heroRef.current.querySelector('.booking-hero-sub');
+    if (!heading || !subtitle) return;
+
+    const split = new SplitType(heading as HTMLElement, { types: 'chars' });
+    gsap.set(split.chars, { opacity: 0, y: 40, rotateX: -90 });
+    gsap.set(subtitle, { opacity: 0, y: 20 });
+
+    const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+    tl.to(split.chars, {
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      duration: 0.8,
+      stagger: 0.03,
+    });
+    tl.to(subtitle, { opacity: 1, y: 0, duration: 0.6 }, '-=0.4');
+
+    return () => { split.revert(); };
+  }, []);
+
+  // Animate step indicator on step change
+  useEffect(() => {
+    if (!stepRef.current) return;
+    gsap.fromTo(
+      stepRef.current.querySelectorAll('.step-dot'),
+      { scale: 0.7, opacity: 0.5 },
+      { scale: 1, opacity: 1, duration: 0.4, stagger: 0.08, ease: 'back.out(2)' }
+    );
+  }, [bookingStep, selectedSlot]);
+
+  // Animate form/payment cards on mount
+  useEffect(() => {
+    const target = formRef.current || paymentRef.current;
+    if (!target) return;
+    gsap.fromTo(target, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
+  }, [bookingStep, selectedSlot]);
+
+  // ── Business logic (unchanged) ──
+  useEffect(() => {
+    if (selectedDate) fetchSlots(selectedDate);
+    else { setSlots([]); setSelectedSlot(null); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
-  // Poll for payment confirmation
   useEffect(() => {
     if (!paymentPolling || !currentBookingId) return;
-
     const interval = setInterval(async () => {
       try {
         const { data, error } = await supabase
@@ -62,60 +116,33 @@ export const BookingSystem = () => {
           .select('payment_status, deposit_paid, mpesa_receipt')
           .eq('id', currentBookingId)
           .single();
-
-        if (error) {
-          console.error('Polling error:', error);
-          return;
-        }
-
+        if (error) return;
         if (data?.payment_status === 'paid' && data?.deposit_paid) {
           setPaymentPolling(false);
           setBookingStep('confirmed');
-          toast({
-            title: 'Payment received! ✅',
-            description: `Deposit of KES ${depositAmount} confirmed. Receipt: ${data.mpesa_receipt || 'Processing'}`,
-          });
+          toast({ title: 'Payment received! ✅', description: `Deposit of KES ${depositAmount} confirmed. Receipt: ${data.mpesa_receipt || 'Processing'}` });
         } else if (data?.payment_status === 'failed') {
           setPaymentPolling(false);
           setBookingStep('failed');
-          toast({
-            title: 'Payment failed',
-            description: 'The M-Pesa payment was not completed. You can retry.',
-            variant: 'destructive'
-          });
+          toast({ title: 'Payment failed', description: 'The M-Pesa payment was not completed. You can retry.', variant: 'destructive' });
         }
-      } catch (err) {
-        console.error('Payment polling error:', err);
-      }
-    }, 5000); // Poll every 5 seconds
-
+      } catch (err) { console.error('Payment polling error:', err); }
+    }, 5000);
     return () => clearInterval(interval);
   }, [paymentPolling, currentBookingId, depositAmount, toast]);
 
   const fetchSlots = useCallback(async (date: Date) => {
     setLoading(true);
     setSelectedSlot(null);
-
     try {
       const formattedDate = format(date, 'yyyy-MM-dd');
-
-      await supabase.functions.invoke('generate-slots', {
-        body: { date: formattedDate }
-      });
-
-      const { data, error } = await supabase.rpc('get_slot_availability', {
-        target_date: formattedDate
-      });
-
+      await supabase.functions.invoke('generate-slots', { body: { date: formattedDate } });
+      const { data, error } = await supabase.rpc('get_slot_availability', { target_date: formattedDate });
       if (error) throw error;
       setSlots((data as SlotAvailability[]) || []);
     } catch (error: unknown) {
       console.error('Error fetching slots:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load available slots. Please try again.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Failed to load available slots. Please try again.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -124,24 +151,8 @@ export const BookingSystem = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Invalid file type',
-          description: 'Please upload an image file (JPEG, PNG, etc.)',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: 'File too large',
-          description: 'Please upload an image smaller than 5MB',
-          variant: 'destructive'
-        });
-        return;
-      }
-
+      if (!file.type.startsWith('image/')) { toast({ title: 'Invalid file type', description: 'Please upload an image file (JPEG, PNG, etc.)', variant: 'destructive' }); return; }
+      if (file.size > 5 * 1024 * 1024) { toast({ title: 'File too large', description: 'Please upload an image smaller than 5MB', variant: 'destructive' }); return; }
       setInspirationImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
@@ -151,163 +162,70 @@ export const BookingSystem = () => {
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!selectedSlot || !clientName.trim() || !phoneNumber.trim() || !agreedPrice) {
-      toast({
-        title: 'Missing information',
-        description: 'Please fill in all required fields including the agreed price.',
-        variant: 'destructive'
-      });
-      return;
+      toast({ title: 'Missing information', description: 'Please fill in all required fields including the agreed price.', variant: 'destructive' }); return;
     }
-
     const price = parseFloat(agreedPrice);
-    if (isNaN(price) || price <= 0) {
-      toast({
-        title: 'Invalid price',
-        description: 'Please enter a valid price amount.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
+    if (isNaN(price) || price <= 0) { toast({ title: 'Invalid price', description: 'Please enter a valid price amount.', variant: 'destructive' }); return; }
     const phoneRegex = /^[\d\s\-+()]{10,}$/;
-    if (!phoneRegex.test(phoneNumber)) {
-      toast({
-        title: 'Invalid phone number',
-        description: 'Please enter a valid phone number (e.g. 0712345678 or +254712345678).',
-        variant: 'destructive'
-      });
-      return;
-    }
+    if (!phoneRegex.test(phoneNumber)) { toast({ title: 'Invalid phone number', description: 'Please enter a valid phone number.', variant: 'destructive' }); return; }
 
     setSubmitting(true);
-
     try {
       let imageUrl = null;
-
       if (inspirationImage) {
         const fileExt = inspirationImage.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('inspiration-images')
-          .upload(fileName, inspirationImage);
-
+        const { error: uploadError } = await supabase.storage.from('inspiration-images').upload(fileName, inspirationImage);
         if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('inspiration-images')
-          .getPublicUrl(fileName);
-
+        const { data: { publicUrl } } = supabase.storage.from('inspiration-images').getPublicUrl(fileName);
         imageUrl = publicUrl;
       }
-
-      // Create booking with pending payment
       const newBookingId = crypto.randomUUID();
       const deposit = Math.ceil(price * 0.15);
-
-      const { error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          id: newBookingId,
-          slot_id: selectedSlot.slot_id,
-          client_name: clientName.trim(),
-          phone_number: phoneNumber.trim(),
-          inspiration_image_url: imageUrl,
-          notes: notes.trim() || null,
-          status: 'upcoming',
-          agreed_price: price,
-          deposit_amount: deposit,
-          payment_status: 'pending',
-          deposit_paid: false,
-          payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        });
-
+      const { error: bookingError } = await supabase.from('bookings').insert({
+        id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
+        inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'upcoming', agreed_price: price,
+        deposit_amount: deposit, payment_status: 'pending', deposit_paid: false,
+        payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
       if (bookingError) {
-        if (bookingError.message.includes('duplicate') || bookingError.message.includes('already exists')) {
-          throw new Error('This slot has already been booked. Please select another time.');
-        }
+        if (bookingError.message.includes('duplicate') || bookingError.message.includes('already exists')) throw new Error('This slot has already been booked. Please select another time.');
         throw bookingError;
       }
-
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
       setBookingStep('payment');
-
     } catch (error: unknown) {
-      console.error('Booking error:', error);
       const message = error instanceof Error ? error.message : 'Failed to create booking. Please try again.';
-      toast({
-        title: 'Booking failed',
-        description: message,
-        variant: 'destructive'
-      });
-    } finally {
-      setSubmitting(false);
-    }
+      toast({ title: 'Booking failed', description: message, variant: 'destructive' });
+    } finally { setSubmitting(false); }
   };
 
   const handlePayDeposit = async () => {
     if (!currentBookingId) return;
-
     setSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
-        body: {
-          bookingId: currentBookingId,
-          phoneNumber: phoneNumber.trim(),
-          agreedPrice: parseFloat(agreedPrice),
-        }
+        body: { bookingId: currentBookingId, phoneNumber: phoneNumber.trim(), agreedPrice: parseFloat(agreedPrice) }
       });
-
       if (error) throw error;
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      toast({
-        title: 'M-Pesa prompt sent! 📱',
-        description: 'Check your phone and enter your M-Pesa PIN to complete the payment.',
-      });
-
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'M-Pesa prompt sent! 📱', description: 'Check your phone and enter your M-Pesa PIN to complete the payment.' });
       setBookingStep('waiting');
       setPaymentPolling(true);
-
     } catch (error: unknown) {
-      console.error('Payment error:', error);
       const message = error instanceof Error ? error.message : 'Failed to send M-Pesa prompt. Please try again.';
-      toast({
-        title: 'Payment initiation failed',
-        description: message,
-        variant: 'destructive'
-      });
-    } finally {
-      setSubmitting(false);
-    }
+      toast({ title: 'Payment initiation failed', description: message, variant: 'destructive' });
+    } finally { setSubmitting(false); }
   };
 
-  const handleRetryPayment = () => {
-    setBookingStep('payment');
-  };
-
+  const handleRetryPayment = () => setBookingStep('payment');
   const handleResetBooking = () => {
-    setClientName('');
-    setPhoneNumber('');
-    setNotes('');
-    setAgreedPrice('');
-    setInspirationImage(null);
-    setImagePreview(null);
-    setSelectedSlot(null);
-    setBookingStep('details');
-    setCurrentBookingId(null);
-    setDepositAmount(0);
-    setPaymentPolling(false);
-
-    if (selectedDate) {
-      fetchSlots(selectedDate);
-    }
+    setClientName(''); setPhoneNumber(''); setNotes(''); setAgreedPrice('');
+    setInspirationImage(null); setImagePreview(null); setSelectedSlot(null);
+    setBookingStep('details'); setCurrentBookingId(null); setDepositAmount(0); setPaymentPolling(false);
+    if (selectedDate) fetchSlots(selectedDate);
   };
 
   const formatTime = (time: string) => {
@@ -320,542 +238,418 @@ export const BookingSystem = () => {
 
   const getSlotColor = (status: string) => {
     switch (status) {
-      case 'available':
-        return 'bg-green-500/20 border-green-500 text-green-400 hover:bg-green-500/30';
-      case 'ongoing':
-        return 'bg-yellow-500/20 border-yellow-500 text-yellow-400 cursor-not-allowed';
-      case 'upcoming':
-        return 'bg-red-500/20 border-red-500 text-red-400 cursor-not-allowed';
-      case 'completed':
-        return 'bg-muted/50 border-muted text-muted-foreground cursor-not-allowed';
-      default:
-        return 'bg-muted/20 border-muted text-muted-foreground cursor-not-allowed';
+      case 'available': return 'border-green-500/40 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-400/60 hover:shadow-[0_0_20px_hsl(142_52%_64%/0.15)]';
+      case 'ongoing': return 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400 cursor-not-allowed';
+      case 'upcoming': return 'border-red-500/30 bg-red-500/10 text-red-400 cursor-not-allowed';
+      case 'completed': return 'border-border/30 bg-muted/20 text-muted-foreground cursor-not-allowed';
+      default: return 'border-border/20 bg-muted/10 text-muted-foreground cursor-not-allowed';
     }
   };
 
   const getSlotLabel = (status: string) => {
     switch (status) {
-      case 'available':
-        return 'Available';
-      case 'ongoing':
-        return 'In Progress';
-      case 'upcoming':
-        return 'Booked';
-      case 'completed':
-        return 'Completed';
-      default:
-        return status;
+      case 'available': return 'Available'; case 'ongoing': return 'In Progress';
+      case 'upcoming': return 'Booked'; case 'completed': return 'Completed'; default: return status;
     }
   };
 
   const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.15) : 0;
 
+  const stepLabels = ['Select Slot', 'Your Details', 'Pay Deposit', 'Confirmed'];
+  const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
+    bookingStep === 'payment' ? 2 : bookingStep === 'waiting' ? 2 : bookingStep === 'confirmed' ? 3 : 1;
+
   return (
-    <div className="w-full">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-heading font-bold text-foreground mb-2">Book Your Session</h2>
-        <p className="text-muted-foreground">Select a date and time slot, then pay a 15% deposit to confirm</p>
+    <div className="w-full max-w-5xl mx-auto">
+      {/* ── Hero ── */}
+      <div ref={heroRef} className="text-center mb-12">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium tracking-wider uppercase mb-6">
+          <Sparkles className="h-3.5 w-3.5" />
+          Online Booking
+        </div>
+        <h2
+          className="booking-hero-title text-4xl md:text-5xl font-heading font-bold text-foreground mb-3"
+          style={{ perspective: '600px' }}
+        >
+          Book Your Session
+        </h2>
+        <p className="booking-hero-sub text-muted-foreground max-w-md mx-auto">
+          Select a date and time slot, then pay a 15% deposit to confirm your appointment
+        </p>
       </div>
 
-      {/* Step Indicator */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        {['Select Slot', 'Your Details', 'Pay Deposit', 'Confirmed'].map((step, i) => {
-          const stepIndex = i;
-          const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
-            bookingStep === 'payment' ? 2 :
-              bookingStep === 'waiting' ? 2 :
-                bookingStep === 'confirmed' ? 3 : 1;
-          const isActive = stepIndex <= currentIndex;
+      {/* ── Step Indicator ── */}
+      <div ref={stepRef} className="flex items-center justify-center gap-1 sm:gap-2 mb-10">
+        {stepLabels.map((step, i) => {
+          const isActive = i <= currentIndex;
+          const isCurrent = i === currentIndex;
           return (
-            <div key={step} className="flex items-center gap-2">
+            <div key={step} className="flex items-center gap-1 sm:gap-2">
               <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                "step-dot w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300",
+                isCurrent
+                  ? "bg-primary text-primary-foreground gold-glow scale-110"
+                  : isActive
+                    ? "bg-primary/80 text-primary-foreground"
+                    : "glass-panel text-muted-foreground"
               )}>
-                {stepIndex < currentIndex ? '✓' : stepIndex + 1}
+                {i < currentIndex ? '✓' : i + 1}
               </div>
               <span className={cn(
-                "text-sm hidden sm:inline",
-                isActive ? "text-foreground" : "text-muted-foreground"
+                "text-xs sm:text-sm hidden sm:inline font-medium tracking-wide",
+                isCurrent ? "text-primary" : isActive ? "text-foreground" : "text-muted-foreground"
               )}>{step}</span>
-              {i < 3 && <div className={cn("w-8 h-px", isActive ? "bg-primary" : "bg-muted")} />}
+              {i < 3 && (
+                <div className={cn(
+                  "w-6 sm:w-10 h-px transition-colors duration-300",
+                  isActive ? "bg-primary/60" : "bg-border/40"
+                )} />
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Date & Slot Selection */}
+      {/* ── Date & Slot Selection ── */}
       {bookingStep === 'details' && (
         <>
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Calendar Section */}
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Calendar */}
+            <GlassCard elevated className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <CalendarIcon className="h-5 w-5 text-primary" />
-                  Select Date
-                </CardTitle>
-                <CardDescription>Choose your preferred appointment date</CardDescription>
-              </CardHeader>
-              <CardContent className="flex justify-center">
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-semibold text-foreground">Select Date</h3>
+                  <p className="text-xs text-muted-foreground">Choose your preferred day</p>
+                </div>
+              </div>
+              <div className="flex justify-center">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   disabled={(date) => isBefore(date, startOfDay(new Date())) || isSunday(date)}
-                  className="rounded-md border border-border/50"
+                  className="rounded-xl border border-border/30"
                 />
-              </CardContent>
-              <p className="text-xs text-muted-foreground mt-2 text-center pb-4">
-                Mon-Fri: 10am - 6:30pm | Sat: 11am - 5:30pm | Closed Sundays
+              </div>
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                Mon-Fri: 10am – 6:30pm · Sat: 11am – 5:30pm · Closed Sundays
               </p>
-            </Card>
+            </GlassCard>
 
-            {/* Slots Section */}
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            {/* Slots */}
+            <GlassCard elevated className="p-6 h-fit">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Clock className="h-5 w-5 text-primary" />
-                  Available Slots
-                </CardTitle>
-                <CardDescription>
-                  {selectedDate
-                    ? `Showing availability for ${format(selectedDate, 'MMMM d, yyyy')}`
-                    : 'Select a date to view available slots'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!selectedDate ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Please select a date first</p>
-                  </div>
-                ) : loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : slots.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground bg-accent/5 rounded-lg border border-border/50">
-                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium text-foreground">No slots available for this date</p>
-                    <p className="text-xs mt-1">Please try selecting a different date.</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex flex-wrap gap-4 mb-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span>Available</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <span>In Progress</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span>Booked</span>
-                      </div>
-                    </div>
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-semibold text-foreground">Available Slots</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a date to view'}
+                  </p>
+                </div>
+              </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {slots.map((slot) => (
-                        <button
-                          key={slot.slot_id}
-                          onClick={() => slot.status === 'available' && setSelectedSlot(slot)}
-                          disabled={slot.status !== 'available'}
-                          className={cn(
-                            "p-3 rounded-lg border-2 transition-all text-sm font-medium",
-                            getSlotColor(slot.status),
-                            selectedSlot?.slot_id === slot.slot_id && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                          )}
-                        >
-                          <div className="font-semibold">
-                            {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                          </div>
-                          <div className="text-xs opacity-75 mt-1">
-                            {getSlotLabel(slot.status)}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+              {!selectedDate ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-sm">Please select a date first</p>
+                </div>
+              ) : loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : slots.length === 0 ? (
+                <div className="text-center py-16 glass-panel rounded-xl">
+                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="font-medium text-foreground">No slots available</p>
+                  <p className="text-xs text-muted-foreground mt-1">Try a different date</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-4 mb-5 text-xs text-muted-foreground">
+                    {[{ color: 'bg-green-500', label: 'Available' }, { color: 'bg-yellow-500', label: 'In Progress' }, { color: 'bg-red-500', label: 'Booked' }].map(({ color, label }) => (
+                      <div key={label} className="flex items-center gap-1.5">
+                        <div className={cn("w-2.5 h-2.5 rounded-full", color)} />
+                        <span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {slots.map((slot) => (
+                      <button
+                        key={slot.slot_id}
+                        onClick={() => slot.status === 'available' && setSelectedSlot(slot)}
+                        disabled={slot.status !== 'available'}
+                        className={cn(
+                          "p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 text-sm font-medium",
+                          getSlotColor(slot.status),
+                          selectedSlot?.slot_id === slot.slot_id && "ring-2 ring-primary ring-offset-2 ring-offset-background gold-glow"
+                        )}
+                      >
+                        <div className="font-semibold text-xs">
+                          {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
+                        </div>
+                        <div className="text-[10px] opacity-70 mt-0.5">{getSlotLabel(slot.status)}</div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </GlassCard>
           </div>
 
-          {/* Booking Form */}
+          {/* ── Booking Form ── */}
           {selectedDate && selectedSlot && (
-            <Card className="mt-8 bg-card/50 backdrop-blur-sm border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary" />
-                  Your Details
-                </CardTitle>
-                <CardDescription>
-                  Booking for {format(selectedDate!, 'MMMM d, yyyy')} at {formatTime(selectedSlot.start_time)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmitBooking} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="clientName" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Full Name *
-                      </Label>
-                      <Input
-                        id="clientName"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        placeholder="Enter your full name"
-                        required
-                        maxLength={100}
-                      />
-                    </div>
+            <div ref={formRef}>
+              <GlassCard elevated className="mt-8 p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg font-semibold text-foreground">Your Details</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {format(selectedDate, 'MMMM d, yyyy')} at {formatTime(selectedSlot.start_time)}
+                    </p>
+                  </div>
+                </div>
 
+                <form onSubmit={handleSubmitBooking} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <Label htmlFor="phoneNumber" className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        M-Pesa Phone Number *
+                      <Label htmlFor="clientName" className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="h-3.5 w-3.5" /> Full Name *
                       </Label>
-                      <Input
-                        id="phoneNumber"
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="0712345678 or +254712345678"
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">This number will receive the M-Pesa payment prompt</p>
+                      <Input id="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)}
+                        placeholder="Enter your full name" required maxLength={100}
+                        className="bg-input/50 border-border/40 focus:border-primary/60 focus:ring-primary/20" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber" className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5" /> M-Pesa Phone Number *
+                      </Label>
+                      <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
+                        placeholder="0712345678 or +254712345678" required
+                        className="bg-input/50 border-border/40 focus:border-primary/60 focus:ring-primary/20" />
+                      <p className="text-[10px] text-muted-foreground">This number will receive the M-Pesa payment prompt</p>
                     </div>
                   </div>
 
-                  {/* Agreed Price Section */}
-                  <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
-                    <div className="grid md:grid-cols-2 gap-6 items-end">
+                  {/* Agreed Price */}
+                  <div className="p-5 rounded-xl border border-primary/20 bg-primary/5 backdrop-blur-sm">
+                    <div className="grid md:grid-cols-2 gap-5 items-end">
                       <div className="space-y-2">
-                        <Label htmlFor="agreedPrice" className="flex items-center gap-2 text-base font-semibold">
-                          <DollarSign className="h-4 w-4 text-primary" />
-                          Agreed Price (KES) *
+                        <Label htmlFor="agreedPrice" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                          <DollarSign className="h-4 w-4 text-primary" /> Agreed Price (KES) *
                         </Label>
-                        <Input
-                          id="agreedPrice"
-                          type="number"
-                          min="100"
-                          step="1"
-                          value={agreedPrice}
+                        <Input id="agreedPrice" type="number" min="100" step="1" value={agreedPrice}
                           onChange={(e) => setAgreedPrice(e.target.value)}
-                          placeholder="Enter the price agreed with the studio"
-                          required
-                          className="text-lg"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Enter the total price you agreed on when you called the studio
-                        </p>
+                          placeholder="Enter the price agreed with the studio" required
+                          className="text-lg bg-input/50 border-border/40 focus:border-primary/60" />
+                        <p className="text-[10px] text-muted-foreground">Enter the total price agreed when you called the studio</p>
                       </div>
-
                       {agreedPrice && parseFloat(agreedPrice) > 0 && (
-                        <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-                          <p className="text-sm text-muted-foreground">15% Deposit Required</p>
-                          <p className="text-2xl font-bold text-primary">KES {calculatedDeposit.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Balance of KES {(parseFloat(agreedPrice) - calculatedDeposit).toLocaleString()} due at appointment
+                        <GlassCard className="p-4 text-center">
+                          <p className="text-xs text-muted-foreground">15% Deposit Required</p>
+                          <p className="text-3xl font-heading font-bold text-primary mt-1">KES {calculatedDeposit.toLocaleString()}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Balance KES {(parseFloat(agreedPrice) - calculatedDeposit).toLocaleString()} at appointment
                           </p>
-                        </div>
+                        </GlassCard>
                       )}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="inspirationImage" className="flex items-center gap-2">
-                      <Upload className="h-4 w-4" />
-                      Tattoo Inspiration Image (optional)
+                    <Label htmlFor="inspirationImage" className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Upload className="h-3.5 w-3.5" /> Tattoo Inspiration Image (optional)
                     </Label>
                     <div className="flex items-center gap-4">
-                      <Input
-                        id="inspirationImage"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="max-w-sm"
-                      />
+                      <Input id="inspirationImage" type="file" accept="image/*" onChange={handleImageChange}
+                        className="max-w-sm bg-input/50 border-border/40" />
                       {imagePreview && (
-                        <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
-                          <img
-                            src={imagePreview}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setInspirationImage(null);
-                              setImagePreview(null);
-                            }}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 text-xs"
-                          >
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/30">
+                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => { setInspirationImage(null); setImagePreview(null); }}
+                            className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px]">
                             ×
                           </button>
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">Max 5MB, JPEG/PNG</p>
+                    <p className="text-[10px] text-muted-foreground">Max 5MB, JPEG/PNG</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Short Notes (optional)</Label>
-                    <Textarea
-                      id="notes"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Any specific requests or details..."
-                      rows={2}
-                      maxLength={200}
-                    />
-                    <p className="text-xs text-muted-foreground">{notes.length}/200 characters</p>
+                    <Label htmlFor="notes" className="text-sm text-muted-foreground">Short Notes (optional)</Label>
+                    <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Any specific requests or details…" rows={2} maxLength={200}
+                      className="bg-input/50 border-border/40 focus:border-primary/60" />
+                    <p className="text-[10px] text-muted-foreground">{notes.length}/200</p>
                   </div>
 
-                  <Button
-                    type="submit"
-                    size="lg"
+                  <Button type="submit" size="lg"
                     disabled={submitting || !agreedPrice || calculatedDeposit <= 0}
-                    className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
+                    className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold tracking-wide">
                     {submitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating booking...
-                      </>
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating booking…</>
                     ) : (
-                      <>
-                        Proceed to Pay Deposit — KES {calculatedDeposit > 0 ? calculatedDeposit.toLocaleString() : '0'}
-                      </>
+                      <>Proceed to Pay Deposit — KES {calculatedDeposit > 0 ? calculatedDeposit.toLocaleString() : '0'}</>
                     )}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
+              </GlassCard>
+            </div>
           )}
         </>
       )}
 
-      {/* Payment Step */}
+      {/* ── Payment Step ── */}
       {bookingStep === 'payment' && (
-        <Card className="mt-8 bg-card/50 backdrop-blur-sm border-border/50 max-w-lg mx-auto">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+        <div ref={paymentRef}>
+          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 gold-glow">
               <Smartphone className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle>Pay Deposit via M-Pesa</CardTitle>
-            <CardDescription>
-              A payment prompt will be sent to your phone
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="p-4 rounded-lg bg-muted/50 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Booking date</span>
-                <span className="font-medium">{selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Time slot</span>
-                <span className="font-medium">{selectedSlot ? `${formatTime(selectedSlot.start_time)} - ${formatTime(selectedSlot.end_time)}` : ''}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total price</span>
-                <span className="font-medium">KES {parseFloat(agreedPrice).toLocaleString()}</span>
-              </div>
-              <div className="h-px bg-border" />
-              <div className="flex justify-between">
-                <span className="font-semibold">Deposit (15%)</span>
-                <span className="text-xl font-bold text-primary">KES {depositAmount.toLocaleString()}</span>
+            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Pay Deposit via M-Pesa</h3>
+            <p className="text-sm text-muted-foreground mb-6">A payment prompt will be sent to your phone</p>
+
+            <div className="p-5 rounded-xl glass-panel space-y-3 text-left mb-6">
+              {[
+                ['Booking date', selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''],
+                ['Time slot', selectedSlot ? `${formatTime(selectedSlot.start_time)} – ${formatTime(selectedSlot.end_time)}` : ''],
+                ['Total price', `KES ${parseFloat(agreedPrice).toLocaleString()}`],
+              ].map(([l, v]) => (
+                <div key={l} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{l}</span>
+                  <span className="font-medium text-foreground">{v}</span>
+                </div>
+              ))}
+              <div className="h-px bg-border/30" />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-foreground">Deposit (15%)</span>
+                <span className="text-2xl font-heading font-bold text-primary">KES {depositAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">M-Pesa number</span>
-                <span className="font-medium">{phoneNumber}</span>
+                <span className="font-medium text-foreground">{phoneNumber}</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex gap-3">
+            <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3 text-left mb-6">
               <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
-              <div className="text-sm">
+              <div className="text-xs">
                 <p className="font-medium text-yellow-500">Payment expires in 24 hours</p>
-                <p className="text-muted-foreground mt-1">
-                  If the deposit is not paid within 24 hours, your booking will be automatically cancelled.
-                </p>
+                <p className="text-muted-foreground mt-0.5">If not paid, your booking will be cancelled.</p>
               </div>
             </div>
 
-            <Button
-              onClick={handlePayDeposit}
-              size="lg"
-              disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending M-Pesa prompt...
-                </>
-              ) : (
-                <>
-                  <Smartphone className="mr-2 h-5 w-5" />
-                  Pay KES {depositAmount.toLocaleString()} via M-Pesa
-                </>
-              )}
+            <Button onClick={handlePayDeposit} size="lg" disabled={submitting}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold">
+              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</> : <><Smartphone className="mr-2 h-5 w-5" />Pay KES {depositAmount.toLocaleString()} via M-Pesa</>}
             </Button>
-
-            <Button
-              variant="ghost"
-              onClick={handleResetBooking}
-              className="w-full"
-            >
-              Cancel booking
-            </Button>
-          </CardContent>
-        </Card>
+            <Button variant="ghost" onClick={handleResetBooking} className="w-full mt-2 text-muted-foreground hover:text-foreground">Cancel booking</Button>
+          </GlassCard>
+        </div>
       )}
 
-      {/* Waiting for Payment */}
+      {/* ── Waiting ── */}
       {bookingStep === 'waiting' && (
-        <Card className="mt-8 bg-card/50 backdrop-blur-sm border-border/50 max-w-lg mx-auto">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mb-4">
+        <div ref={paymentRef}>
+          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-5">
               <Loader2 className="h-8 w-8 text-yellow-500 animate-spin" />
             </div>
-            <CardTitle>Waiting for Payment</CardTitle>
-            <CardDescription>
-              Check your phone for the M-Pesa prompt and enter your PIN
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="p-4 rounded-lg bg-muted/50 text-center space-y-2">
-              <p className="text-sm text-muted-foreground">Amount</p>
-              <p className="text-3xl font-bold text-primary">KES {depositAmount.toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground">to {phoneNumber}</p>
+            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Waiting for Payment</h3>
+            <p className="text-sm text-muted-foreground mb-6">Check your phone for the M-Pesa prompt</p>
+
+            <div className="p-5 rounded-xl glass-panel text-center mb-6">
+              <p className="text-xs text-muted-foreground">Amount</p>
+              <p className="text-4xl font-heading font-bold text-primary mt-1">KES {depositAmount.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground mt-1">to {phoneNumber}</p>
             </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs shrink-0">1</div>
-                <p>Check your phone for the Safaricom M-Pesa pop-up</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs shrink-0">2</div>
-                <p>Enter your M-Pesa PIN to authorize the payment</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs shrink-0">3</div>
-                <p>This page will update automatically once payment is confirmed</p>
-              </div>
+            <div className="space-y-3 text-sm text-left mb-6">
+              {['Check your phone for the Safaricom M-Pesa pop-up', 'Enter your M-Pesa PIN to authorize', 'This page updates automatically once confirmed'].map((txt, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 font-semibold",
+                    i < 2 ? "bg-primary text-primary-foreground" : "glass-panel text-muted-foreground"
+                  )}>{i + 1}</div>
+                  <p className="text-muted-foreground">{txt}</p>
+                </div>
+              ))}
             </div>
 
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleRetryPayment}
-                className="flex-1"
-              >
-                Retry Payment
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={handleResetBooking}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={handleRetryPayment} className="flex-1 border-border/40">Retry Payment</Button>
+              <Button variant="ghost" onClick={handleResetBooking} className="flex-1 text-muted-foreground">Cancel</Button>
             </div>
-          </CardContent>
-        </Card>
+          </GlassCard>
+        </div>
       )}
 
-      {/* Payment Confirmed */}
+      {/* ── Confirmed ── */}
       {bookingStep === 'confirmed' && (
-        <Card className="mt-8 bg-card/50 backdrop-blur-sm border-border/50 max-w-lg mx-auto">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+        <div ref={paymentRef}>
+          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-5">
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
-            <CardTitle className="text-green-500">Booking Confirmed!</CardTitle>
-            <CardDescription>
-              Your deposit has been received and your slot is now secured
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="p-4 rounded-lg bg-muted/50 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Name</span>
-                <span className="font-medium">{clientName}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Date</span>
-                <span className="font-medium">{selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Time</span>
-                <span className="font-medium">{selectedSlot ? `${formatTime(selectedSlot.start_time)} - ${formatTime(selectedSlot.end_time)}` : ''}</span>
-              </div>
-              <div className="h-px bg-border" />
+            <h3 className="font-heading text-2xl font-bold text-green-400 mb-1">Booking Confirmed!</h3>
+            <p className="text-sm text-muted-foreground mb-6">Your deposit has been received and your slot is secured</p>
+
+            <div className="p-5 rounded-xl glass-panel space-y-3 text-left mb-6">
+              {[
+                ['Name', clientName],
+                ['Date', selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''],
+                ['Time', selectedSlot ? `${formatTime(selectedSlot.start_time)} – ${formatTime(selectedSlot.end_time)}` : ''],
+              ].map(([l, v]) => (
+                <div key={l} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{l}</span>
+                  <span className="font-medium text-foreground">{v}</span>
+                </div>
+              ))}
+              <div className="h-px bg-border/30" />
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Deposit paid</span>
-                <span className="font-medium text-green-500">KES {depositAmount.toLocaleString()}</span>
+                <span className="font-medium text-green-400">KES {depositAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Balance due</span>
-                <span className="font-medium">KES {(parseFloat(agreedPrice) - depositAmount).toLocaleString()}</span>
+                <span className="font-medium text-foreground">KES {(parseFloat(agreedPrice) - depositAmount).toLocaleString()}</span>
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground text-center">
-              You'll receive a confirmation message on WhatsApp shortly. Please arrive on time for your appointment.
-            </p>
+            <p className="text-xs text-muted-foreground mb-6">You'll receive a confirmation on WhatsApp shortly. Please arrive on time.</p>
 
-            <Button
-              onClick={handleResetBooking}
-              className="w-full"
-            >
+            <Button onClick={handleResetBooking} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold">
               Book Another Session
             </Button>
-          </CardContent>
-        </Card>
+          </GlassCard>
+        </div>
       )}
 
-      {/* Payment Failed */}
+      {/* ── Failed ── */}
       {bookingStep === 'failed' && (
-        <Card className="mt-8 bg-card/50 backdrop-blur-sm border-border/50 max-w-lg mx-auto">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+        <div ref={paymentRef}>
+          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-5">
               <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
-            <CardTitle className="text-destructive">Payment Failed</CardTitle>
-            <CardDescription>
-              The M-Pesa payment was not completed
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Your booking is still held for 24 hours. You can retry the payment or cancel the booking.
-            </p>
-
+            <h3 className="font-heading text-2xl font-bold text-destructive mb-1">Payment Failed</h3>
+            <p className="text-sm text-muted-foreground mb-6">The M-Pesa payment was not completed</p>
+            <p className="text-xs text-muted-foreground mb-6">Your booking is held for 24 hours. You can retry or cancel.</p>
             <div className="flex gap-2">
-              <Button
-                onClick={handleRetryPayment}
-                className="flex-1 bg-primary text-primary-foreground"
-              >
-                Retry Payment
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleResetBooking}
-                className="flex-1"
-              >
-                Cancel Booking
-              </Button>
+              <Button onClick={handleRetryPayment} className="flex-1 bg-primary text-primary-foreground gold-glow">Retry Payment</Button>
+              <Button variant="outline" onClick={handleResetBooking} className="flex-1 border-border/40">Cancel Booking</Button>
             </div>
-          </CardContent>
-        </Card>
+          </GlassCard>
+        </div>
       )}
     </div>
   );
