@@ -6,6 +6,9 @@ import { MapSection } from '@/components/contact/MapSection';
 import { FAQ } from '@/components/contact/FAQ';
 import { CTAFooter } from '@/components/contact/CTAFooter';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import PublicReviews from '@/components/reviews/PublicReviews';
+
+const ReviewSubmission = lazy(() => import('@/components/contact/ReviewSubmission'));
 
 const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
@@ -76,12 +79,20 @@ const Contact = () => {
         <Scene3DBroad />
       </Suspense>
       <div className="relative z-10">
-        <ErrorBoundary fallback={<div className="h-96 flex items-center justify-center text-red-500">Failed to load Hero Section</div>}>
+        <ErrorBoundary fallback={<div className="h-96 flex items-center justify-center text-destructive">Failed to load Hero Section</div>}>
           <ContactHero />
         </ErrorBoundary>
 
         <section className="py-16">
           <div className="container max-w-7xl mx-auto px-4">
+            {/* How It Works intro */}
+            <div className="mb-12 max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl font-heading font-bold text-foreground mb-4">How Booking Works</h2>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Start by reaching out to us — via call, WhatsApp, or the chat — to discuss your tattoo idea and get a price quote from our artists. Once you've agreed on the design and cost, come back here to pick a date and time slot. Confirm your booking by paying a 15% deposit via M-Pesa, and you're all set. We'll send you a reminder before your session.
+              </p>
+            </div>
+
             {/* Booking System Section */}
             <div id="contact-form" className="mb-16 scroll-mt-24">
               <ErrorBoundary fallback={
@@ -92,6 +103,20 @@ const Contact = () => {
               }>
                 <BookingSystem />
               </ErrorBoundary>
+            </div>
+
+            <div className="my-12 h-px bg-border/50" />
+
+            {/* Review / Complaint Section */}
+            <div className="grid lg:grid-cols-2 gap-12 items-start mb-16">
+              <div>
+                <Suspense fallback={null}>
+                  <ReviewSubmission />
+                </Suspense>
+              </div>
+              <div>
+                <PublicReviews />
+              </div>
             </div>
 
             <div className="my-12 h-px bg-border/50" />
