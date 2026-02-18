@@ -178,8 +178,8 @@ export const BookingSystem = () => {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('inspiration-images').upload(fileName, inspirationImage);
         if (uploadError) throw uploadError;
-        const { data: { publicUrl } } = supabase.storage.from('inspiration-images').getPublicUrl(fileName);
-        imageUrl = publicUrl;
+        // Store the file path only; admins access via signed URLs
+        imageUrl = fileName;
       }
       const newBookingId = crypto.randomUUID();
       const deposit = Math.ceil(price * 0.15);
