@@ -33,7 +33,7 @@ const Index = () => {
           Eclipse Tattoo & Piercings
         </h1>
         <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-6 md:mb-8 font-light [text-shadow:_0_2px_4px_rgba(0,0,0,0.9),_0_4px_12px_rgba(0,0,0,0.7)]">
-          Perfection is the aim
+          Perfection is thee aim
         </p>
 
         <div className="flex flex-col gap-3 md:gap-4 w-full max-w-md mx-auto sm:max-w-none sm:flex-row sm:justify-center">
