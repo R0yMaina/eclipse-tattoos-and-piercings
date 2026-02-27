@@ -196,6 +196,9 @@ export const BookingSystem = () => {
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
       setBookingStep('payment');
+      setTimeout(() => {
+        paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to create booking. Please try again.';
       toast({ title: 'Booking failed', description: message, variant: 'destructive' });
