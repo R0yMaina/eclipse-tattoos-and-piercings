@@ -385,7 +385,14 @@ export const BookingSystem = () => {
                     {slots.map((slot) => (
                       <button
                         key={slot.slot_id}
-                        onClick={() => slot.status === 'available' && setSelectedSlot(slot)}
+                        onClick={() => {
+                          if (slot.status === 'available') {
+                            setSelectedSlot(slot);
+                            setTimeout(() => {
+                              formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                          }
+                        }}
                         disabled={slot.status !== 'available'}
                         className={cn(
                           "p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 text-sm font-medium",
