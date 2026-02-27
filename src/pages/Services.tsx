@@ -6,7 +6,7 @@ import { JewelryAftercare } from '@/components/services/JewelryAftercare';
 import { ProcessTimeline } from '@/components/services/ProcessTimeline';
 import { ServicesFAQ } from '@/components/services/ServicesFAQ';
 import { ServicesCTA } from '@/components/services/ServicesCTA';
-import { StudioGallery } from '@/components/about/StudioGallery';
+
 
 const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
@@ -21,7 +21,7 @@ const Services = () => {
         <StickySubnav />
         <PiercingServices />
         <JewelryAftercare />
-        <StudioGallery />
+        
         <ProcessTimeline />
         <ServicesFAQ />
         <ServicesCTA />
