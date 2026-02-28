@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Plus, Pencil, Upload, X, GripVertical } from "lucide-react";
+import { Trash2, Plus, Pencil, Upload, X, GripVertical, Images } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ export default function GalleryManagement() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [editingImage, setEditingImage] = useState<GalleryImage | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
 
@@ -49,6 +51,14 @@ export default function GalleryManagement() {
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+
+  // Bulk upload state
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkPreviews, setBulkPreviews] = useState<string[]>([]);
+  const [bulkGalleryType, setBulkGalleryType] = useState("portfolio");
+  const [bulkStyles, setBulkStyles] = useState<string[]>([]);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [bulkTotal, setBulkTotal] = useState(0);
 
   const fetchImages = useCallback(async () => {
     const { data, error } = await supabase
@@ -204,6 +214,85 @@ export default function GalleryManagement() {
     }
   };
 
+  const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setBulkFiles(files);
+    setBulkPreviews(files.map((f) => URL.createObjectURL(f)));
+  };
+
+  const removeBulkFile = (index: number) => {
+    setBulkFiles((prev) => prev.filter((_, i) => i !== index));
+    setBulkPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleBulkStyle = (style: string) => {
+    setBulkStyles((prev) =>
+      prev.includes(style) ? prev.filter((s) => s !== style) : [...prev, style]
+    );
+  };
+
+  const handleBulkUpload = async () => {
+    if (bulkFiles.length === 0) {
+      toast({ title: "No files selected", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    setBulkTotal(bulkFiles.length);
+    setBulkProgress(0);
+
+    const maxOrder = images.length > 0 ? Math.max(...images.map((i) => i.sort_order)) + 1 : 0;
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < bulkFiles.length; i++) {
+      const f = bulkFiles[i];
+      try {
+        const ext = f.name.split(".").pop();
+        const baseName = f.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9-_ ]/g, "").trim();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+        const filePath = `${bulkGalleryType}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("gallery-images")
+          .upload(filePath, f);
+
+        if (uploadError) throw uploadError;
+
+        const { error: insertError } = await supabase.from("gallery_images").insert({
+          title: baseName || `Image ${i + 1}`,
+          alt_text: baseName || `Gallery image ${i + 1}`,
+          gallery_type: bulkGalleryType,
+          styles: bulkStyles,
+          image_path: filePath,
+          sort_order: maxOrder + i,
+        });
+
+        if (insertError) throw insertError;
+        successCount++;
+      } catch {
+        failCount++;
+      }
+      setBulkProgress(i + 1);
+    }
+
+    toast({
+      title: "Bulk upload complete",
+      description: `${successCount} uploaded${failCount > 0 ? `, ${failCount} failed` : ""}`,
+      variant: failCount > 0 ? "destructive" : "default",
+    });
+
+    setBulkDialogOpen(false);
+    setBulkFiles([]);
+    setBulkPreviews([]);
+    setBulkStyles([]);
+    setBulkProgress(0);
+    setBulkTotal(0);
+    setUploading(false);
+    fetchImages();
+  };
+
   const filteredImages =
     filterType === "all" ? images : images.filter((i) => i.gallery_type === filterType);
 
@@ -320,6 +409,101 @@ export default function GalleryManagement() {
 
                 <Button onClick={handleSubmit} disabled={uploading} className="w-full">
                   {uploading ? "Uploading..." : editingImage ? "Save Changes" : "Add Image"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Bulk Upload Dialog */}
+          <Dialog open={bulkDialogOpen} onOpenChange={(open) => { setBulkDialogOpen(open); if (!open) { setBulkFiles([]); setBulkPreviews([]); setBulkStyles([]); } }}>
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => setBulkDialogOpen(true)} className="gap-2 glass-panel">
+                <Images className="h-4 w-4" /> Bulk Upload
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Bulk Upload Images</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                {/* File picker */}
+                <label className="flex items-center justify-center gap-2 p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Select multiple images
+                  </span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleBulkFileChange} />
+                </label>
+
+                {/* Previews */}
+                {bulkPreviews.length > 0 && (
+                  <div>
+                    <Label>{bulkFiles.length} image{bulkFiles.length !== 1 ? "s" : ""} selected</Label>
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {bulkPreviews.map((p, i) => (
+                        <div key={i} className="relative rounded-lg overflow-hidden border border-border">
+                          <img src={p} alt={`Preview ${i + 1}`} className="w-full aspect-square object-cover" />
+                          <button
+                            onClick={() => removeBulkFile(i)}
+                            className="absolute top-1 right-1 p-0.5 rounded-full bg-background/80 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gallery Type */}
+                <div>
+                  <Label>Gallery Type (applied to all)</Label>
+                  <Select value={bulkGalleryType} onValueChange={setBulkGalleryType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="portfolio">Portfolio (Gallery page)</SelectItem>
+                      <SelectItem value="studio">Studio (About page)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Styles */}
+                {bulkGalleryType === "portfolio" && (
+                  <div>
+                    <Label>Styles (applied to all)</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {STYLE_OPTIONS.map((style) => (
+                        <button
+                          key={style}
+                          type="button"
+                          onClick={() => toggleBulkStyle(style)}
+                          className={`px-3 py-1 text-xs rounded-full border transition-colors capitalize ${
+                            bulkStyles.includes(style)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "border-border text-muted-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {style}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Progress */}
+                {uploading && bulkTotal > 0 && (
+                  <div className="space-y-2">
+                    <Progress value={(bulkProgress / bulkTotal) * 100} className="h-2" />
+                    <p className="text-xs text-muted-foreground text-center">
+                      Uploading {bulkProgress} of {bulkTotal}...
+                    </p>
+                  </div>
+                )}
+
+                <Button onClick={handleBulkUpload} disabled={uploading || bulkFiles.length === 0} className="w-full">
+                  {uploading ? `Uploading ${bulkProgress}/${bulkTotal}...` : `Upload ${bulkFiles.length} Image${bulkFiles.length !== 1 ? "s" : ""}`}
                 </Button>
               </div>
             </DialogContent>
