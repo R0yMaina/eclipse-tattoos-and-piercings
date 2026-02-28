@@ -12,9 +12,10 @@ import SlotConfiguration from "@/components/admin/SlotConfiguration";
 import MessageTemplates from "@/components/admin/MessageTemplates";
 import ReviewsManagement from "@/components/admin/ReviewsManagement";
 import TransactionsManagement from "@/components/admin/TransactionsManagement";
+import GalleryManagement from "@/components/admin/GalleryManagement";
 import {
   Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
-  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard
+  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
@@ -224,6 +225,13 @@ export default function Admin() {
                 <Star className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Feedback</span>
               </TabsTrigger>
+              <TabsTrigger
+                value="gallery"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <ImageIcon className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Gallery</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -238,6 +246,7 @@ export default function Admin() {
             <TabsContent value="security" className="mt-0"><SecurityMonitor /></TabsContent>
             <TabsContent value="questions" className="mt-0"><PopularQuestions /></TabsContent>
             <TabsContent value="feedback" className="mt-0"><FeedbackList /></TabsContent>
+            <TabsContent value="gallery" className="mt-0"><GalleryManagement /></TabsContent>
           </div>
         </Tabs>
       </main>

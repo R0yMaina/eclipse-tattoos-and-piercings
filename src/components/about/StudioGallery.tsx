@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { supabase } from '@/integrations/supabase/client';
 import tattoo1 from '@/assets/gallery/tattoo-1.jpg';
 import tattoo2 from '@/assets/gallery/tattoo-2.jpg';
 import tattoo3 from '@/assets/gallery/tattoo-3.jpg';
@@ -8,7 +9,7 @@ import tattoo4 from '@/assets/gallery/tattoo-4.jpg';
 import tattoo5 from '@/assets/gallery/tattoo-5.jpg';
 import tattoo6 from '@/assets/gallery/tattoo-6.jpg';
 
-const galleryImages = [
+const staticImages = [
   { src: tattoo1, alt: "Intricate spiral tribal tattoo design" },
   { src: tattoo2, alt: "Rose with butterflies tattoo" },
   { src: tattoo3, alt: "Lioness with flowers tattoo" },
@@ -20,8 +21,29 @@ const galleryImages = [
 const videoLinks = [
   { url: "https://vm.tiktok.com/ZMAWpFvph/", title: "Studio Work Showcase" }
 ];
+
 export const StudioGallery = () => {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
+  const [galleryImages, setGalleryImages] = useState(staticImages);
+
+  useEffect(() => {
+    const fetchDbImages = async () => {
+      const { data } = await supabase
+        .from("gallery_images")
+        .select("*")
+        .eq("gallery_type", "studio")
+        .order("sort_order", { ascending: true });
+
+      if (data && data.length > 0) {
+        const dbItems = data.map((img: any) => ({
+          src: supabase.storage.from("gallery-images").getPublicUrl(img.image_path).data.publicUrl,
+          alt: img.alt_text || img.title,
+        }));
+        setGalleryImages(dbItems);
+      }
+    };
+    fetchDbImages();
+  }, []);
 
   return (
     <>
