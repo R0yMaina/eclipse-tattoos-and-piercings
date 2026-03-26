@@ -1,9 +1,10 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
-// Gallery images
+// Static fallback imports
 import tattoo1 from '@/assets/gallery/tattoo-1.jpg';
 import tattoo2 from '@/assets/gallery/tattoo-2.jpg';
 import tattoo3 from '@/assets/gallery/tattoo-3.jpg';
@@ -23,15 +24,15 @@ import tattoo16 from '@/assets/gallery/tattoo-16.jpg';
 
 const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
-type TattooStyle = 'all' | 'tribal' | 'floral' | 'realism' | 'symbolic' | 'script' | 'piercing';
+type TattooStyle = 'all' | 'tribal' | 'floral' | 'realism' | 'symbolic' | 'script' | 'piercing' | 'geometric' | 'minimalist' | 'traditional';
 
 interface GalleryItem {
   src: string;
   alt: string;
-  style: TattooStyle[];
+  style: string[];
 }
 
-const galleryItems: GalleryItem[] = [
+const staticGalleryItems: GalleryItem[] = [
   { src: tattoo1, alt: "Intricate spiral tribal tattoo design", style: ['tribal', 'symbolic'] },
   { src: tattoo2, alt: "Rose with butterflies tattoo", style: ['floral', 'realism'] },
   { src: tattoo3, alt: "Lioness with flowers tattoo", style: ['realism', 'floral'] },
@@ -58,11 +59,35 @@ const styleFilters: { value: TattooStyle; label: string }[] = [
   { value: 'symbolic', label: 'Symbolic' },
   { value: 'script', label: 'Script' },
   { value: 'piercing', label: 'Piercings' },
+  { value: 'geometric', label: 'Geometric' },
+  { value: 'minimalist', label: 'Minimalist' },
+  { value: 'traditional', label: 'Traditional' },
 ];
 
 const Gallery = () => {
   const [activeFilter, setActiveFilter] = useState<TattooStyle>('all');
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(staticGalleryItems);
+
+  useEffect(() => {
+    const fetchDbImages = async () => {
+      const { data } = await supabase
+        .from("gallery_images")
+        .select("*")
+        .eq("gallery_type", "portfolio")
+        .order("sort_order", { ascending: true });
+
+      if (data && data.length > 0) {
+        const dbItems: GalleryItem[] = data.map((img: any) => ({
+          src: supabase.storage.from("gallery-images").getPublicUrl(img.image_path).data.publicUrl,
+          alt: img.alt_text || img.title,
+          style: img.styles || [],
+        }));
+        setGalleryItems(dbItems);
+      }
+    };
+    fetchDbImages();
+  }, []);
 
   const filteredItems = activeFilter === 'all'
     ? galleryItems

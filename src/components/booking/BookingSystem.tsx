@@ -178,8 +178,8 @@ export const BookingSystem = () => {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('inspiration-images').upload(fileName, inspirationImage);
         if (uploadError) throw uploadError;
-        const { data: { publicUrl } } = supabase.storage.from('inspiration-images').getPublicUrl(fileName);
-        imageUrl = publicUrl;
+        // Store the file path only; admins access via signed URLs
+        imageUrl = fileName;
       }
       const newBookingId = crypto.randomUUID();
       const deposit = Math.ceil(price * 0.15);
@@ -196,6 +196,9 @@ export const BookingSystem = () => {
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
       setBookingStep('payment');
+      setTimeout(() => {
+        paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to create booking. Please try again.';
       toast({ title: 'Booking failed', description: message, variant: 'destructive' });
@@ -382,7 +385,14 @@ export const BookingSystem = () => {
                     {slots.map((slot) => (
                       <button
                         key={slot.slot_id}
-                        onClick={() => slot.status === 'available' && setSelectedSlot(slot)}
+                        onClick={() => {
+                          if (slot.status === 'available') {
+                            setSelectedSlot(slot);
+                            setTimeout(() => {
+                              formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                          }
+                        }}
                         disabled={slot.status !== 'available'}
                         className={cn(
                           "p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 text-sm font-medium",

@@ -293,6 +293,42 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_images: {
+        Row: {
+          alt_text: string
+          created_at: string
+          gallery_type: string
+          id: string
+          image_path: string
+          sort_order: number
+          styles: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alt_text?: string
+          created_at?: string
+          gallery_type?: string
+          id?: string
+          image_path: string
+          sort_order?: number
+          styles?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alt_text?: string
+          created_at?: string
+          gallery_type?: string
+          id?: string
+          image_path?: string
+          sort_order?: number
+          styles?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       message_feedback: {
         Row: {
           comment: string | null

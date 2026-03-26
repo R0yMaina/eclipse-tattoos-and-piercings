@@ -55,7 +55,7 @@ export const StoryValues = () => {
             <div className="space-y-6">
               <h3 className="text-2xl md:text-3xl font-heading font-semibold text-primary/90">A Creative Spark</h3>
               <p className="text-lg text-foreground/80 leading-relaxed font-light first-letter:text-5xl first-letter:font-heading first-letter:font-bold first-letter:text-primary first-letter:mr-3 first-letter:float-left">
-                What began in 2019 as a small creative spark has grown into one of Kenya’s most respected tattoo and piercing studios. Eclipse Tattoos & Piercings was founded on a simple belief: perfection is the aim — not as an absolute, but as a standard that pushes every artist to grow, refine, and evolve.
+                What began in 2019 as a small creative spark has grown into one of Kenya’s most respected tattoo and piercing studios. Eclipse Tattoos & Piercings was founded on a simple belief: What began in 2019 as a small creative spark has grown into one of Kenya's most respected tattoo and piercing studios. Eclipse Tattoos & Piercings was founded on a simple belief: perfection is thee aim — not as an absolute, but as a standard that pushes every artist to grow, refine, and evolve. — not as an absolute, but as a standard that pushes every artist to grow, refine, and evolve.
               </p>
             </div>
           </div>
