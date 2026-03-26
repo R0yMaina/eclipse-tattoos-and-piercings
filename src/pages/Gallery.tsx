@@ -15,10 +15,15 @@ import tattoo8 from '@/assets/gallery/tattoo-8.jpg';
 import tattoo9 from '@/assets/gallery/tattoo-9.jpg';
 import tattoo10 from '@/assets/gallery/tattoo-10.jpg';
 import tattoo11 from '@/assets/gallery/tattoo-11.jpg';
+import tattoo12 from '@/assets/gallery/tattoo-12.jpg';
+import tattoo13 from '@/assets/gallery/tattoo-13.jpg';
+import tattoo14 from '@/assets/gallery/tattoo-14.jpg';
+import tattoo15 from '@/assets/gallery/tattoo-15.jpg';
+import tattoo16 from '@/assets/gallery/tattoo-16.jpg';
 
 const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
-type TattooStyle = 'all' | 'tribal' | 'floral' | 'realism' | 'symbolic' | 'script';
+type TattooStyle = 'all' | 'tribal' | 'floral' | 'realism' | 'symbolic' | 'script' | 'piercing';
 
 interface GalleryItem {
   src: string;
@@ -38,6 +43,11 @@ const galleryItems: GalleryItem[] = [
   { src: tattoo9, alt: "Butterfly with laurel wreath and 'BALANCE'", style: ['symbolic', 'script'] },
   { src: tattoo10, alt: "Elegant floral line art on hip", style: ['floral'] },
   { src: tattoo11, alt: "Surreal geometric design with hands and faces", style: ['realism', 'symbolic'] },
+  { src: tattoo12, alt: "Butterfly and Lotus Flower forearm tattoo", style: ['floral', 'symbolic'] },
+  { src: tattoo13, alt: "Nose stud piercing", style: ['piercing'] },
+  { src: tattoo14, alt: "Butterfly and Lotus Flower forearm tattoo", style: ['floral', 'symbolic'] },
+  { src: tattoo15, alt: "Floral vine hip tattoo", style: ['floral'] },
+  { src: tattoo16, alt: "Atom and physics equation rib tattoo", style: ['symbolic'] },
 ];
 
 const styleFilters: { value: TattooStyle; label: string }[] = [
@@ -47,6 +57,7 @@ const styleFilters: { value: TattooStyle; label: string }[] = [
   { value: 'realism', label: 'Realism' },
   { value: 'symbolic', label: 'Symbolic' },
   { value: 'script', label: 'Script' },
+  { value: 'piercing', label: 'Piercings' },
 ];
 
 const Gallery = () => {

@@ -134,7 +134,7 @@ serve(async (req: Request) => {
         PhoneNumber: formattedPhone,
         CallBackURL: callbackUrl,
         AccountReference: `Eclipse-${bookingId.substring(0, 8)}`,
-        TransactionDesc: `Booking deposit for Eclipse Tattoo`,
+        TransactionDesc: `eclipse tattoo and piercings`,
       }),
     });
 

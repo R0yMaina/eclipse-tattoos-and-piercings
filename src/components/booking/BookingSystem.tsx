@@ -211,7 +211,7 @@ export const BookingSystem = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast({ title: 'M-Pesa prompt sent! 📱', description: 'Check your phone and enter your M-Pesa PIN to complete the payment.' });
+      toast({ title: 'M-Pesa prompt sent! 📱', description: 'Check your phone and enter your M-Pesa PIN to complete the payment to Eclipse Tattoo and Piercings.' });
       setBookingStep('waiting');
       setPaymentPolling(true);
     } catch (error: unknown) {
@@ -570,7 +570,7 @@ export const BookingSystem = () => {
             <div className="p-5 rounded-xl glass-panel text-center mb-6">
               <p className="text-xs text-muted-foreground">Amount</p>
               <p className="text-4xl font-heading font-bold text-primary mt-1">KES {depositAmount.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">to {phoneNumber}</p>
+              <p className="text-xs text-muted-foreground mt-1">to eclipse tattoo and piercings</p>
             </div>
 
             <div className="space-y-3 text-sm text-left mb-6">
