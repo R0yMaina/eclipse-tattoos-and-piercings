@@ -59,12 +59,14 @@ export type Database = {
           mpesa_receipt: string | null
           notes: string | null
           payment_expires_at: string | null
+          payment_phone: string | null
           payment_status: string | null
           phone_number: string
           price_charged: number | null
           reminder_sent: boolean | null
           slot_id: string
           status: Database["public"]["Enums"]["booking_status"]
+          transaction_code: string | null
           updated_at: string
         }
         Insert: {
@@ -84,12 +86,14 @@ export type Database = {
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+          payment_phone?: string | null
           payment_status?: string | null
           phone_number: string
           price_charged?: number | null
           reminder_sent?: boolean | null
           slot_id: string
           status?: Database["public"]["Enums"]["booking_status"]
+          transaction_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -109,12 +113,14 @@ export type Database = {
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+          payment_phone?: string | null
           payment_status?: string | null
           phone_number?: string
           price_charged?: number | null
           reminder_sent?: boolean | null
           slot_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
+          transaction_code?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -636,6 +642,9 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_show"
+        | "pending_payment"
+        | "pending_verification"
+        | "confirmed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -770,6 +779,9 @@ export const Constants = {
         "completed",
         "cancelled",
         "no_show",
+        "pending_payment",
+        "pending_verification",
+        "confirmed",
       ],
     },
   },
