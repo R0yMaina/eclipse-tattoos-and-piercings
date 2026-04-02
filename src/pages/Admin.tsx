@@ -164,6 +164,13 @@ export default function Admin() {
           <div className="glass-panel rounded-2xl p-2">
             <TabsList className="w-full flex flex-wrap gap-1 bg-transparent h-auto p-0">
               <TabsTrigger
+                value="payments"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Banknote className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Payments</span>
+              </TabsTrigger>
+              <TabsTrigger
                 value="transactions"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
