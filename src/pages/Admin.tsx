@@ -159,7 +159,7 @@ export default function Admin() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="transactions" className="space-y-8">
+        <Tabs defaultValue="payments" className="space-y-8">
           {/* Modern Tab Navigation */}
           <div className="glass-panel rounded-2xl p-2">
             <TabsList className="w-full flex flex-wrap gap-1 bg-transparent h-auto p-0">
