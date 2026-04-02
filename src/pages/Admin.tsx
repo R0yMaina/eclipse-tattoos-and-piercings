@@ -13,9 +13,10 @@ import MessageTemplates from "@/components/admin/MessageTemplates";
 import ReviewsManagement from "@/components/admin/ReviewsManagement";
 import TransactionsManagement from "@/components/admin/TransactionsManagement";
 import GalleryManagement from "@/components/admin/GalleryManagement";
+import PaymentVerification from "@/components/admin/PaymentVerification";
 import {
   Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
-  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon
+  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
