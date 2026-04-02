@@ -389,7 +389,7 @@ const BookingsManagement = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {booking.status === 'upcoming' && (
+                          {(booking.status === 'upcoming' || booking.status === 'confirmed') && (
                             <div className="flex flex-wrap items-center gap-2">
                               <Button
                                 size="sm"
