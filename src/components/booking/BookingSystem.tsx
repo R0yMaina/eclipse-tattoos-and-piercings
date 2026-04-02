@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Upload, Clock, CheckCircle, Calendar as CalendarIcon, User, Phone, DollarSign, Smartphone, AlertCircle, Sparkles } from 'lucide-react';
+import { Loader2, Upload, Clock, CheckCircle, Calendar as CalendarIcon, User, Phone, DollarSign, Smartphone, AlertCircle, Sparkles, Copy, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import gsap from 'gsap';
 import SplitType from 'split-type';
@@ -21,9 +21,8 @@ interface SlotAvailability {
   client_name: string | null;
 }
 
-type BookingStep = 'details' | 'payment' | 'waiting' | 'confirmed' | 'failed';
+type BookingStep = 'details' | 'payment' | 'submitted' | 'confirmed';
 
-/* ─── Reusable glass card ─── */
 const GlassCard = ({ children, className, elevated = false }: { children: React.ReactNode; className?: string; elevated?: boolean }) => (
   <div className={cn(
     "rounded-2xl backdrop-blur-xl",
@@ -50,40 +49,31 @@ export const BookingSystem = () => {
   const [bookingStep, setBookingStep] = useState<BookingStep>('details');
   const [currentBookingId, setCurrentBookingId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState(0);
-  const [paymentPolling, setPaymentPolling] = useState(false);
+  // Manual payment fields
+  const [transactionCode, setTransactionCode] = useState('');
+  const [paymentPhone, setPaymentPhone] = useState('');
+  const [submittingPayment, setSubmittingPayment] = useState(false);
   const { toast } = useToast();
 
-  // GSAP refs
   const heroRef = useRef<HTMLDivElement>(null);
   const stepRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const paymentRef = useRef<HTMLDivElement>(null);
 
-  // GSAP hero text animation
   useEffect(() => {
     if (!heroRef.current) return;
     const heading = heroRef.current.querySelector('.booking-hero-title');
     const subtitle = heroRef.current.querySelector('.booking-hero-sub');
     if (!heading || !subtitle) return;
-
     const split = new SplitType(heading as HTMLElement, { types: 'chars' });
     gsap.set(split.chars, { opacity: 0, y: 40, rotateX: -90 });
     gsap.set(subtitle, { opacity: 0, y: 20 });
-
     const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
-    tl.to(split.chars, {
-      opacity: 1,
-      y: 0,
-      rotateX: 0,
-      duration: 0.8,
-      stagger: 0.03,
-    });
+    tl.to(split.chars, { opacity: 1, y: 0, rotateX: 0, duration: 0.8, stagger: 0.03 });
     tl.to(subtitle, { opacity: 1, y: 0, duration: 0.6 }, '-=0.4');
-
     return () => { split.revert(); };
   }, []);
 
-  // Animate step indicator on step change
   useEffect(() => {
     if (!stepRef.current) return;
     gsap.fromTo(
@@ -93,43 +83,17 @@ export const BookingSystem = () => {
     );
   }, [bookingStep, selectedSlot]);
 
-  // Animate form/payment cards on mount
   useEffect(() => {
     const target = formRef.current || paymentRef.current;
     if (!target) return;
     gsap.fromTo(target, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
   }, [bookingStep, selectedSlot]);
 
-  // ── Business logic (unchanged) ──
   useEffect(() => {
     if (selectedDate) fetchSlots(selectedDate);
     else { setSlots([]); setSelectedSlot(null); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
-
-  useEffect(() => {
-    if (!paymentPolling || !currentBookingId) return;
-    const interval = setInterval(async () => {
-      try {
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('payment_status, deposit_paid, mpesa_receipt')
-          .eq('id', currentBookingId)
-          .single();
-        if (error) return;
-        if (data?.payment_status === 'paid' && data?.deposit_paid) {
-          setPaymentPolling(false);
-          setBookingStep('confirmed');
-          toast({ title: 'Payment received! ✅', description: `Deposit of KES ${depositAmount} confirmed. Receipt: ${data.mpesa_receipt || 'Processing'}` });
-        } else if (data?.payment_status === 'failed') {
-          setPaymentPolling(false);
-          setBookingStep('failed');
-          toast({ title: 'Payment failed', description: 'The M-Pesa payment was not completed. You can retry.', variant: 'destructive' });
-        }
-      } catch (err) { console.error('Payment polling error:', err); }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [paymentPolling, currentBookingId, depositAmount, toast]);
 
   const fetchSlots = useCallback(async (date: Date) => {
     setLoading(true);
@@ -178,14 +142,13 @@ export const BookingSystem = () => {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('inspiration-images').upload(fileName, inspirationImage);
         if (uploadError) throw uploadError;
-        // Store the file path only; admins access via signed URLs
         imageUrl = fileName;
       }
       const newBookingId = crypto.randomUUID();
       const deposit = Math.ceil(price * 0.15);
       const { error: bookingError } = await supabase.from('bookings').insert({
         id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
-        inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'upcoming', agreed_price: price,
+        inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'pending_payment' as any, agreed_price: price,
         deposit_amount: deposit, payment_status: 'pending', deposit_paid: false,
         payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       });
@@ -195,6 +158,7 @@ export const BookingSystem = () => {
       }
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
+      setPaymentPhone(phoneNumber.trim());
       setBookingStep('payment');
       setTimeout(() => {
         paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -205,30 +169,51 @@ export const BookingSystem = () => {
     } finally { setSubmitting(false); }
   };
 
-  const handlePayDeposit = async () => {
-    if (!currentBookingId) return;
-    setSubmitting(true);
+  const handleSubmitTransaction = async () => {
+    if (!currentBookingId || !transactionCode.trim()) {
+      toast({ title: 'Missing transaction code', description: 'Please enter your M-Pesa transaction code.', variant: 'destructive' }); return;
+    }
+    if (!paymentPhone.trim()) {
+      toast({ title: 'Missing phone number', description: 'Please enter the phone number used for payment.', variant: 'destructive' }); return;
+    }
+    const code = transactionCode.trim().toUpperCase();
+    if (code.length < 6 || code.length > 15) {
+      toast({ title: 'Invalid code', description: 'M-Pesa transaction codes are typically 8-10 characters.', variant: 'destructive' }); return;
+    }
+
+    setSubmittingPayment(true);
     try {
-      const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
-        body: { bookingId: currentBookingId, phoneNumber: phoneNumber.trim(), agreedPrice: parseFloat(agreedPrice) }
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast({ title: 'M-Pesa prompt sent! 📱', description: 'Check your phone and enter your M-Pesa PIN to complete the payment to Eclipse Tattoo and Piercings.' });
-      setBookingStep('waiting');
-      setPaymentPolling(true);
+      const { error } = await supabase.from('bookings').update({
+        transaction_code: code,
+        payment_phone: paymentPhone.trim(),
+        payment_status: 'pending',
+        status: 'pending_verification' as any,
+      }).eq('id', currentBookingId);
+      if (error) {
+        if (error.message.includes('duplicate') || error.message.includes('unique')) {
+          throw new Error('This transaction code has already been used. Please check and enter the correct code.');
+        }
+        throw error;
+      }
+      setBookingStep('submitted');
+      toast({ title: 'Transaction submitted! ✅', description: 'Your payment details are under review. You will be notified once confirmed.' });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to send M-Pesa prompt. Please try again.';
-      toast({ title: 'Payment initiation failed', description: message, variant: 'destructive' });
-    } finally { setSubmitting(false); }
+      const message = error instanceof Error ? error.message : 'Failed to submit transaction. Please try again.';
+      toast({ title: 'Submission failed', description: message, variant: 'destructive' });
+    } finally { setSubmittingPayment(false); }
   };
 
-  const handleRetryPayment = () => setBookingStep('payment');
   const handleResetBooking = () => {
     setClientName(''); setPhoneNumber(''); setNotes(''); setAgreedPrice('');
     setInspirationImage(null); setImagePreview(null); setSelectedSlot(null);
-    setBookingStep('details'); setCurrentBookingId(null); setDepositAmount(0); setPaymentPolling(false);
+    setBookingStep('details'); setCurrentBookingId(null); setDepositAmount(0);
+    setTransactionCode(''); setPaymentPhone('');
     if (selectedDate) fetchSlots(selectedDate);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copied!', description: `"${text}" copied to clipboard.` });
   };
 
   const formatTime = (time: string) => {
@@ -243,7 +228,8 @@ export const BookingSystem = () => {
     switch (status) {
       case 'available': return 'border-green-500/40 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-400/60 hover:shadow-[0_0_20px_hsl(142_52%_64%/0.15)]';
       case 'ongoing': return 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400 cursor-not-allowed';
-      case 'upcoming': return 'border-red-500/30 bg-red-500/10 text-red-400 cursor-not-allowed';
+      case 'upcoming': case 'pending_payment': case 'pending_verification': case 'confirmed':
+        return 'border-red-500/30 bg-red-500/10 text-red-400 cursor-not-allowed';
       case 'completed': return 'border-border/30 bg-muted/20 text-muted-foreground cursor-not-allowed';
       default: return 'border-border/20 bg-muted/10 text-muted-foreground cursor-not-allowed';
     }
@@ -252,36 +238,36 @@ export const BookingSystem = () => {
   const getSlotLabel = (status: string) => {
     switch (status) {
       case 'available': return 'Available'; case 'ongoing': return 'In Progress';
-      case 'upcoming': return 'Booked'; case 'completed': return 'Completed'; default: return status;
+      case 'upcoming': case 'pending_payment': case 'pending_verification': case 'confirmed': return 'Booked';
+      case 'completed': return 'Completed'; default: return status;
     }
   };
 
   const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.15) : 0;
 
-  const stepLabels = ['Select Slot', 'Your Details', 'Pay Deposit', 'Confirmed'];
+  const stepLabels = ['Select Slot', 'Your Details', 'Send Payment', 'Confirmed'];
   const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
-    bookingStep === 'payment' ? 2 : bookingStep === 'waiting' ? 2 : bookingStep === 'confirmed' ? 3 : 1;
+    bookingStep === 'payment' ? 2 : bookingStep === 'submitted' ? 3 : 3;
+
+  const MPESA_NUMBER = '0769138198';
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      {/* ── Hero ── */}
+      {/* Hero */}
       <div ref={heroRef} className="text-center mb-12">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium tracking-wider uppercase mb-6">
           <Sparkles className="h-3.5 w-3.5" />
           Online Booking
         </div>
-        <h2
-          className="booking-hero-title text-4xl md:text-5xl font-heading font-bold text-foreground mb-3"
-          style={{ perspective: '600px' }}
-        >
+        <h2 className="booking-hero-title text-4xl md:text-5xl font-heading font-bold text-foreground mb-3" style={{ perspective: '600px' }}>
           Book Your Session
         </h2>
         <p className="booking-hero-sub text-muted-foreground max-w-md mx-auto">
-          Select a date and time slot, then pay a 15% deposit to confirm your appointment
+          Select a date and time slot, then send a 15% deposit via M-Pesa to confirm your appointment
         </p>
       </div>
 
-      {/* ── Step Indicator ── */}
+      {/* Step Indicator */}
       <div ref={stepRef} className="flex items-center justify-center gap-1 sm:gap-2 mb-10">
         {stepLabels.map((step, i) => {
           const isActive = i <= currentIndex;
@@ -290,11 +276,7 @@ export const BookingSystem = () => {
             <div key={step} className="flex items-center gap-1 sm:gap-2">
               <div className={cn(
                 "step-dot w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300",
-                isCurrent
-                  ? "bg-primary text-primary-foreground gold-glow scale-110"
-                  : isActive
-                    ? "bg-primary/80 text-primary-foreground"
-                    : "glass-panel text-muted-foreground"
+                isCurrent ? "bg-primary text-primary-foreground gold-glow scale-110" : isActive ? "bg-primary/80 text-primary-foreground" : "glass-panel text-muted-foreground"
               )}>
                 {i < currentIndex ? '✓' : i + 1}
               </div>
@@ -303,21 +285,17 @@ export const BookingSystem = () => {
                 isCurrent ? "text-primary" : isActive ? "text-foreground" : "text-muted-foreground"
               )}>{step}</span>
               {i < 3 && (
-                <div className={cn(
-                  "w-6 sm:w-10 h-px transition-colors duration-300",
-                  isActive ? "bg-primary/60" : "bg-border/40"
-                )} />
+                <div className={cn("w-6 sm:w-10 h-px transition-colors duration-300", isActive ? "bg-primary/60" : "bg-border/40")} />
               )}
             </div>
           );
         })}
       </div>
 
-      {/* ── Date & Slot Selection ── */}
+      {/* Date & Slot Selection */}
       {bookingStep === 'details' && (
         <>
           <div className="grid lg:grid-cols-2 gap-6">
-            {/* Calendar */}
             <GlassCard elevated className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -329,20 +307,15 @@ export const BookingSystem = () => {
                 </div>
               </div>
               <div className="flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
+                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate}
                   disabled={(date) => isBefore(date, startOfDay(new Date())) || isSunday(date)}
-                  className="rounded-xl border border-border/30"
-                />
+                  className="rounded-xl border border-border/30" />
               </div>
               <p className="text-xs text-muted-foreground mt-4 text-center">
                 Mon-Fri: 10am – 6:30pm · Sat: 11am – 5:30pm · Closed Sundays
               </p>
             </GlassCard>
 
-            {/* Slots */}
             <GlassCard elevated className="p-6 h-fit">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -383,14 +356,11 @@ export const BookingSystem = () => {
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {slots.map((slot) => (
-                      <button
-                        key={slot.slot_id}
+                      <button key={slot.slot_id}
                         onClick={() => {
                           if (slot.status === 'available') {
                             setSelectedSlot(slot);
-                            setTimeout(() => {
-                              formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }, 100);
+                            setTimeout(() => { formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
                           }
                         }}
                         disabled={slot.status !== 'available'}
@@ -400,9 +370,7 @@ export const BookingSystem = () => {
                           selectedSlot?.slot_id === slot.slot_id && "ring-2 ring-primary ring-offset-2 ring-offset-background gold-glow"
                         )}
                       >
-                        <div className="font-semibold text-xs">
-                          {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
-                        </div>
+                        <div className="font-semibold text-xs">{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</div>
                         <div className="text-[10px] opacity-70 mt-0.5">{getSlotLabel(slot.status)}</div>
                       </button>
                     ))}
@@ -412,7 +380,7 @@ export const BookingSystem = () => {
             </GlassCard>
           </div>
 
-          {/* ── Booking Form ── */}
+          {/* Booking Form */}
           {selectedDate && selectedSlot && (
             <div ref={formRef}>
               <GlassCard elevated className="mt-8 p-6 sm:p-8">
@@ -440,12 +408,11 @@ export const BookingSystem = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phoneNumber" className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-3.5 w-3.5" /> M-Pesa Phone Number *
+                        <Phone className="h-3.5 w-3.5" /> Phone Number *
                       </Label>
                       <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="0712345678 or +254712345678" required
                         className="bg-input/50 border-border/40 focus:border-primary/60 focus:ring-primary/20" />
-                      <p className="text-[10px] text-muted-foreground">This number will receive the M-Pesa payment prompt</p>
                     </div>
                   </div>
 
@@ -508,7 +475,7 @@ export const BookingSystem = () => {
                     {submitting ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating booking…</>
                     ) : (
-                      <>Proceed to Pay Deposit — KES {calculatedDeposit > 0 ? calculatedDeposit.toLocaleString() : '0'}</>
+                      <>Book Now — Deposit KES {calculatedDeposit > 0 ? calculatedDeposit.toLocaleString() : '0'}</>
                     )}
                   </Button>
                 </form>
@@ -518,16 +485,19 @@ export const BookingSystem = () => {
         </>
       )}
 
-      {/* ── Payment Step ── */}
+      {/* Payment Instructions & Transaction Code Form */}
       {bookingStep === 'payment' && (
         <div ref={paymentRef}>
-          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 gold-glow">
-              <Smartphone className="h-8 w-8 text-primary" />
+          <GlassCard elevated className="max-w-lg mx-auto p-8">
+            <div className="text-center mb-6">
+              <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 gold-glow">
+                <Smartphone className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Send Deposit via M-Pesa</h3>
+              <p className="text-sm text-muted-foreground">Follow the steps below, then enter your transaction code</p>
             </div>
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Pay Deposit via M-Pesa</h3>
-            <p className="text-sm text-muted-foreground mb-6">A payment prompt will be sent to your phone</p>
 
+            {/* Booking Summary */}
             <div className="p-5 rounded-xl glass-panel space-y-3 text-left mb-6">
               {[
                 ['Booking date', selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''],
@@ -544,66 +514,124 @@ export const BookingSystem = () => {
                 <span className="font-semibold text-foreground">Deposit (15%)</span>
                 <span className="text-2xl font-heading font-bold text-primary">KES {depositAmount.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">M-Pesa number</span>
-                <span className="font-medium text-foreground">{phoneNumber}</span>
+            </div>
+
+            {/* M-Pesa Instructions */}
+            <div className="p-5 rounded-xl bg-green-500/5 border border-green-500/20 mb-6">
+              <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-green-500" />
+                M-Pesa Payment Instructions
+              </h4>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs shrink-0 font-semibold">1</div>
+                  <p className="text-muted-foreground">Go to M-Pesa on your phone and select <span className="text-foreground font-medium">Send Money</span></p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs shrink-0 font-semibold">2</div>
+                  <div className="text-muted-foreground">
+                    Send to this number:
+                    <button onClick={() => copyToClipboard(MPESA_NUMBER)}
+                      className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary font-mono font-bold text-base hover:bg-primary/20 transition-colors">
+                      {MPESA_NUMBER}
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs shrink-0 font-semibold">3</div>
+                  <p className="text-muted-foreground">
+                    Enter amount: <span className="text-foreground font-bold">KES {depositAmount.toLocaleString()}</span>
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs shrink-0 font-semibold">4</div>
+                  <p className="text-muted-foreground">Complete the payment and note your <span className="text-foreground font-medium">M-Pesa transaction code</span> from the confirmation SMS</p>
+                </div>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3 text-left mb-6">
+            {/* Transaction Code Form */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="paymentPhone" className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="h-3.5 w-3.5" /> Phone Number Used to Pay *
+                </Label>
+                <Input id="paymentPhone" type="tel" value={paymentPhone} onChange={(e) => setPaymentPhone(e.target.value)}
+                  placeholder="0712345678" required
+                  className="bg-input/50 border-border/40 focus:border-primary/60 focus:ring-primary/20" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="transactionCode" className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileText className="h-3.5 w-3.5" /> M-Pesa Transaction Code *
+                </Label>
+                <Input id="transactionCode" value={transactionCode}
+                  onChange={(e) => setTransactionCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. SLK4H7R2T0"
+                  required maxLength={15}
+                  className="bg-input/50 border-border/40 focus:border-primary/60 focus:ring-primary/20 font-mono text-lg tracking-wider uppercase" />
+                <p className="text-[10px] text-muted-foreground">Find this in the M-Pesa confirmation SMS you received</p>
+              </div>
+
+              <Button onClick={handleSubmitTransaction} size="lg" disabled={submittingPayment || !transactionCode.trim() || !paymentPhone.trim()}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold">
+                {submittingPayment ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</> : <>Submit Transaction Code</>}
+              </Button>
+            </div>
+
+            <div className="mt-4 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3 text-left">
               <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
               <div className="text-xs">
-                <p className="font-medium text-yellow-500">Payment expires in 24 hours</p>
-                <p className="text-muted-foreground mt-0.5">If not paid, your booking will be cancelled.</p>
+                <p className="font-medium text-yellow-500">Booking expires in 24 hours</p>
+                <p className="text-muted-foreground mt-0.5">If payment is not verified within 24 hours, your booking will be cancelled.</p>
               </div>
             </div>
 
-            <Button onClick={handlePayDeposit} size="lg" disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold">
-              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</> : <><Smartphone className="mr-2 h-5 w-5" />Pay KES {depositAmount.toLocaleString()} via M-Pesa</>}
-            </Button>
             <Button variant="ghost" onClick={handleResetBooking} className="w-full mt-2 text-muted-foreground hover:text-foreground">Cancel booking</Button>
           </GlassCard>
         </div>
       )}
 
-      {/* ── Waiting ── */}
-      {bookingStep === 'waiting' && (
+      {/* Submitted - Under Verification */}
+      {bookingStep === 'submitted' && (
         <div ref={paymentRef}>
           <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-5">
-              <Loader2 className="h-8 w-8 text-yellow-500 animate-spin" />
+              <Clock className="h-8 w-8 text-yellow-500" />
             </div>
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Waiting for Payment</h3>
-            <p className="text-sm text-muted-foreground mb-6">Check your phone for the M-Pesa prompt</p>
+            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Under Verification</h3>
+            <p className="text-sm text-muted-foreground mb-6">Your payment details have been submitted and are being reviewed</p>
 
-            <div className="p-5 rounded-xl glass-panel text-center mb-6">
-              <p className="text-xs text-muted-foreground">Amount</p>
-              <p className="text-4xl font-heading font-bold text-primary mt-1">KES {depositAmount.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">to eclipse tattoo and piercings</p>
-            </div>
-
-            <div className="space-y-3 text-sm text-left mb-6">
-              {['Check your phone for the Safaricom M-Pesa pop-up', 'Enter your M-Pesa PIN to authorize', 'This page updates automatically once confirmed'].map((txt, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 font-semibold",
-                    i < 2 ? "bg-primary text-primary-foreground" : "glass-panel text-muted-foreground"
-                  )}>{i + 1}</div>
-                  <p className="text-muted-foreground">{txt}</p>
+            <div className="p-5 rounded-xl glass-panel space-y-3 text-left mb-6">
+              {[
+                ['Name', clientName],
+                ['Date', selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''],
+                ['Time', selectedSlot ? `${formatTime(selectedSlot.start_time)} – ${formatTime(selectedSlot.end_time)}` : ''],
+                ['Transaction Code', transactionCode],
+                ['Deposit Amount', `KES ${depositAmount.toLocaleString()}`],
+              ].map(([l, v]) => (
+                <div key={l} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{l}</span>
+                  <span className="font-medium text-foreground">{v}</span>
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleRetryPayment} className="flex-1 border-border/40">Retry Payment</Button>
-              <Button variant="ghost" onClick={handleResetBooking} className="flex-1 text-muted-foreground">Cancel</Button>
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
+              <p className="text-sm text-muted-foreground">
+                You'll receive a confirmation via WhatsApp once the admin verifies your payment. This usually takes a few minutes during working hours.
+              </p>
             </div>
+
+            <Button onClick={handleResetBooking} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold">
+              Book Another Session
+            </Button>
           </GlassCard>
         </div>
       )}
 
-      {/* ── Confirmed ── */}
+      {/* Confirmed */}
       {bookingStep === 'confirmed' && (
         <div ref={paymentRef}>
           <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
@@ -611,7 +639,7 @@ export const BookingSystem = () => {
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
             <h3 className="font-heading text-2xl font-bold text-green-400 mb-1">Booking Confirmed!</h3>
-            <p className="text-sm text-muted-foreground mb-6">Your deposit has been received and your slot is secured</p>
+            <p className="text-sm text-muted-foreground mb-6">Your deposit has been verified and your slot is secured</p>
 
             <div className="p-5 rounded-xl glass-panel space-y-3 text-left mb-6">
               {[
@@ -635,29 +663,11 @@ export const BookingSystem = () => {
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground mb-6">You'll receive a confirmation on WhatsApp shortly. Please arrive on time.</p>
+            <p className="text-xs text-muted-foreground mb-6">Please arrive on time for your appointment.</p>
 
             <Button onClick={handleResetBooking} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold">
               Book Another Session
             </Button>
-          </GlassCard>
-        </div>
-      )}
-
-      {/* ── Failed ── */}
-      {bookingStep === 'failed' && (
-        <div ref={paymentRef}>
-          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-5">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-            </div>
-            <h3 className="font-heading text-2xl font-bold text-destructive mb-1">Payment Failed</h3>
-            <p className="text-sm text-muted-foreground mb-6">The M-Pesa payment was not completed</p>
-            <p className="text-xs text-muted-foreground mb-6">Your booking is held for 24 hours. You can retry or cancel.</p>
-            <div className="flex gap-2">
-              <Button onClick={handleRetryPayment} className="flex-1 bg-primary text-primary-foreground gold-glow">Retry Payment</Button>
-              <Button variant="outline" onClick={handleResetBooking} className="flex-1 border-border/40">Cancel Booking</Button>
-            </div>
           </GlassCard>
         </div>
       )}

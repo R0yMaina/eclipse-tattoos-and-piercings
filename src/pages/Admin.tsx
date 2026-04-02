@@ -13,9 +13,10 @@ import MessageTemplates from "@/components/admin/MessageTemplates";
 import ReviewsManagement from "@/components/admin/ReviewsManagement";
 import TransactionsManagement from "@/components/admin/TransactionsManagement";
 import GalleryManagement from "@/components/admin/GalleryManagement";
+import PaymentVerification from "@/components/admin/PaymentVerification";
 import {
   Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
-  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon
+  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
@@ -158,10 +159,17 @@ export default function Admin() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="transactions" className="space-y-8">
+        <Tabs defaultValue="payments" className="space-y-8">
           {/* Modern Tab Navigation */}
           <div className="glass-panel rounded-2xl p-2">
             <TabsList className="w-full flex flex-wrap gap-1 bg-transparent h-auto p-0">
+              <TabsTrigger
+                value="payments"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Banknote className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Payments</span>
+              </TabsTrigger>
               <TabsTrigger
                 value="transactions"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
@@ -237,6 +245,7 @@ export default function Admin() {
 
           {/* Tab Content with Animation */}
           <div className="animate-fade-in">
+            <TabsContent value="payments" className="mt-0"><PaymentVerification /></TabsContent>
             <TabsContent value="transactions" className="mt-0"><TransactionsManagement /></TabsContent>
             <TabsContent value="bookings" className="mt-0"><BookingsManagement /></TabsContent>
             <TabsContent value="slots" className="mt-0"><SlotConfiguration /></TabsContent>
