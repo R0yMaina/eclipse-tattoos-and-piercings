@@ -184,6 +184,9 @@ const BookingsManagement = () => {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
+      pending_payment: { variant: 'outline', className: 'border-blue-500 text-blue-500' },
+      pending_verification: { variant: 'default', className: 'bg-yellow-500' },
+      confirmed: { variant: 'default', className: 'bg-green-600' },
       upcoming: { variant: 'default', className: 'bg-blue-500' },
       ongoing: { variant: 'default', className: 'bg-yellow-500' },
       completed: { variant: 'default', className: 'bg-green-500' },
