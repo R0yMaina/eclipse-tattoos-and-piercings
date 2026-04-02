@@ -245,6 +245,7 @@ export default function Admin() {
 
           {/* Tab Content with Animation */}
           <div className="animate-fade-in">
+            <TabsContent value="payments" className="mt-0"><PaymentVerification /></TabsContent>
             <TabsContent value="transactions" className="mt-0"><TransactionsManagement /></TabsContent>
             <TabsContent value="bookings" className="mt-0"><BookingsManagement /></TabsContent>
             <TabsContent value="slots" className="mt-0"><SlotConfiguration /></TabsContent>
