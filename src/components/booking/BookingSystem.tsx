@@ -21,7 +21,7 @@ interface SlotAvailability {
   client_name: string | null;
 }
 
-type BookingStep = 'details' | 'payment' | 'waiting' | 'confirmed' | 'failed';
+type BookingStep = 'details' | 'payment' | 'waiting' | 'confirmed' | 'failed' | 'manual_details';
 
 /* ─── Reusable glass card ─── */
 const GlassCard = ({ children, className, elevated = false }: { children: React.ReactNode; className?: string; elevated?: boolean }) => (
@@ -51,6 +51,10 @@ export const BookingSystem = () => {
   const [currentBookingId, setCurrentBookingId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState(0);
   const [paymentPolling, setPaymentPolling] = useState(false);
+  const [transactionCode, setTransactionCode] = useState('');
+  const [paymentPhone, setPaymentPhone] = useState('');
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const { toast } = useToast();
 
   // GSAP refs
@@ -117,14 +121,14 @@ export const BookingSystem = () => {
           .eq('id', currentBookingId)
           .single();
         if (error) return;
-        if (data?.payment_status === 'paid' && data?.deposit_paid) {
+        if (data?.payment_status === 'confirmed' || (data?.payment_status === 'paid' && data?.deposit_paid)) {
           setPaymentPolling(false);
           setBookingStep('confirmed');
-          toast({ title: 'Payment received! ✅', description: `Deposit of KES ${depositAmount} confirmed. Receipt: ${data.mpesa_receipt || 'Processing'}` });
-        } else if (data?.payment_status === 'failed') {
+          toast({ title: 'Payment verified! ✅', description: `Deposit of KES ${depositAmount} confirmed.` });
+        } else if (data?.payment_status === 'rejected' || data?.payment_status === 'failed') {
           setPaymentPolling(false);
           setBookingStep('failed');
-          toast({ title: 'Payment failed', description: 'The M-Pesa payment was not completed. You can retry.', variant: 'destructive' });
+          toast({ title: 'Payment rejected', description: 'The M-Pesa payment was rejected or failed verification.', variant: 'destructive' });
         }
       } catch (err) { console.error('Payment polling error:', err); }
     }, 5000);
@@ -186,7 +190,7 @@ export const BookingSystem = () => {
       const { error: bookingError } = await supabase.from('bookings').insert({
         id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
         inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'upcoming', agreed_price: price,
-        deposit_amount: deposit, payment_status: 'pending', deposit_paid: false,
+        deposit_amount: deposit, payment_status: 'pending_payment', deposit_paid: false,
         payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       });
       if (bookingError) {
@@ -205,28 +209,66 @@ export const BookingSystem = () => {
     } finally { setSubmitting(false); }
   };
 
-  const handlePayDeposit = async () => {
-    if (!currentBookingId) return;
+  const handleManualPaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentBookingId || !transactionCode.trim() || !paymentPhone.trim()) {
+      toast({ title: 'Missing details', description: 'Please enter the M-Pesa transaction code and phone number used.', variant: 'destructive' });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
-        body: { bookingId: currentBookingId, phoneNumber: phoneNumber.trim(), agreedPrice: parseFloat(agreedPrice) }
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast({ title: 'M-Pesa prompt sent! 📱', description: 'Check your phone and enter your M-Pesa PIN to complete the payment to Eclipse Tattoo and Piercings.' });
+      let screenshotUrl = null;
+      if (paymentScreenshot) {
+        const fileExt = paymentScreenshot.name.split('.').pop();
+        const fileName = `payment-${currentBookingId}-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('payment-screenshots').upload(fileName, paymentScreenshot);
+        if (uploadError) throw uploadError;
+        screenshotUrl = fileName;
+      }
+
+      const { error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          transaction_code: transactionCode.trim().toUpperCase(),
+          payment_phone: paymentPhone.trim(),
+          payment_screenshot_url: screenshotUrl,
+          payment_status: 'pending_verification'
+        })
+        .eq('id', currentBookingId);
+
+      if (updateError) {
+        if (updateError.message.includes('unique') || updateError.message.includes('duplicate')) {
+          throw new Error('This transaction code has already been submitted.');
+        }
+        throw updateError;
+      }
+
+      toast({ title: 'Details submitted! 🚀', description: 'We are verifying your payment. This will take a few minutes.' });
       setBookingStep('waiting');
       setPaymentPolling(true);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to send M-Pesa prompt. Please try again.';
-      toast({ title: 'Payment initiation failed', description: message, variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Failed to submit payment details. Please try again.';
+      toast({ title: 'Submission failed', description: message, variant: 'destructive' });
     } finally { setSubmitting(false); }
+  };
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) { toast({ title: 'Invalid file type', description: 'Please upload an image file.', variant: 'destructive' }); return; }
+      setPaymentScreenshot(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setScreenshotPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleRetryPayment = () => setBookingStep('payment');
   const handleResetBooking = () => {
     setClientName(''); setPhoneNumber(''); setNotes(''); setAgreedPrice('');
     setInspirationImage(null); setImagePreview(null); setSelectedSlot(null);
+    setTransactionCode(''); setPaymentPhone(''); setPaymentScreenshot(null); setScreenshotPreview(null);
     setBookingStep('details'); setCurrentBookingId(null); setDepositAmount(0); setPaymentPolling(false);
     if (selectedDate) fetchSlots(selectedDate);
   };
@@ -258,7 +300,7 @@ export const BookingSystem = () => {
 
   const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.15) : 0;
 
-  const stepLabels = ['Select Slot', 'Your Details', 'Pay Deposit', 'Confirmed'];
+  const stepLabels = ['Select Slot', 'Your Details', 'Payment', 'Confirmed'];
   const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
     bookingStep === 'payment' ? 2 : bookingStep === 'waiting' ? 2 : bookingStep === 'confirmed' ? 3 : 1;
 
@@ -518,52 +560,99 @@ export const BookingSystem = () => {
         </>
       )}
 
-      {/* ── Payment Step ── */}
+      {/* ── Payment Step (Instructions & Form) ── */}
       {bookingStep === 'payment' && (
         <div ref={paymentRef}>
-          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 gold-glow">
-              <Smartphone className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Pay Deposit via M-Pesa</h3>
-            <p className="text-sm text-muted-foreground mb-6">A payment prompt will be sent to your phone</p>
-
-            <div className="p-5 rounded-xl glass-panel space-y-3 text-left mb-6">
-              {[
-                ['Booking date', selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''],
-                ['Time slot', selectedSlot ? `${formatTime(selectedSlot.start_time)} – ${formatTime(selectedSlot.end_time)}` : ''],
-                ['Total price', `KES ${parseFloat(agreedPrice).toLocaleString()}`],
-              ].map(([l, v]) => (
-                <div key={l} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{l}</span>
-                  <span className="font-medium text-foreground">{v}</span>
+          <div className="grid lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Instructions */}
+            <GlassCard elevated className="p-8">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
+                <Smartphone className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-heading text-2xl font-bold text-foreground mb-4 text-left">Payment Instructions</h3>
+              
+              <div className="space-y-6 text-left">
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">M-Pesa Pay Bill / Number</p>
+                  <p className="text-2xl font-bold text-primary">0769138198</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Send money directly to this number</p>
                 </div>
-              ))}
-              <div className="h-px bg-border/30" />
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-foreground">Deposit (15%)</span>
-                <span className="text-2xl font-heading font-bold text-primary">KES {depositAmount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">M-Pesa number</span>
-                <span className="font-medium text-foreground">{phoneNumber}</span>
-              </div>
-            </div>
 
-            <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3 text-left mb-6">
-              <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <p className="font-medium text-yellow-500">Payment expires in 24 hours</p>
-                <p className="text-muted-foreground mt-0.5">If not paid, your booking will be cancelled.</p>
-              </div>
-            </div>
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Deposit Amount</p>
+                  <p className="text-2xl font-bold text-foreground">KES {depositAmount.toLocaleString()}</p>
+                </div>
 
-            <Button onClick={handlePayDeposit} size="lg" disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold">
-              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</> : <><Smartphone className="mr-2 h-5 w-5" />Pay KES {depositAmount.toLocaleString()} via M-Pesa</>}
-            </Button>
-            <Button variant="ghost" onClick={handleResetBooking} className="w-full mt-2 text-muted-foreground hover:text-foreground">Cancel booking</Button>
-          </GlassCard>
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">Next steps:</p>
+                  <ul className="text-sm text-muted-foreground space-y-2">
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">1.</span>
+                      Go to M-Pesa &gt; Send Money
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">2.</span>
+                      Enter number <span className="font-mono font-bold text-foreground">0769138198</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">3.</span>
+                      Enter amount <span className="font-bold text-foreground">KES {depositAmount.toLocaleString()}</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">4.</span>
+                      Enter your M-Pesa PIN and send
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-yellow-500">Important:</span> Enter your M-Pesa transaction code in the form to confirm your booking.
+                  </p>
+                </div>
+              </div>
+            </GlassCard>
+
+            {/* Confirmation Form */}
+            <GlassCard elevated className="p-8">
+              <h3 className="font-heading text-xl font-bold text-foreground mb-6 text-left">Confirm Payment</h3>
+              <form onSubmit={handleManualPaymentSubmit} className="space-y-5 text-left">
+                <div className="space-y-2">
+                  <Label htmlFor="paymentPhone" className="text-sm text-muted-foreground">M-Pesa Phone Number</Label>
+                  <Input id="paymentPhone" value={paymentPhone} onChange={(e) => setPaymentPhone(e.target.value)}
+                    placeholder="Number used to pay" required
+                    className="bg-input/50 border-border/40 focus:border-primary/60" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="transactionCode" className="text-sm text-muted-foreground text-left">M-Pesa Transaction Code</Label>
+                  <Input id="transactionCode" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)}
+                    placeholder="e.g. RBT1234567" required maxLength={12}
+                    className="bg-input/50 border-border/40 focus:border-primary/60 uppercase font-mono" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="screenshot" className="text-sm text-muted-foreground">Screenshot (Optional)</Label>
+                  <div className="flex items-center gap-3">
+                    <Input id="screenshot" type="file" accept="image/*" onChange={handleScreenshotChange}
+                      className="bg-input/50 border-border/40" />
+                    {screenshotPreview && (
+                      <div className="relative w-12 h-12 rounded border border-border/30 overflow-hidden">
+                        <img src={screenshotPreview} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Button type="submit" size="lg" disabled={submitting}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold">
+                  {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</> : "Submit for Verification"}
+                </Button>
+                <Button variant="ghost" type="button" onClick={() => setBookingStep('details')} className="w-full text-muted-foreground">Back to details</Button>
+              </form>
+            </GlassCard>
+          </div>
         </div>
       )}
 
