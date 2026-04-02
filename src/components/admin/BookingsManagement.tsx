@@ -21,7 +21,7 @@ interface Booking {
   phone_number: string;
   inspiration_image_url: string | null;
   notes: string | null;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled' | 'no_show';
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled' | 'no_show' | 'pending_payment' | 'pending_verification' | 'confirmed';
   actual_start_time: string | null;
   actual_end_time: string | null;
   price_charged: number | null;
