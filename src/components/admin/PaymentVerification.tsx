@@ -85,8 +85,9 @@ const PaymentVerification = () => {
       if (booking) {
         const slotDate = format(parseISO(booking.booking_slots.slot_date), 'MMM d, yyyy');
         const slotTime = formatTime(booking.booking_slots.start_time);
+        
         try {
-          await supabase.functions.invoke('send-whatsapp', {
+          const { data, error: invokeError } = await supabase.functions.invoke('send-whatsapp', {
             body: {
               type: action === 'confirm' ? 'payment_confirmed' : 'payment_rejected',
               bookingId,
@@ -96,20 +97,30 @@ const PaymentVerification = () => {
               time: slotTime,
             },
           });
+
+          if (invokeError || (data && data.error)) {
+            console.error('WhatsApp notification failed:', invokeError || data.error);
+            toast({ 
+              title: 'Success, but notification failed ⚠️', 
+              description: 'Payment status updated, but WhatsApp message could not be sent. Please check your config.',
+              variant: 'destructive'
+            });
+          } else {
+            toast({
+              title: action === 'confirm' ? 'Payment Confirmed ✅' : 'Payment Rejected',
+              description: action === 'confirm'
+                ? 'Booking has been confirmed. The client will be notified.'
+                : 'Booking has been rejected and cancelled.',
+            });
+          }
         } catch (e) {
-          console.error('WhatsApp notification failed:', e);
+          console.error('WhatsApp invoke failed:', e);
         }
       }
 
-      toast({
-        title: action === 'confirm' ? 'Payment Confirmed ✅' : 'Payment Rejected',
-        description: action === 'confirm'
-          ? 'Booking has been confirmed. The client will be notified.'
-          : 'Booking has been rejected and cancelled.',
-      });
-
       fetchPendingPayments();
-    } catch {
+    } catch (error) {
+      console.error('Verification error:', error);
       toast({ title: 'Error', description: `Failed to ${action} payment`, variant: 'destructive' });
     } finally {
       setUpdating(null);

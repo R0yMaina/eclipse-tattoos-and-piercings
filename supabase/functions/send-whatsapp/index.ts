@@ -37,10 +37,10 @@ serve(async (req: Request) => {
     const hasTwilio = !!(lovableApiKey && twilioApiKey);
 
     if (!hasWhatsApp && !hasTwilio) {
-      console.log("Neither WhatsApp nor Twilio configured, skipping notification");
+      console.error("Neither WhatsApp nor Twilio configured. Please set WHATSAPP_ACCESS_TOKEN/ID or LOVABLE_API_KEY/TWILIO_API_KEY in Supabase Edge Function Secrets.");
       return new Response(
-        JSON.stringify({ success: false, message: "No messaging channel configured" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, error: "No messaging channel configured (WhatsApp/Twilio)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
