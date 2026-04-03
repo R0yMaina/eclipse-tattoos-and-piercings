@@ -8,6 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const TWILIO_GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
+
 interface WhatsAppRequest {
   type: 'confirmation' | 'reminder' | 'late_warning' | 'review_request' | 'payment_confirmed' | 'payment_rejected';
   bookingId?: string;
@@ -18,7 +20,6 @@ interface WhatsAppRequest {
 }
 
 serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -29,10 +30,16 @@ serve(async (req: Request) => {
     const whatsappPhoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
     const whatsappAccessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 
-    if (!whatsappPhoneNumberId || !whatsappAccessToken) {
-      console.log("WhatsApp credentials not configured, skipping message send");
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    const twilioApiKey = Deno.env.get("TWILIO_API_KEY");
+
+    const hasWhatsApp = !!(whatsappPhoneNumberId && whatsappAccessToken);
+    const hasTwilio = !!(lovableApiKey && twilioApiKey);
+
+    if (!hasWhatsApp && !hasTwilio) {
+      console.log("Neither WhatsApp nor Twilio configured, skipping notification");
       return new Response(
-        JSON.stringify({ success: false, message: "WhatsApp not configured" }),
+        JSON.stringify({ success: false, message: "No messaging channel configured" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -40,7 +47,7 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body: WhatsAppRequest = await req.json();
 
-    console.log(`Sending ${body.type} message to ${body.phoneNumber}`);
+    console.log(`Sending ${body.type} message to ${body.phoneNumber} via ${hasWhatsApp ? 'WhatsApp' : 'Twilio SMS'}`);
 
     // Get message template
     const { data: template } = await supabase
@@ -63,37 +70,73 @@ serve(async (req: Request) => {
       .replace(/\{\{date\}\}/g, body.date || '')
       .replace(/\{\{time\}\}/g, body.time || '');
 
-    // Format phone number (remove non-digits, add country code if needed)
+    // Format phone number
     let formattedPhone = body.phoneNumber.replace(/\D/g, '');
-    if (!formattedPhone.startsWith('1') && formattedPhone.length === 10) {
-      formattedPhone = '1' + formattedPhone; // Add US country code
+    if (!formattedPhone.startsWith('254') && formattedPhone.startsWith('0')) {
+      formattedPhone = '254' + formattedPhone.substring(1); // Kenya country code
     }
 
-    // Send via WhatsApp Business API
-    const whatsappResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${whatsappPhoneNumberId}/messages`,
-      {
+    let messageId: string | undefined;
+    let channel: string;
+
+    if (hasWhatsApp) {
+      // ── WhatsApp Business API ──
+      channel = 'whatsapp';
+      const whatsappResponse = await fetch(
+        `https://graph.facebook.com/v18.0/${whatsappPhoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${whatsappAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: formattedPhone,
+            type: 'text',
+            text: { body: message }
+          }),
+        }
+      );
+
+      const whatsappResult = await whatsappResponse.json();
+      console.log("WhatsApp API response:", JSON.stringify(whatsappResult));
+
+      if (!whatsappResponse.ok) {
+        console.error("WhatsApp API error:", whatsappResult);
+        throw new Error(whatsappResult.error?.message || "WhatsApp API error");
+      }
+
+      messageId = whatsappResult.messages?.[0]?.id;
+    } else {
+      // ── Twilio SMS Fallback ──
+      channel = 'sms';
+      const twilioFromNumber = Deno.env.get("TWILIO_FROM_NUMBER") || '+254700000000';
+
+      const smsResponse = await fetch(`${TWILIO_GATEWAY_URL}/Messages.json`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${whatsappAccessToken}`,
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'X-Connection-Api-Key': twilioApiKey!,
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: formattedPhone,
-          type: 'text',
-          text: { body: message }
+        body: new URLSearchParams({
+          To: `+${formattedPhone}`,
+          From: twilioFromNumber,
+          Body: message,
         }),
+      });
+
+      const smsResult = await smsResponse.json();
+      console.log("Twilio SMS response:", JSON.stringify(smsResult));
+
+      if (!smsResponse.ok) {
+        console.error("Twilio SMS error:", smsResult);
+        throw new Error(`Twilio API error [${smsResponse.status}]: ${JSON.stringify(smsResult)}`);
       }
-    );
 
-    const whatsappResult = await whatsappResponse.json();
-    console.log("WhatsApp API response:", JSON.stringify(whatsappResult));
-
-    if (!whatsappResponse.ok) {
-      console.error("WhatsApp API error:", whatsappResult);
-      throw new Error(whatsappResult.error?.message || "WhatsApp API error");
+      messageId = smsResult.sid;
     }
 
     // Update booking flags if applicable
@@ -115,7 +158,7 @@ serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, messageId: whatsappResult.messages?.[0]?.id }),
+      JSON.stringify({ success: true, messageId, channel }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
