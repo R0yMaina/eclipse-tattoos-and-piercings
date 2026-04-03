@@ -56,6 +56,21 @@ export const BookingSystem = () => {
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const { toast } = useToast();
+  const [hasRestored, setHasRestored] = useState(false);
+
+  // Restore booking session from localStorage
+  useEffect(() => {
+    if (hasRestored) return;
+    const savedBookingId = localStorage.getItem('eclipse_current_booking_id');
+    if (savedBookingId) {
+      setCurrentBookingId(savedBookingId);
+      setBookingStep('waiting');
+      setPaymentPolling(true);
+      // We don't have the deposit amount anymore, but we can fetch it or just show a generic message
+      // For now, let's just trigger the polling
+    }
+    setHasRestored(true);
+  }, [hasRestored]);
 
   // GSAP refs
   const heroRef = useRef<HTMLDivElement>(null);
@@ -117,20 +132,44 @@ export const BookingSystem = () => {
       try {
         const { data, error } = await supabase
           .from('bookings')
-          .select('payment_status, deposit_paid, mpesa_receipt')
+          .select('id, payment_status, status, deposit_paid, mpesa_receipt')
           .eq('id', currentBookingId)
-          .single();
-        if (error) return;
-        if (data?.payment_status === 'confirmed' || (data?.payment_status === 'paid' && data?.deposit_paid)) {
+          .maybeSingle();
+
+        if (error) {
+          console.error('Polling error:', error);
+          return;
+        }
+
+        if (!data) return;
+
+        // Either confirmed/paid OR the status changed to confirmed/upcoming
+        if (
+          data.payment_status === 'confirmed' ||
+          data.payment_status === 'paid' ||
+          data.status === 'confirmed' ||
+          data.status === 'upcoming'
+        ) {
           setPaymentPolling(false);
           setBookingStep('confirmed');
-          toast({ title: 'Payment verified! ✅', description: `Deposit of KES ${depositAmount} confirmed.` });
-        } else if (data?.payment_status === 'rejected' || data?.payment_status === 'failed') {
+          toast({
+            title: 'Payment verified! ✅',
+            description: `Deposit of KES ${depositAmount} confirmed.`,
+          });
+          // Clear persistence on success
+          localStorage.removeItem('eclipse_current_booking_id');
+        } else if (data.payment_status === 'rejected' || data.payment_status === 'failed' || data.status === 'cancelled') {
           setPaymentPolling(false);
           setBookingStep('failed');
-          toast({ title: 'Payment rejected', description: 'The M-Pesa payment was rejected or failed verification.', variant: 'destructive' });
+          toast({
+            title: 'Verification failed',
+            description: 'The M-Pesa payment details could not be verified by the admin.',
+            variant: 'destructive'
+          });
         }
-      } catch (err) { console.error('Payment polling error:', err); }
+      } catch (err) {
+        console.error('Payment polling error:', err);
+      }
     }, 5000);
     return () => clearInterval(interval);
   }, [paymentPolling, currentBookingId, depositAmount, toast]);
@@ -199,6 +238,8 @@ export const BookingSystem = () => {
       }
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
+      // Persist booking ID in case of refresh
+      localStorage.setItem('eclipse_current_booking_id', newBookingId);
       setBookingStep('payment');
       setTimeout(() => {
         paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -220,11 +261,16 @@ export const BookingSystem = () => {
     try {
       let screenshotUrl = null;
       if (paymentScreenshot) {
-        const fileExt = paymentScreenshot.name.split('.').pop();
-        const fileName = `payment-${currentBookingId}-${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('payment-screenshots').upload(fileName, paymentScreenshot);
-        if (uploadError) throw uploadError;
-        screenshotUrl = fileName;
+        try {
+          const fileExt = paymentScreenshot.name.split('.').pop();
+          const fileName = `payment-${currentBookingId}-${Date.now()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage.from('payment-screenshots').upload(fileName, paymentScreenshot);
+          if (uploadError) throw uploadError;
+          screenshotUrl = fileName;
+        } catch (uploadError) {
+          console.error('Screenshot upload error:', uploadError);
+          // Don't fail the whole submission if screenshot fails
+        }
       }
 
       const { error: updateError } = await supabase
@@ -233,7 +279,8 @@ export const BookingSystem = () => {
           transaction_code: transactionCode.trim().toUpperCase(),
           payment_phone: paymentPhone.trim(),
           payment_screenshot_url: screenshotUrl,
-          payment_status: 'pending_verification'
+          payment_status: 'pending_verification',
+          status: 'pending_verification' // CRITICAL: This allows admin to see it
         })
         .eq('id', currentBookingId);
 
@@ -244,7 +291,7 @@ export const BookingSystem = () => {
         throw updateError;
       }
 
-      toast({ title: 'Details submitted! 🚀', description: 'We are verifying your payment. This will take a few minutes.' });
+      toast({ title: 'Details submitted! 🚀', description: 'Our team is verifying your payment. Keep this page open.' });
       setBookingStep('waiting');
       setPaymentPolling(true);
     } catch (error: unknown) {
@@ -663,30 +710,31 @@ export const BookingSystem = () => {
             <div className="mx-auto w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-5">
               <Loader2 className="h-8 w-8 text-yellow-500 animate-spin" />
             </div>
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Waiting for Payment</h3>
-            <p className="text-sm text-muted-foreground mb-6">Check your phone for the M-Pesa prompt</p>
+            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Verifying Payment</h3>
+            <p className="text-sm text-muted-foreground mb-6">Our admin is manually verifying your transaction</p>
 
             <div className="p-5 rounded-xl glass-panel text-center mb-6">
-              <p className="text-xs text-muted-foreground">Amount</p>
-              <p className="text-4xl font-heading font-bold text-primary mt-1">KES {depositAmount.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">to eclipse tattoo and piercings</p>
+              <p className="text-xs text-muted-foreground">Transaction Code</p>
+              <p className="text-2xl font-mono font-bold text-primary mt-1 uppercase">{transactionCode}</p>
+              <div className="mt-4 pt-4 border-t border-border/30">
+                <p className="text-xs text-muted-foreground">Amount</p>
+                <p className="text-xl font-bold text-foreground">KES {depositAmount.toLocaleString()}</p>
+              </div>
             </div>
 
             <div className="space-y-3 text-sm text-left mb-6">
-              {['Check your phone for the Safaricom M-Pesa pop-up', 'Enter your M-Pesa PIN to authorize', 'This page updates automatically once confirmed'].map((txt, i) => (
+              {['Verification usually takes 5-10 minutes', 'Keep this page open to receive confirmation', 'You will receive a WhatsApp message once verified'].map((txt, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 font-semibold",
-                    i < 2 ? "bg-primary text-primary-foreground" : "glass-panel text-muted-foreground"
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 font-semibold bg-primary text-primary-foreground"
                   )}>{i + 1}</div>
                   <p className="text-muted-foreground">{txt}</p>
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleRetryPayment} className="flex-1 border-border/40">Retry Payment</Button>
-              <Button variant="ghost" onClick={handleResetBooking} className="flex-1 text-muted-foreground">Cancel</Button>
+            <div className="flex flex-col gap-2">
+              <Button variant="ghost" onClick={handleRetryPayment} className="text-muted-foreground">Correction? Edit Details</Button>
             </div>
           </GlassCard>
         </div>
