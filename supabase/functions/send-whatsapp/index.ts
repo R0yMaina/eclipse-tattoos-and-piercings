@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface WhatsAppRequest {
-  type: 'confirmation' | 'reminder' | 'late_warning' | 'review_request';
+  type: 'confirmation' | 'reminder' | 'late_warning' | 'review_request' | 'payment_confirmed' | 'payment_rejected';
   bookingId?: string;
   clientName: string;
   phoneNumber: string;
