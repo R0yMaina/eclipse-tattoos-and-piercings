@@ -80,6 +80,27 @@ const PaymentVerification = () => {
 
       if (error) throw error;
 
+      // Find the booking to get details for the notification
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) {
+        const slotDate = format(parseISO(booking.booking_slots.slot_date), 'MMM d, yyyy');
+        const slotTime = formatTime(booking.booking_slots.start_time);
+        try {
+          await supabase.functions.invoke('send-whatsapp', {
+            body: {
+              type: action === 'confirm' ? 'payment_confirmed' : 'payment_rejected',
+              bookingId,
+              clientName: booking.client_name,
+              phoneNumber: booking.phone_number,
+              date: slotDate,
+              time: slotTime,
+            },
+          });
+        } catch (e) {
+          console.error('WhatsApp notification failed:', e);
+        }
+      }
+
       toast({
         title: action === 'confirm' ? 'Payment Confirmed ✅' : 'Payment Rejected',
         description: action === 'confirm'
