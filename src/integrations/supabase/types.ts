@@ -61,6 +61,7 @@ export type Database = {
           payment_expires_at: string | null
           payment_phone: string | null
           payment_status: string | null
+          payment_screenshot_url: string | null
           phone_number: string
           price_charged: number | null
           reminder_sent: boolean | null
@@ -88,6 +89,7 @@ export type Database = {
           payment_expires_at?: string | null
           payment_phone?: string | null
           payment_status?: string | null
+          payment_screenshot_url?: string | null
           phone_number: string
           price_charged?: number | null
           reminder_sent?: boolean | null
@@ -115,6 +117,7 @@ export type Database = {
           payment_expires_at?: string | null
           payment_phone?: string | null
           payment_status?: string | null
+          payment_screenshot_url?: string | null
           phone_number?: string
           price_charged?: number | null
           reminder_sent?: boolean | null
