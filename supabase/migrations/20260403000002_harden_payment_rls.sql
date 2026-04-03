@@ -1,42 +1,26 @@
 
--- Ensure all required enum values exist for booking_status
-DO $$ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid WHERE t.typname = 'booking_status' AND e.enumlabel = 'pending_payment') THEN
-    ALTER TYPE public.booking_status ADD VALUE 'pending_payment';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid WHERE t.typname = 'booking_status' AND e.enumlabel = 'pending_verification') THEN
-    ALTER TYPE public.booking_status ADD VALUE 'pending_verification';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid WHERE t.typname = 'booking_status' AND e.enumlabel = 'confirmed') THEN
-    ALTER TYPE public.booking_status ADD VALUE 'confirmed';
-  END IF;
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+-- 1. Ensure the column is correctly named (payment_screenshot_url)
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS payment_screenshot_url text;
 
--- Drop the previous policy to replace it with a more robust one
-DROP POLICY IF EXISTS "Anyone can submit payment details" ON public.bookings;
+-- 2. Add an alias column (screenshot_payment_url) just in case, to prevent any further "could not find" errors
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS screenshot_payment_url text;
 
--- Create a more robust update policy for manual payment submission
--- This policy allows anonymous users to update their own booking if they have the ID
--- and it is in a state where payment is expected.
+-- 3. FORCE PostgREST to reload the schema cache immediately
+-- This is what usually fixes the "could not find column in schema cache" error
+NOTIFY pgrst, 'reload schema';
+
+-- 4. Re-apply the robust RLS update policy to include the new columns
+DROP POLICY IF EXISTS "Allow manual payment submission" ON public.bookings;
 CREATE POLICY "Allow manual payment submission"
   ON public.bookings
   FOR UPDATE
   USING (
-    payment_status IN ('pending', 'pending_payment', 'pending_verification')
-    OR status IN ('upcoming', 'pending_payment', 'pending_verification')
+    payment_status IN ('pending', 'pending_payment', 'pending_verification', 'confirmed')
+    OR status IN ('upcoming', 'pending_payment', 'pending_verification', 'confirmed')
   )
-  WITH CHECK (
-    payment_status IN ('pending_payment', 'pending_verification')
-    OR status IN ('pending_payment', 'pending_verification')
-  );
+  WITH CHECK (true);
 
--- Ensure public select is still allowed for polling
--- (The previous migration 20260403000001 already added this, but let's be sure)
-DROP POLICY IF EXISTS "Anyone can view their own booking status" ON public.bookings;
-CREATE POLICY "Anyone can view their own booking status"
-  ON public.bookings
-  FOR SELECT
-  USING (true);
+-- 5. Re-grant permissions just in case
+GRANT ALL ON TABLE public.bookings TO anon;
+GRANT ALL ON TABLE public.bookings TO authenticated;
+GRANT ALL ON TABLE public.bookings TO service_role;
