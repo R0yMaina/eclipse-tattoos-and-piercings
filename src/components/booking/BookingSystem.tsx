@@ -62,12 +62,39 @@ export const BookingSystem = () => {
   useEffect(() => {
     if (hasRestored) return;
     const savedBookingId = localStorage.getItem('eclipse_current_booking_id');
+    const savedDeposit = localStorage.getItem('eclipse_current_deposit');
+    const savedPrice = localStorage.getItem('eclipse_current_price');
+
     if (savedBookingId) {
       setCurrentBookingId(savedBookingId);
-      setBookingStep('waiting');
-      setPaymentPolling(true);
-      // We don't have the deposit amount anymore, but we can fetch it or just show a generic message
-      // For now, let's just trigger the polling
+      if (savedDeposit) setDepositAmount(parseInt(savedDeposit));
+      if (savedPrice) setAgreedPrice(savedPrice);
+      
+      // Fetch latest status to determine step
+      const checkStatus = async () => {
+        const { data } = await supabase
+          .from('bookings')
+          .select('status, payment_status, transaction_code')
+          .eq('id', savedBookingId)
+          .maybeSingle();
+        
+        if (data) {
+          if (data.status === 'confirmed' || data.status === 'upcoming') {
+            setBookingStep('confirmed');
+          } else if (data.status === 'pending_verification' || data.transaction_code) {
+            setBookingStep('waiting');
+            setTransactionCode(data.transaction_code || '');
+            setPaymentPolling(true);
+          } else {
+            setBookingStep('payment');
+          }
+        } else {
+          setBookingStep('waiting'); // Fallback
+          setPaymentPolling(true);
+        }
+      };
+      
+      checkStatus();
     }
     setHasRestored(true);
   }, [hasRestored]);
@@ -228,7 +255,7 @@ export const BookingSystem = () => {
       const deposit = Math.ceil(price * 0.15);
       const { error: bookingError } = await supabase.from('bookings').insert({
         id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
-        inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'upcoming', agreed_price: price,
+        inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'pending_payment', agreed_price: price,
         deposit_amount: deposit, payment_status: 'pending_payment', deposit_paid: false,
         payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       });
@@ -238,8 +265,11 @@ export const BookingSystem = () => {
       }
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
-      // Persist booking ID in case of refresh
+      // Persist booking session details
       localStorage.setItem('eclipse_current_booking_id', newBookingId);
+      localStorage.setItem('eclipse_current_deposit', deposit.toString());
+      localStorage.setItem('eclipse_current_price', price.toString());
+      
       setBookingStep('payment');
       setTimeout(() => {
         paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -294,8 +324,9 @@ export const BookingSystem = () => {
       toast({ title: 'Details submitted! 🚀', description: 'Our team is verifying your payment. Keep this page open.' });
       setBookingStep('waiting');
       setPaymentPolling(true);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to submit payment details. Please try again.';
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      const message = error.message || error.error_description || 'Failed to submit payment details. Please try again.';
       toast({ title: 'Submission failed', description: message, variant: 'destructive' });
     } finally { setSubmitting(false); }
   };
@@ -317,6 +348,12 @@ export const BookingSystem = () => {
     setInspirationImage(null); setImagePreview(null); setSelectedSlot(null);
     setTransactionCode(''); setPaymentPhone(''); setPaymentScreenshot(null); setScreenshotPreview(null);
     setBookingStep('details'); setCurrentBookingId(null); setDepositAmount(0); setPaymentPolling(false);
+    
+    // Clear all persistence
+    localStorage.removeItem('eclipse_current_booking_id');
+    localStorage.removeItem('eclipse_current_deposit');
+    localStorage.removeItem('eclipse_current_price');
+    
     if (selectedDate) fetchSlots(selectedDate);
   };
 
