@@ -37,7 +37,7 @@ serve(async (req: Request) => {
     const hasTwilio = !!(lovableApiKey && twilioApiKey);
 
     if (!hasWhatsApp && !hasTwilio) {
-      console.error("Neither WhatsApp nor Twilio configured. Please set WHATSAPP_ACCESS_TOKEN/ID or LOVABLE_API_KEY/TWILIO_API_KEY in Supabase Edge Function Secrets.");
+      console.error("Neither WhatsApp nor Twilio configured.");
       return new Response(
         JSON.stringify({ success: false, error: "No messaging channel configured (WhatsApp/Twilio)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -46,8 +46,6 @@ serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body: WhatsAppRequest = await req.json();
-
-    console.log(`Sending ${body.type} message to ${body.phoneNumber} via ${hasWhatsApp ? 'WhatsApp' : 'Twilio SMS'}`);
 
     // Get message template
     const { data: template } = await supabase
@@ -73,45 +71,54 @@ serve(async (req: Request) => {
     // Format phone number
     let formattedPhone = body.phoneNumber.replace(/\D/g, '');
     if (!formattedPhone.startsWith('254') && formattedPhone.startsWith('0')) {
-      formattedPhone = '254' + formattedPhone.substring(1); // Kenya country code
+      formattedPhone = '254' + formattedPhone.substring(1);
     }
 
     let messageId: string | undefined;
-    let channel: string;
+    let channel: string = 'none';
+    let whatsappFailed = false;
 
+    // Try WhatsApp first
     if (hasWhatsApp) {
-      // ── WhatsApp Business API ──
-      channel = 'whatsapp';
-      const whatsappResponse = await fetch(
-        `https://graph.facebook.com/v18.0/${whatsappPhoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${whatsappAccessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            recipient_type: 'individual',
-            to: formattedPhone,
-            type: 'text',
-            text: { body: message }
-          }),
+      try {
+        console.log(`Attempting WhatsApp to ${formattedPhone}`);
+        const whatsappResponse = await fetch(
+          `https://graph.facebook.com/v18.0/${whatsappPhoneNumberId}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${whatsappAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              recipient_type: 'individual',
+              to: formattedPhone,
+              type: 'text',
+              text: { body: message }
+            }),
+          }
+        );
+
+        const whatsappResult = await whatsappResponse.json();
+
+        if (whatsappResponse.ok) {
+          messageId = whatsappResult.messages?.[0]?.id;
+          channel = 'whatsapp';
+          console.log("WhatsApp sent successfully, messageId:", messageId);
+        } else {
+          console.error("WhatsApp API error, will try SMS fallback:", JSON.stringify(whatsappResult));
+          whatsappFailed = true;
         }
-      );
-
-      const whatsappResult = await whatsappResponse.json();
-      console.log("WhatsApp API response:", JSON.stringify(whatsappResult));
-
-      if (!whatsappResponse.ok) {
-        console.error("WhatsApp API error:", whatsappResult);
-        throw new Error(whatsappResult.error?.message || "WhatsApp API error");
+      } catch (e) {
+        console.error("WhatsApp request failed, will try SMS fallback:", e);
+        whatsappFailed = true;
       }
+    }
 
-      messageId = whatsappResult.messages?.[0]?.id;
-    } else {
-      // ── Twilio SMS Fallback ──
-      channel = 'sms';
+    // Fallback to Twilio SMS if WhatsApp wasn't available or failed
+    if ((whatsappFailed || !hasWhatsApp) && hasTwilio) {
+      console.log(`Sending SMS via Twilio to +${formattedPhone}`);
       const twilioFromNumber = Deno.env.get("TWILIO_FROM_NUMBER") || '+254700000000';
 
       const smsResponse = await fetch(`${TWILIO_GATEWAY_URL}/Messages.json`, {
@@ -137,6 +144,12 @@ serve(async (req: Request) => {
       }
 
       messageId = smsResult.sid;
+      channel = 'sms';
+    }
+
+    // If neither channel worked
+    if (channel === 'none') {
+      throw new Error("All messaging channels failed");
     }
 
     // Update booking flags if applicable
