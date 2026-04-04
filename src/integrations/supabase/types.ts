@@ -60,11 +60,12 @@ export type Database = {
           notes: string | null
           payment_expires_at: string | null
           payment_phone: string | null
-          payment_status: string | null
           payment_screenshot_url: string | null
+          payment_status: string | null
           phone_number: string
           price_charged: number | null
           reminder_sent: boolean | null
+          screenshot_payment_url: string | null
           slot_id: string
           status: Database["public"]["Enums"]["booking_status"]
           transaction_code: string | null
@@ -88,11 +89,12 @@ export type Database = {
           notes?: string | null
           payment_expires_at?: string | null
           payment_phone?: string | null
-          payment_status?: string | null
           payment_screenshot_url?: string | null
+          payment_status?: string | null
           phone_number: string
           price_charged?: number | null
           reminder_sent?: boolean | null
+          screenshot_payment_url?: string | null
           slot_id: string
           status?: Database["public"]["Enums"]["booking_status"]
           transaction_code?: string | null
@@ -116,11 +118,12 @@ export type Database = {
           notes?: string | null
           payment_expires_at?: string | null
           payment_phone?: string | null
-          payment_status?: string | null
           payment_screenshot_url?: string | null
+          payment_status?: string | null
           phone_number?: string
           price_charged?: number | null
           reminder_sent?: boolean | null
+          screenshot_payment_url?: string | null
           slot_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
           transaction_code?: string | null
