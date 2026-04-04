@@ -65,13 +65,18 @@ serve(async (req: Request) => {
     // Replace placeholders
     const message = template.template_content
       .replace(/\{\{client_name\}\}/g, body.clientName)
+      .replace(/\{client_name\}/g, body.clientName)
       .replace(/\{\{date\}\}/g, body.date || '')
-      .replace(/\{\{time\}\}/g, body.time || '');
+      .replace(/\{date\}/g, body.date || '')
+      .replace(/\{\{time\}\}/g, body.time || '')
+      .replace(/\{time\}/g, body.time || '');
 
     // Format phone number
     let formattedPhone = body.phoneNumber.replace(/\D/g, '');
-    if (!formattedPhone.startsWith('254') && formattedPhone.startsWith('0')) {
+    if (formattedPhone.startsWith('0')) {
       formattedPhone = '254' + formattedPhone.substring(1);
+    } else if (formattedPhone.length === 9) {
+      formattedPhone = '254' + formattedPhone;
     }
 
     let messageId: string | undefined;
@@ -121,6 +126,14 @@ serve(async (req: Request) => {
       console.log(`Sending SMS via Twilio to +${formattedPhone}`);
       const twilioFromNumber = Deno.env.get("TWILIO_FROM_NUMBER") || '+254700000000';
 
+      const twilioParams = new URLSearchParams({
+        To: `+${formattedPhone}`,
+        From: twilioFromNumber,
+        Body: message,
+      });
+
+      console.log(`Sending Twilio SMS via gateway. To: +${formattedPhone}, From: ${twilioFromNumber}`);
+      
       const smsResponse = await fetch(`${TWILIO_GATEWAY_URL}/Messages.json`, {
         method: 'POST',
         headers: {
@@ -128,11 +141,7 @@ serve(async (req: Request) => {
           'X-Connection-Api-Key': twilioApiKey!,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          To: `+${formattedPhone}`,
-          From: twilioFromNumber,
-          Body: message,
-        }),
+        body: twilioParams,
       });
 
       const smsResult = await smsResponse.json();
@@ -140,7 +149,7 @@ serve(async (req: Request) => {
 
       if (!smsResponse.ok) {
         console.error("Twilio SMS error:", smsResult);
-        throw new Error(`Twilio API error [${smsResponse.status}]: ${JSON.stringify(smsResult)}`);
+        throw new Error(`Twilio API error [${smsResponse.status}]. Content: "${message}". From: ${twilioFromNumber}. Error detail: ${JSON.stringify(smsResult)}`);
       }
 
       messageId = smsResult.sid;
@@ -154,7 +163,8 @@ serve(async (req: Request) => {
 
     // Update booking flags if applicable
     if (body.bookingId) {
-      const updateField = body.type === 'confirmation'
+      console.log(`Updating booking ${body.bookingId} tracking flags for type ${body.type}`);
+      const updateField = (body.type === 'confirmation' || body.type === 'payment_confirmed')
         ? { confirmation_sent: true }
         : body.type === 'reminder'
           ? { reminder_sent: true }
@@ -163,10 +173,12 @@ serve(async (req: Request) => {
             : {};
 
       if (Object.keys(updateField).length > 0) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('bookings')
           .update(updateField)
           .eq('id', body.bookingId);
+        
+        if (updateError) console.error("Error updating booking flags:", updateError);
       }
     }
 

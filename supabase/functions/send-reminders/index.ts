@@ -99,72 +99,23 @@ serve(async (req: Request) => {
           const displayHour = hour % 12 || 12;
           const timeFormatted = `${displayHour}:${minutes} ${ampm}`;
 
-          // Fetch reminder template
-          const { data: template, error: templateError } = await supabase
-            .from('message_templates')
-            .select('template_content')
-            .eq('template_type', 'reminder')
-            .eq('is_active', true)
-            .single();
+          // Invoke send-whatsapp function for SMS/WhatsApp
+          const { data: result, error: invokeError } = await supabase.functions.invoke('send-whatsapp', {
+            body: {
+              type: 'reminder',
+              bookingId: booking.id,
+              clientName: booking.client_name,
+              phoneNumber: booking.phone_number,
+              date: dateFormatted,
+              time: timeFormatted,
+            },
+          });
 
-          if (templateError) {
-            console.error("Error fetching template:", templateError);
-            results.errors.push(`Template error for ${booking.id}: ${templateError.message}`);
-            continue;
-          }
-
-          // Replace placeholders
-          const message = template.template_content
-            .replace('{client_name}', booking.client_name)
-            .replace('{date}', dateFormatted)
-            .replace('{time}', timeFormatted);
-
-          // Send WhatsApp message
-          const whatsappPhoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-          const whatsappToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-
-          if (whatsappPhoneId && whatsappToken) {
-            // Format phone number
-            const phone = booking.phone_number.replace(/[\s\-()]/g, '').replace(/^\+/, '');
-
-            const whatsappResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${whatsappPhoneId}/messages`,
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${whatsappToken}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  messaging_product: 'whatsapp',
-                  to: phone,
-                  type: 'text',
-                  text: { body: message }
-                }),
-              }
-            );
-
-            if (!whatsappResponse.ok) {
-              const errorText = await whatsappResponse.text();
-              console.error(`WhatsApp error for ${booking.id}:`, errorText);
-              results.errors.push(`WhatsApp error for ${booking.id}: ${errorText}`);
-            } else {
-              console.log(`Reminder sent to ${booking.client_name}`);
-            }
+          if (invokeError || (result && result.error)) {
+            console.error(`Messaging error for ${booking.id}:`, invokeError || result.error);
+            results.errors.push(`Messaging error for ${booking.id}: ${invokeError?.message || result?.error}`);
           } else {
-            console.log(`WhatsApp not configured, would send: "${message}"`);
-          }
-
-          // Update booking to mark reminder as sent
-          const { error: updateError } = await supabase
-            .from('bookings')
-            .update({ reminder_sent: true })
-            .eq('id', booking.id);
-
-          if (updateError) {
-            console.error(`Update error for ${booking.id}:`, updateError);
-            results.errors.push(`Update error for ${booking.id}: ${updateError.message}`);
-          } else {
+            console.log(`Reminder sent to ${booking.client_name} via ${result.channel}`);
             results.reminders_sent++;
           }
         }
