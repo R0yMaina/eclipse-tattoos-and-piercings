@@ -188,9 +188,6 @@ const Gallery = () => {
               alt={selectedImage.alt}
               className="w-full h-full object-contain rounded-2xl"
             />
-            <div className="text-center mt-4">
-              <p className="text-foreground font-medium text-lg">{selectedImage.alt}</p>
-            </div>
           </div>
         </div>
       )}
