@@ -760,7 +760,7 @@ export const BookingSystem = () => {
             </div>
 
             <div className="space-y-3 text-sm text-left mb-6">
-              {['Verification usually takes 5-10 minutes', 'Keep this page open to receive confirmation', 'You will receive a WhatsApp message once verified'].map((txt, i) => (
+              {['Verification usually takes 5-10 minutes', 'Keep this page open to receive confirmation', 'You will be notified once verified'].map((txt, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className={cn(
                     "w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 font-semibold bg-primary text-primary-foreground"
@@ -809,7 +809,7 @@ export const BookingSystem = () => {
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground mb-6">You'll receive a confirmation on WhatsApp shortly. Please arrive on time.</p>
+            <p className="text-xs text-muted-foreground mb-6">Your booking is confirmed. Please arrive on time.</p>
 
             <Button onClick={handleResetBooking} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold">
               Book Another Session

@@ -125,26 +125,6 @@ const BookingsManagement = () => {
   const handleStartSession = async (booking: Booking) => {
     await updateBookingStatus(booking.id, 'ongoing');
 
-    // Send late warning check after 15 minutes
-    setTimeout(async () => {
-      const { data: currentBooking } = await supabase
-        .from('bookings')
-        .select('status, late_warning_sent')
-        .eq('id', booking.id)
-        .single();
-
-      if (currentBooking?.status === 'upcoming' && !currentBooking.late_warning_sent) {
-        await supabase.functions.invoke('send-whatsapp', {
-          body: {
-            type: 'late_warning',
-            bookingId: booking.id,
-            clientName: booking.client_name,
-            phoneNumber: booking.phone_number,
-            time: formatTime(booking.booking_slots.start_time)
-          }
-        });
-      }
-    }, 15 * 60 * 1000);
   };
 
   const handleCompleteSession = async () => {
