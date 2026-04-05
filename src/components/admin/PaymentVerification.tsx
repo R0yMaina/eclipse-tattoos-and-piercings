@@ -80,43 +80,12 @@ const PaymentVerification = () => {
 
       if (error) throw error;
 
-      // Find the booking to get details for the notification
-      const booking = bookings.find(b => b.id === bookingId);
-      if (booking) {
-        const slotDate = format(parseISO(booking.booking_slots.slot_date), 'MMM d, yyyy');
-        const slotTime = formatTime(booking.booking_slots.start_time);
-        
-        try {
-          const { data, error: invokeError } = await supabase.functions.invoke('send-whatsapp', {
-            body: {
-              type: action === 'confirm' ? 'payment_confirmed' : 'payment_rejected',
-              bookingId,
-              clientName: booking.client_name,
-              phoneNumber: booking.phone_number,
-              date: slotDate,
-              time: slotTime,
-            },
-          });
-
-          if (invokeError || (data && data.error)) {
-            console.error('WhatsApp notification failed:', invokeError || data.error);
-            toast({ 
-              title: 'Success, but notification failed ⚠️', 
-              description: 'Payment status updated, but WhatsApp message could not be sent. Please check your config.',
-              variant: 'destructive'
-            });
-          } else {
-            toast({
-              title: action === 'confirm' ? 'Payment Confirmed ✅' : 'Payment Rejected',
-              description: action === 'confirm'
-                ? 'Booking has been confirmed. The client will be notified.'
-                : 'Booking has been rejected and cancelled.',
-            });
-          }
-        } catch (e) {
-          console.error('WhatsApp invoke failed:', e);
-        }
-      }
+      toast({
+        title: action === 'confirm' ? 'Payment Confirmed ✅' : 'Payment Rejected',
+        description: action === 'confirm'
+          ? 'Booking has been confirmed.'
+          : 'Booking has been rejected and cancelled.',
+      });
 
       fetchPendingPayments();
     } catch (error) {

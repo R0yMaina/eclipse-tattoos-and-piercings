@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ChatLauncher } from "./components/chat/ChatLauncher";
-import { WhatsAppButton } from "./components/chat/WhatsAppButton";
+
 import { Navbar } from "./components/layout/Navbar";
 import Index from "./pages/Index";
 import Contact from "./pages/Contact";
@@ -38,7 +38,7 @@ const App = () => (
           </Routes>
         </div>
         <ChatLauncher />
-        <WhatsAppButton />
+        
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
