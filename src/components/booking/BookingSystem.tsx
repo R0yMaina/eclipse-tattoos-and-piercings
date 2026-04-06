@@ -157,11 +157,9 @@ export const BookingSystem = () => {
     if (!paymentPolling || !currentBookingId) return;
     const interval = setInterval(async () => {
       try {
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('id, payment_status, status, deposit_paid, mpesa_receipt')
-          .eq('id', currentBookingId)
-          .maybeSingle();
+        const { data: rows, error } = await supabase
+          .rpc('check_booking_status', { booking_id: currentBookingId });
+        const data = rows?.[0] ?? null;
 
         if (error) {
           console.error('Polling error:', error);

@@ -565,6 +565,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_booking_status: {
+        Args: { booking_id: string }
+        Returns: {
+          deposit_paid: boolean
+          id: string
+          payment_status: string
+          status: string
+        }[]
+      }
       generate_slots_for_date: {
         Args: { target_date: string }
         Returns: undefined
