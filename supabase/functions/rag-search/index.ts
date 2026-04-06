@@ -14,7 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    const { query, topK = 6 } = await req.json();
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized. Login required for AI search.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { query, topK = 10 } = await req.json();
 
     if (!query) {
       return new Response(JSON.stringify({ error: 'Query is required' }), {

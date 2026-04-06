@@ -49,7 +49,7 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                 {message.citations.map((citation: Citation) => (
                   <a
                     key={citation.index}
-                    href={citation.url}
+                    href={citation.url.startsWith('http') ? citation.url : '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block text-xs text-primary hover:underline"
