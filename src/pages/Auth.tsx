@@ -222,6 +222,16 @@ export default function Auth() {
                       <p className="text-sm text-destructive">{errors.password}</p>
                     )}
                   </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-sm text-primary hover:underline"
+                      disabled={isLoading}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (
                       <>
