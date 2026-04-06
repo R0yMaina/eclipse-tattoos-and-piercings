@@ -12,6 +12,7 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Gallery from "./pages/Gallery";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
