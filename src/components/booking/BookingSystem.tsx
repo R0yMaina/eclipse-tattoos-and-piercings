@@ -309,23 +309,16 @@ export const BookingSystem = () => {
       if (!storedToken) {
         throw new Error('Booking session expired. Please create a new booking.');
       }
-      const { error: updateError } = await supabase
-        .from('bookings')
-        .update({
-          transaction_code: transactionCode.trim().toUpperCase(),
-          payment_phone: paymentPhone.trim(),
-          payment_screenshot_url: screenshotUrl,
-          payment_status: 'pending_verification',
-          status: 'pending_verification'
-        })
-        .eq('id', currentBookingId)
-        .eq('client_token', storedToken);
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('submit_payment', {
+        p_booking_id: currentBookingId,
+        p_client_token: storedToken,
+        p_transaction_code: transactionCode.trim().toUpperCase(),
+        p_payment_phone: paymentPhone.trim() || null,
+      });
 
-      if (updateError) {
-        if (updateError.message.includes('unique') || updateError.message.includes('duplicate')) {
-          throw new Error('This transaction code has already been submitted.');
-        }
-        throw updateError;
+      if (rpcError) throw rpcError;
+      if (rpcResult && !(rpcResult as any).success) {
+        throw new Error((rpcResult as any).error || 'Payment submission failed');
       }
 
       toast({ title: 'Details submitted! 🚀', description: 'Our team is verifying your payment. Keep this page open.' });
