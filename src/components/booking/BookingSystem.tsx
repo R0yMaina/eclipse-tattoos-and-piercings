@@ -183,6 +183,7 @@ export const BookingSystem = () => {
           });
           // Clear persistence on success
           localStorage.removeItem('eclipse_current_booking_id');
+          localStorage.removeItem('eclipse_current_booking_token');
         } else if (data.payment_status === 'rejected' || data.payment_status === 'failed' || data.status === 'cancelled') {
           setPaymentPolling(false);
           setBookingStep('failed');
@@ -357,6 +358,7 @@ export const BookingSystem = () => {
     
     // Clear all persistence
     localStorage.removeItem('eclipse_current_booking_id');
+    localStorage.removeItem('eclipse_current_booking_token');
     localStorage.removeItem('eclipse_current_deposit');
     localStorage.removeItem('eclipse_current_price');
     
