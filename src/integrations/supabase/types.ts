@@ -48,6 +48,7 @@ export type Database = {
           admin_notes: string | null
           agreed_price: number | null
           client_name: string
+          client_token: string | null
           confirmation_sent: boolean | null
           created_at: string
           deposit_amount: number | null
@@ -77,6 +78,7 @@ export type Database = {
           admin_notes?: string | null
           agreed_price?: number | null
           client_name: string
+          client_token?: string | null
           confirmation_sent?: boolean | null
           created_at?: string
           deposit_amount?: number | null
@@ -106,6 +108,7 @@ export type Database = {
           admin_notes?: string | null
           agreed_price?: number | null
           client_name?: string
+          client_token?: string | null
           confirmation_sent?: boolean | null
           created_at?: string
           deposit_amount?: number | null
