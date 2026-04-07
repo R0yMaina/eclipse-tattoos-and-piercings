@@ -250,12 +250,14 @@ export const BookingSystem = () => {
         imageUrl = fileName;
       }
       const newBookingId = crypto.randomUUID();
+      const clientToken = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
       const deposit = Math.ceil(price * 0.15);
       const { error: bookingError } = await supabase.from('bookings').insert({
         id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
         inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'pending_payment', agreed_price: price,
         deposit_amount: deposit, payment_status: 'pending_payment', deposit_paid: false,
         payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        client_token: clientToken,
       });
       if (bookingError) {
         if (bookingError.message.includes('duplicate') || bookingError.message.includes('already exists')) throw new Error('This slot has already been booked. Please select another time.');
@@ -265,6 +267,7 @@ export const BookingSystem = () => {
       setDepositAmount(deposit);
       // Persist booking session details
       localStorage.setItem('eclipse_current_booking_id', newBookingId);
+      localStorage.setItem('eclipse_current_booking_token', clientToken);
       localStorage.setItem('eclipse_current_deposit', deposit.toString());
       localStorage.setItem('eclipse_current_price', price.toString());
       
@@ -301,6 +304,10 @@ export const BookingSystem = () => {
         }
       }
 
+      const storedToken = localStorage.getItem('eclipse_current_booking_token');
+      if (!storedToken) {
+        throw new Error('Booking session expired. Please create a new booking.');
+      }
       const { error: updateError } = await supabase
         .from('bookings')
         .update({
@@ -308,9 +315,10 @@ export const BookingSystem = () => {
           payment_phone: paymentPhone.trim(),
           payment_screenshot_url: screenshotUrl,
           payment_status: 'pending_verification',
-          status: 'pending_verification' // CRITICAL: This allows admin to see it
+          status: 'pending_verification'
         })
-        .eq('id', currentBookingId);
+        .eq('id', currentBookingId)
+        .eq('client_token', storedToken);
 
       if (updateError) {
         if (updateError.message.includes('unique') || updateError.message.includes('duplicate')) {
