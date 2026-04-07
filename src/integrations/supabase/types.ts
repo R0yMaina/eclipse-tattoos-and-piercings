@@ -651,6 +651,15 @@ export type Database = {
           url: string
         }[]
       }
+      submit_payment: {
+        Args: {
+          p_booking_id: string
+          p_client_token: string
+          p_payment_phone?: string
+          p_transaction_code: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
