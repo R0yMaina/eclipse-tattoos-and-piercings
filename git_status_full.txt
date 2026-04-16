@@ -1,0 +1,37 @@
+On branch main
+Your branch and 'origin/main' have diverged,
+and have 1 and 10 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+	modified:   src/App.tsx
+	modified:   src/components/admin/BookingsManagement.tsx
+	modified:   src/components/admin/MessageTemplates.tsx
+	modified:   src/components/admin/PaymentVerification.tsx
+	modified:   src/components/admin/ReviewsManagement.tsx
+	modified:   src/components/booking/BookingSystem.tsx
+	deleted:    src/components/chat/WhatsAppButton.tsx
+	modified:   src/integrations/supabase/types.ts
+	modified:   src/pages/Contact.tsx
+	modified:   src/pages/Gallery.tsx
+
+Unmerged paths:
+  (use "git add/rm <file>..." as appropriate to mark resolution)
+	deleted by them: supabase/functions/check-late-arrivals/index.ts
+	deleted by them: supabase/functions/send-reminders/index.ts
+	deleted by them: supabase/functions/send-whatsapp/index.ts
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   eclipse-tattoos-and-piercings (modified content, untracked content)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_status_full.txt
+

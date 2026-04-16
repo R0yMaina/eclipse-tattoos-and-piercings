@@ -29,84 +29,70 @@ export const JewelryAftercare = () => {
   }, []);
 
   return (
-    <section id="jewelry-aftercare" ref={sectionRef} className="py-24 px-4">
+    <section id="aftercare" ref={sectionRef} className="py-24 px-4 bg-background/30">
       <div className="container max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-heading font-semibold mb-4">
-            Jewelry & Aftercare
+            Aftercare Essentials
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Hypoallergenic metals, ethically sourced stones, and clear aftercare.
+            Proper healing is essential for preserving the longevity and beauty of your body art.
           </p>
         </div>
 
-        <div ref={contentRef} className="grid lg:grid-cols-2 gap-8">
-          {/* Jewelry Section */}
+        <div ref={contentRef} className="grid md:grid-cols-2 gap-8">
+          {/* Tattoo Aftercare Section */}
           <div className="glass-panel-elevated glass-highlight rounded-[24px] p-8">
             <div className="flex items-center gap-3 mb-6">
-              <Sparkles className="w-6 h-6 text-primary" />
-              <h3 className="text-2xl font-heading font-semibold">Premium Jewelry</h3>
+              <ShieldCheck className="w-8 h-8 text-primary" />
+              <h3 className="text-2xl font-heading font-semibold">Tattoo Care</h3>
             </div>
 
             <div className="space-y-6">
-              {jewelryOptions.map((option, index) => (
-                <div key={index} className="border-b border-border/30 pb-4 last:border-0 last:pb-0">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-foreground">{option.title}</h4>
-                    <span className="text-sm font-semibold text-primary">From KES {option.price_from_kes.toLocaleString()}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{option.notes}</p>
-                </div>
-              ))}
+              <ul className="space-y-4">
+                {aftercareInfo.tattoo.map((step, index) => (
+                  <li key={index} className="text-base text-muted-foreground flex items-start gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            <p className="text-xs text-muted-foreground mt-6 italic">
-              All jewelry is implant-grade and suitable for fresh piercings. Custom orders available.
-            </p>
           </div>
 
-          {/* Aftercare Section */}
+          {/* Piercing Aftercare Section */}
           <div className="glass-panel-elevated glass-highlight rounded-[24px] p-8">
             <div className="flex items-center gap-3 mb-6">
-              <ShieldCheck className="w-6 h-6 text-primary" />
-              <h3 className="text-2xl font-heading font-semibold">Aftercare Essentials</h3>
+              <ShieldCheck className="w-8 h-8 text-primary" />
+              <h3 className="text-2xl font-heading font-semibold">Piercing Care</h3>
             </div>
 
             <div className="space-y-6">
-              <div>
-                <h4 className="font-semibold text-foreground mb-3">Tattoo Care</h4>
-                <ul className="space-y-2">
-                  {aftercareInfo.tattoo.map((step, index) => (
-                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary mt-1">•</span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-foreground mb-3">Piercing Care</h4>
-                <ul className="space-y-2">
-                  {aftercareInfo.piercing.map((step, index) => (
-                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary mt-1">•</span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="space-y-4">
+                {aftercareInfo.piercing.map((step, index) => (
+                  <li key={index} className="text-base text-muted-foreground flex items-start gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-6 border-primary/40 hover:border-primary hover:bg-primary/10 transition-smooth"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Full Guide
-            </Button>
           </div>
+        </div>
+
+        <div className="mt-12 text-center">
+          <Button
+            variant="outline"
+            size="lg"
+            className="border-primary/40 hover:border-primary hover:bg-primary/10 transition-smooth group"
+          >
+            <Download className="w-5 h-5 mr-3 group-hover:translate-y-0.5 transition-transform" />
+            Download Full Aftercare Guide
+          </Button>
         </div>
       </div>
     </section>

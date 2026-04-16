@@ -8,7 +8,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Tattoos", href: "#tattoos" },
   { label: "Piercings", href: "#piercings" },
-  { label: "Jewelry & Aftercare", href: "#jewelry-aftercare" },
+  { label: "Aftercare", href: "#aftercare" },
   { label: "Pricing", href: "#pricing" },
   { label: "Process", href: "#process" },
   { label: "FAQ", href: "#faq" }
