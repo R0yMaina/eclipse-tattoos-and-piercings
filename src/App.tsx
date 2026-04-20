@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ChatLauncher } from "./components/chat/ChatLauncher";
 
 import { Navbar } from "./components/layout/Navbar";
+import { Footer } from "./components/layout/Footer";
 import Index from "./pages/Index";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
+        <Footer />
         <ChatLauncher />
         
       </BrowserRouter>
