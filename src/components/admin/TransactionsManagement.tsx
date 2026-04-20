@@ -267,6 +267,11 @@ const TransactionsManagement = () => {
                   const balance = agreed > 0 ? Math.max(agreed - paid, 0) : 0;
                   const isFullyPaid = agreed > 0 && paid >= agreed;
 
+                  const slotEndTime = parseISO(booking.booking_slots.slot_date);
+                  const [endH, endM] = booking.booking_slots.end_time.split(':').map(Number);
+                  slotEndTime.setHours(endH, endM, 0);
+                  const isTimeOver = now > slotEndTime;
+
                   return (
                     <TableRow key={booking.id}>
                       <TableCell className="whitespace-nowrap text-sm">
@@ -283,13 +288,13 @@ const TransactionsManagement = () => {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={booking.status === 'completed' ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'}
+                          variant={booking.status === 'completed' || (isTimeOver && booking.status === 'confirmed') ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'}
                           className={
-                            booking.status === 'completed' ? 'bg-green-500/80' :
+                            (booking.status === 'completed' || (isTimeOver && booking.status === 'confirmed')) ? 'bg-green-500/80' :
                             booking.status === 'ongoing' ? 'bg-yellow-500' : ''
                           }
                         >
-                          {booking.status.replace('_', ' ')}
+                          {(isTimeOver && booking.status === 'confirmed') ? 'DONE' : booking.status.replace('_', ' ')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right text-sm">
@@ -306,7 +311,7 @@ const TransactionsManagement = () => {
                         {paid > 0 ? `KSh ${paid.toLocaleString()}` : <Minus className="h-4 w-4 mx-auto text-muted-foreground" />}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {isFullyPaid ? (
+                        {isFullyPaid || (isTimeOver && booking.status !== 'cancelled') ? (
                           <Badge variant="outline" className="border-green-500 text-green-500">Paid</Badge>
                         ) : balance > 0 ? (
                           <span className="text-yellow-500 font-medium">KSh {balance.toLocaleString()}</span>

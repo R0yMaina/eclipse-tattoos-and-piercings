@@ -162,12 +162,22 @@ const BookingsManagement = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (booking: Booking) => {
+    const status = booking.status;
+    
+    // Check if session time is over
+    const now = new Date();
+    const [endH, endM] = booking.booking_slots.end_time.split(':').map(Number);
+    const slotEndTime = parseISO(booking.booking_slots.slot_date);
+    slotEndTime.setHours(endH, endM, 0);
+    
+    const isOver = now > slotEndTime;
+
     const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
       pending_payment: { label: 'PENDING', variant: 'outline', className: 'border-blue-500 text-blue-500' },
       pending_verification: { label: 'WAITING APPROVAL', variant: 'default', className: 'bg-yellow-500' },
-      confirmed: { label: 'APPROVED', variant: 'default', className: 'bg-green-600' },
-      upcoming: { label: 'APPROVED', variant: 'default', className: 'bg-blue-500' },
+      confirmed: { label: isOver ? 'DONE' : 'APPROVED', variant: 'default', className: isOver ? 'bg-green-600' : 'bg-green-600' },
+      upcoming: { label: isOver ? 'DONE' : 'APPROVED', variant: 'default', className: isOver ? 'bg-green-600' : 'bg-blue-500' },
       ongoing: { label: 'IN PROGRESS', variant: 'default', className: 'bg-yellow-500' },
       completed: { label: 'FINISHED', variant: 'default', className: 'bg-green-500' },
       cancelled: { label: 'CANCELLED', variant: 'destructive', className: '' },
@@ -328,7 +338,7 @@ const BookingsManagement = () => {
                               <Clock className="h-4 w-4 text-primary" />
                               {formatTime(booking.booking_slots.start_time)} - {formatTime(booking.booking_slots.end_time)}
                             </div>
-                            {getStatusBadge(booking.status)}
+                            {getStatusBadge(booking)}
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
