@@ -29,8 +29,20 @@ export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
   const [reindexing, setReindexing] = useState(false);
 
-  const checkAdminAccess = useCallback(async (userId: string) => {
+  const checkAdminAccess = useCallback(async (userId: string, email: string | undefined) => {
     try {
+      // Hardened check: Only allow specific emails
+      const allowedEmails = ['roymaina395@gmail.com', 'jamingtonbuluma17@gmail.com'];
+      if (!email || !allowedEmails.includes(email.toLowerCase())) {
+        toast({ 
+          title: "Access Denied", 
+          description: "This account is not authorized to access the admin dashboard.", 
+          variant: "destructive" 
+        });
+        navigate("/auth");
+        return;
+      }
+
       const { data: roleData, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -53,21 +65,23 @@ export default function Admin() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user ?? null);
-        if (!session?.user) {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (!currentUser) {
           navigate("/auth");
         } else {
-          setTimeout(() => checkAdminAccess(session.user.id), 0);
+          setTimeout(() => checkAdminAccess(currentUser.id, currentUser.email), 0);
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (!currentUser) {
         navigate("/auth");
       } else {
-        checkAdminAccess(session.user.id);
+        checkAdminAccess(currentUser.id, currentUser.email);
       }
     });
 
