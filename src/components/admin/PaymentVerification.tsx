@@ -81,10 +81,10 @@ const PaymentVerification = () => {
       if (error) throw error;
 
       toast({
-        title: action === 'confirm' ? 'Payment Confirmed ✅' : 'Payment Rejected',
+        title: action === 'confirm' ? 'Booking Approved ✅' : 'Booking Rejected',
         description: action === 'confirm'
-          ? 'Booking has been confirmed.'
-          : 'Booking has been rejected and cancelled.',
+          ? 'The booking has been successfully approved.'
+          : 'The booking has been rejected and cancelled.',
       });
 
       fetchPendingPayments();
@@ -216,17 +216,17 @@ const PaymentVerification = () => {
                         {format(parseISO(booking.created_at), 'MMM d, HH:mm')}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button size="sm"
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
+                           <Button size="sm"
                             onClick={() => handleVerify(booking.id, 'confirm')}
                             disabled={updating === booking.id}
-                            className="bg-green-600 hover:bg-green-700 text-white">
-                            {updating === booking.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="h-4 w-4 mr-1" /> Confirm</>}
+                            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold">
+                            {updating === booking.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="h-4 w-4 mr-1" /> Approve</>}
                           </Button>
                           <Button size="sm" variant="outline"
                             onClick={() => handleVerify(booking.id, 'reject')}
                             disabled={updating === booking.id}
-                            className="border-destructive text-destructive hover:bg-destructive/10">
+                            className="w-full sm:w-auto border-destructive text-destructive hover:bg-destructive/10 font-medium">
                             <XCircle className="h-4 w-4 mr-1" /> Reject
                           </Button>
                         </div>

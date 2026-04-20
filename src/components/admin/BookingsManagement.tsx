@@ -163,22 +163,22 @@ const BookingsManagement = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
-      pending_payment: { variant: 'outline', className: 'border-blue-500 text-blue-500' },
-      pending_verification: { variant: 'default', className: 'bg-yellow-500' },
-      confirmed: { variant: 'default', className: 'bg-green-600' },
-      upcoming: { variant: 'default', className: 'bg-blue-500' },
-      ongoing: { variant: 'default', className: 'bg-yellow-500' },
-      completed: { variant: 'default', className: 'bg-green-500' },
-      cancelled: { variant: 'destructive', className: '' },
-      no_show: { variant: 'destructive', className: '' }
+    const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
+      pending_payment: { label: 'PENDING', variant: 'outline', className: 'border-blue-500 text-blue-500' },
+      pending_verification: { label: 'WAITING APPROVAL', variant: 'default', className: 'bg-yellow-500' },
+      confirmed: { label: 'APPROVED', variant: 'default', className: 'bg-green-600' },
+      upcoming: { label: 'APPROVED', variant: 'default', className: 'bg-blue-500' },
+      ongoing: { label: 'IN PROGRESS', variant: 'default', className: 'bg-yellow-500' },
+      completed: { label: 'FINISHED', variant: 'default', className: 'bg-green-500' },
+      cancelled: { label: 'CANCELLED', variant: 'destructive', className: '' },
+      no_show: { label: 'MISSED', variant: 'destructive', className: '' }
     };
 
-    const config = variants[status] || { variant: 'secondary', className: '' };
+    const config = variants[status] || { label: status.toUpperCase(), variant: 'secondary', className: '' };
 
     return (
-      <Badge variant={config.variant} className={config.className}>
-        {status.replace('_', ' ').toUpperCase()}
+      <Badge variant={config.variant} className={cn("font-bold tracking-tight", config.className)}>
+        {config.label}
       </Badge>
     );
   };
