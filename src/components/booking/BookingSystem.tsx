@@ -273,7 +273,7 @@ export const BookingSystem = () => {
           type: 'booking_created',
           phoneNumber: phoneNumber.trim(),
           clientName: clientName.trim(),
-          date: selectedSlot.slot_date,
+          date: selectedDate ? format(selectedDate, 'MMMM d, yyyy') : '',
           time: selectedSlot.start_time,
           depositAmount: deposit,
         },
