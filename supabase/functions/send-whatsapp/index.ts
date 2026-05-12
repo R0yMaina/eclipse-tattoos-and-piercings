@@ -16,18 +16,65 @@ function normalizePhone(raw: string): string {
   return p;
 }
 
-function buildMessage(type: string, data: Record<string, any>): string {
+// Map our internal event type to a Meta-approved template name + ordered body params.
+// Template names below MUST match what you create & get approved in Meta Business Manager.
+// Each template body should use {{1}}, {{2}}, ... placeholders in the same order as `params`.
+function templateFor(type: string, data: Record<string, any>) {
+  const name = data.clientName || "Customer";
+  switch (type) {
+    case "booking_created":
+      // Template: booking_created (Utility)
+      // Body: "Hi {{1}}! Your booking with Eclipse Tattoos & Piercings is received.
+      //        Date: {{2}}  Time: {{3}}  Deposit due: KES {{4}}.
+      //        Please complete your 15% deposit within 24 hours to confirm your slot."
+      return {
+        name: "booking_created",
+        params: [name, data.date ?? "TBD", data.time ?? "TBD", String(data.depositAmount ?? "")],
+      };
+    case "confirmation":
+      // Template: booking_confirmed (Utility)
+      // Body: "Hi {{1}}! Your booking is confirmed for {{2}} at {{3}}. Payment: {{4}}. See you soon!"
+      return {
+        name: "booking_confirmed",
+        params: [name, data.date ?? "", data.time ?? "", String(data.depositAmount ?? "Received")],
+      };
+    case "cancellation":
+      // Template: booking_cancelled (Utility)
+      // Body: "Hi {{1}}, your booking has been cancelled. Reason: {{2}}. Feel free to rebook anytime."
+      return {
+        name: "booking_cancelled",
+        params: [name, data.reason ?? "Not specified"],
+      };
+    default:
+      return null;
+  }
+}
+
+function fallbackText(type: string, data: Record<string, any>): string {
   const name = data.clientName || "there";
   switch (type) {
     case "booking_created":
-      return `Hi ${name}! 🎉 Your booking with Eclipse Tattoos & Piercings is received.\n\nDate: ${data.date ?? "TBD"}\nTime: ${data.time ?? "TBD"}\nDeposit due: KES ${data.depositAmount ?? ""}\n\nPlease complete your 15% deposit within 24 hours to confirm your slot. Reply here if you have questions.`;
+      return `Hi ${name}! 🎉 Your booking with Eclipse Tattoos & Piercings is received.\n\nDate: ${data.date ?? "TBD"}\nTime: ${data.time ?? "TBD"}\nDeposit due: KES ${data.depositAmount ?? ""}\n\nPlease complete your 15% deposit within 24 hours to confirm your slot.`;
     case "confirmation":
-      return `Hi ${name}! ✅ Your booking is confirmed.\n\nDate: ${data.date ?? ""}\nTime: ${data.time ?? ""}\n${data.depositAmount ? `Payment: ${data.depositAmount}\n` : ""}\nSee you soon at Eclipse Tattoos & Piercings!`;
+      return `Hi ${name}! ✅ Your booking is confirmed.\nDate: ${data.date ?? ""}\nTime: ${data.time ?? ""}\n${data.depositAmount ? `Payment: ${data.depositAmount}\n` : ""}See you soon at Eclipse Tattoos & Piercings!`;
     case "cancellation":
-      return `Hi ${name}, your booking has been cancelled. ${data.reason ?? ""}\n\nFeel free to rebook anytime at Eclipse Tattoos & Piercings.`;
+      return `Hi ${name}, your booking has been cancelled. ${data.reason ?? ""}\n\nFeel free to rebook anytime.`;
     default:
       return data.message || `Hello from Eclipse Tattoos & Piercings.`;
   }
+}
+
+async function sendWhatsApp(payload: Record<string, any>, phoneNumberId: string, accessToken: string) {
+  const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  return { ok: res.ok, status: res.status, json };
 }
 
 serve(async (req: Request) => {
@@ -36,6 +83,8 @@ serve(async (req: Request) => {
   try {
     const accessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
     const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const lang = Deno.env.get("WHATSAPP_TEMPLATE_LANG") || "en";
+
     if (!accessToken || !phoneNumberId) {
       console.error("Missing WhatsApp credentials");
       return new Response(JSON.stringify({ error: "WhatsApp not configured" }), {
@@ -52,34 +101,51 @@ serve(async (req: Request) => {
     }
 
     const to = normalizePhone(phoneNumber);
-    const text = buildMessage(type, data);
+    const tpl = templateFor(type, data);
 
-    console.log(`Sending WhatsApp [${type}] to ${to}`);
-
-    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    // Try template first (works outside the 24h window)
+    if (tpl) {
+      const payload = {
         messaging_product: "whatsapp",
         to,
-        type: "text",
-        text: { body: text },
-      }),
-    });
-
-    const result = await res.json();
-    if (!res.ok) {
-      console.error("WhatsApp API error:", JSON.stringify(result));
-      return new Response(JSON.stringify({ error: result }), {
-        status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        type: "template",
+        template: {
+          name: tpl.name,
+          language: { code: lang },
+          components: tpl.params.length > 0 ? [{
+            type: "body",
+            parameters: tpl.params.map((v) => ({ type: "text", text: String(v) })),
+          }] : [],
+        },
+      };
+      console.log(`Sending WhatsApp template [${tpl.name}] to ${to}`);
+      const r = await sendWhatsApp(payload, phoneNumberId, accessToken);
+      if (r.ok) {
+        console.log("WhatsApp template sent:", r.json?.messages?.[0]?.id);
+        return new Response(JSON.stringify({ success: true, mode: "template", result: r.json }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      console.warn(`Template ${tpl.name} failed (${r.status}), falling back to text:`, JSON.stringify(r.json));
     }
 
-    console.log("WhatsApp sent:", result?.messages?.[0]?.id);
-    return new Response(JSON.stringify({ success: true, result }), {
+    // Fallback: plain text (only delivers inside the 24h customer-initiated window)
+    const textPayload = {
+      messaging_product: "whatsapp",
+      to,
+      type: "text",
+      text: { body: fallbackText(type, data) },
+    };
+    console.log(`Sending WhatsApp text fallback to ${to}`);
+    const r = await sendWhatsApp(textPayload, phoneNumberId, accessToken);
+    if (!r.ok) {
+      console.error("WhatsApp API error:", JSON.stringify(r.json));
+      return new Response(JSON.stringify({ error: r.json }), {
+        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    console.log("WhatsApp text sent:", r.json?.messages?.[0]?.id);
+    return new Response(JSON.stringify({ success: true, mode: "text", result: r.json }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
