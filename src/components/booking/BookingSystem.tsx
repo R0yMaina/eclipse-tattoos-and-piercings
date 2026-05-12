@@ -266,6 +266,18 @@ export const BookingSystem = () => {
       }
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
+
+      // Fire-and-forget WhatsApp confirmation (don't block booking on failure)
+      supabase.functions.invoke('send-whatsapp', {
+        body: {
+          type: 'booking_created',
+          phoneNumber: phoneNumber.trim(),
+          clientName: clientName.trim(),
+          date: selectedSlot.slot_date,
+          time: selectedSlot.start_time,
+          depositAmount: deposit,
+        },
+      }).catch((err) => console.error('WhatsApp send failed:', err));
       // Persist booking session details
       localStorage.setItem('eclipse_current_booking_id', newBookingId);
       localStorage.setItem('eclipse_current_booking_token', clientToken);
