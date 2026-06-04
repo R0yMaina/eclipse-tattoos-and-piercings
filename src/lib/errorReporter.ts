@@ -24,13 +24,13 @@ export async function reportClientError(
     const sig = `${message}::${(stack || "").slice(0, 200)}`;
     if (!shouldSend(sig)) return;
 
-    await supabase.from("client_errors").insert({
+    await supabase.from("client_errors").insert([{
       message: String(message).slice(0, 2000),
       stack: stack ? String(stack).slice(0, 8000) : null,
       url: typeof window !== "undefined" ? window.location.href.slice(0, 500) : null,
       user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
       context: context ?? null,
-    });
+    }]);
   } catch {
     // Never let error reporting itself throw
   }

@@ -15,13 +15,13 @@ export async function logAdminAction(
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from("admin_audit_log").insert({
+    await supabase.from("admin_audit_log").insert([{
       actor_user_id: user.id,
       action,
       entity_type: entityType,
       entity_id: entityId ?? null,
       details: details ?? null,
-    });
+    }]);
   } catch (err) {
     console.warn("audit log failed", err);
   }
