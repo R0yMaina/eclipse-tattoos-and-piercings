@@ -28,6 +28,8 @@ interface ContactFormData {
 export const ContactForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [honeypot, setHoneypot] = useState('');
+  const [mountedAt] = useState(() => Date.now());
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ContactFormData>();
 
   const consent = watch('consent');
@@ -58,6 +60,12 @@ export const ContactForm = () => {
   const onSubmit = async (data: ContactFormData) => {
     if (!data.consent) {
       toast.error('Please consent to be contacted');
+      return;
+    }
+
+    // Bot protection: honeypot must be empty + form must be on screen >2s
+    if (honeypot || Date.now() - mountedAt < 2000) {
+      toast.error('Submission rejected. Please try again.');
       return;
     }
 
