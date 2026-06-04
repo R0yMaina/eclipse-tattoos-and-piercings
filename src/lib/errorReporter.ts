@@ -29,7 +29,7 @@ export async function reportClientError(
       stack: stack ? String(stack).slice(0, 8000) : null,
       url: typeof window !== "undefined" ? window.location.href.slice(0, 500) : null,
       user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
-      context: context ?? null,
+      context: (context ?? null) as never,
     }]);
   } catch {
     // Never let error reporting itself throw
