@@ -584,6 +584,17 @@ export const BookingSystem = () => {
                 </div>
 
                 <form onSubmit={handleSubmitBooking} className="space-y-6">
+                  {/* Honeypot — hidden from real users, irresistible to bots */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    aria-hidden="true"
+                    style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                  />
                   <div className="grid md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <Label htmlFor="clientName" className="flex items-center gap-2 text-sm text-muted-foreground">
