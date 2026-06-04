@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+        }
+        Relationships: []
+      }
       booking_slots: {
         Row: {
           created_at: string
@@ -241,6 +274,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_errors: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          message: string
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          message: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          message?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       contact_submissions: {
         Row: {
@@ -577,6 +643,18 @@ export type Database = {
           status: string
         }[]
       }
+      create_booking: {
+        Args: {
+          p_agreed_price: number
+          p_client_name: string
+          p_honeypot?: string
+          p_inspiration_image_url?: string
+          p_notes?: string
+          p_phone_number: string
+          p_slot_id: string
+        }
+        Returns: Json
+      }
       generate_slots_for_date: {
         Args: { target_date: string }
         Returns: undefined
@@ -637,6 +715,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      health_check: { Args: never; Returns: Json }
       match_chunks: {
         Args: {
           match_count?: number

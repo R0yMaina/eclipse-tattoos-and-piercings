@@ -57,6 +57,8 @@ export const BookingSystem = () => {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const { toast } = useToast();
   const [hasRestored, setHasRestored] = useState(false);
+  const [honeypot, setHoneypot] = useState(''); // bot trap — must remain empty
+  const formMountedAt = useRef<number>(Date.now());
 
   // Restore booking session from localStorage
   useEffect(() => {
@@ -239,6 +241,12 @@ export const BookingSystem = () => {
     const phoneRegex = /^[\d\s\-+()]{10,}$/;
     if (!phoneRegex.test(phoneNumber)) { toast({ title: 'Invalid phone number', description: 'Please enter a valid phone number.', variant: 'destructive' }); return; }
 
+    // Bot protection: honeypot must stay empty + form must be on screen > 2s
+    if (honeypot || Date.now() - formMountedAt.current < 2000) {
+      toast({ title: 'Submission rejected', description: 'Please try again.', variant: 'destructive' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       let imageUrl = null;
@@ -247,27 +255,35 @@ export const BookingSystem = () => {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('inspiration-images').upload(fileName, inspirationImage);
         if (uploadError) throw uploadError;
-        // Store the file path only; admins access via signed URLs
         imageUrl = fileName;
       }
-      const newBookingId = crypto.randomUUID();
-      const clientToken = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
-      const deposit = Math.ceil(price * 0.15);
-      const { error: bookingError } = await supabase.from('bookings').insert({
-        id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
-        inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'pending_payment', agreed_price: price,
-        deposit_amount: deposit, payment_status: 'pending_payment', deposit_paid: false,
-        payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        client_token: clientToken,
+
+      // Atomic, race-safe booking creation via SECURITY DEFINER RPC.
+      // The DB locks the slot row and rejects duplicates even under concurrent load.
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('create_booking', {
+        p_slot_id: selectedSlot.slot_id,
+        p_client_name: clientName.trim(),
+        p_phone_number: phoneNumber.trim(),
+        p_agreed_price: price,
+        p_inspiration_image_url: imageUrl,
+        p_notes: notes.trim() || null,
+        p_honeypot: honeypot || null,
       });
-      if (bookingError) {
-        if (bookingError.message.includes('duplicate') || bookingError.message.includes('already exists')) throw new Error('This slot has already been booked. Please select another time.');
-        throw bookingError;
+
+      if (rpcError) throw rpcError;
+      const result = rpcResult as { success: boolean; error?: string; booking_id?: string; client_token?: string; deposit_amount?: number };
+      if (!result?.success) {
+        throw new Error(result?.error || 'Could not create booking');
       }
+
+      const newBookingId = result.booking_id!;
+      const clientToken = result.client_token!;
+      const deposit = result.deposit_amount ?? Math.ceil(price * 0.15);
+
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
 
-      // Fire-and-forget WhatsApp confirmation (don't block booking on failure)
+      // Fire-and-forget WhatsApp confirmation
       supabase.functions.invoke('send-whatsapp', {
         body: {
           type: 'booking_created',
@@ -278,12 +294,12 @@ export const BookingSystem = () => {
           depositAmount: deposit,
         },
       }).catch((err) => console.error('WhatsApp send failed:', err));
-      // Persist booking session details
+
       localStorage.setItem('eclipse_current_booking_id', newBookingId);
       localStorage.setItem('eclipse_current_booking_token', clientToken);
       localStorage.setItem('eclipse_current_deposit', deposit.toString());
       localStorage.setItem('eclipse_current_price', price.toString());
-      
+
       setBookingStep('payment');
       setTimeout(() => {
         paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -568,6 +584,17 @@ export const BookingSystem = () => {
                 </div>
 
                 <form onSubmit={handleSubmitBooking} className="space-y-6">
+                  {/* Honeypot — hidden from real users, irresistible to bots */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    aria-hidden="true"
+                    style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                  />
                   <div className="grid md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <Label htmlFor="clientName" className="flex items-center gap-2 text-sm text-muted-foreground">
