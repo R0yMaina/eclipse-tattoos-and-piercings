@@ -26,7 +26,7 @@ function templateFor(type: string, data: Record<string, any>) {
       // Template: booking_created (Utility)
       // Body: "Hi {{1}}! Your booking with Eclipse Tattoos & Piercings is received.
       //        Date: {{2}}  Time: {{3}}  Deposit due: KES {{4}}.
-      //        Please complete your 15% deposit within 24 hours to confirm your slot."
+      //        Please complete your 30% deposit within 24 hours to confirm your slot."
       return {
         name: "booking_created",
         params: [name, data.date ?? "TBD", data.time ?? "TBD", String(data.depositAmount ?? "")],
@@ -54,7 +54,7 @@ function fallbackText(type: string, data: Record<string, any>): string {
   const name = data.clientName || "there";
   switch (type) {
     case "booking_created":
-      return `Hi ${name}! 🎉 Your booking with Eclipse Tattoos & Piercings is received.\n\nDate: ${data.date ?? "TBD"}\nTime: ${data.time ?? "TBD"}\nDeposit due: KES ${data.depositAmount ?? ""}\n\nPlease complete your 15% deposit within 24 hours to confirm your slot.`;
+      return `Hi ${name}! 🎉 Your booking with Eclipse Tattoos & Piercings is received.\n\nDate: ${data.date ?? "TBD"}\nTime: ${data.time ?? "TBD"}\nDeposit due: KES ${data.depositAmount ?? ""}\n\nPlease complete your 30% deposit (Pochi la Biashara 0769138198) within 24 hours to confirm your slot.`;
     case "confirmation":
       return `Hi ${name}! ✅ Your booking is confirmed.\nDate: ${data.date ?? ""}\nTime: ${data.time ?? ""}\n${data.depositAmount ? `Payment: ${data.depositAmount}\n` : ""}See you soon at Eclipse Tattoos & Piercings!`;
     case "cancellation":

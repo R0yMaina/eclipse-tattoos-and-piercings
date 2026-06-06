@@ -278,7 +278,7 @@ export const BookingSystem = () => {
 
       const newBookingId = result.booking_id!;
       const clientToken = result.client_token!;
-      const deposit = result.deposit_amount ?? Math.ceil(price * 0.15);
+      const deposit = result.deposit_amount ?? Math.ceil(price * 0.30);
 
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
@@ -411,7 +411,7 @@ export const BookingSystem = () => {
     }
   };
 
-  const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.15) : 0;
+  const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.30) : 0;
 
   const stepLabels = ['Select Slot', 'Your Details', 'Payment', 'Confirmed'];
   const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
@@ -432,7 +432,7 @@ export const BookingSystem = () => {
           Book Your Session
         </h2>
         <p className="booking-hero-sub text-muted-foreground max-w-md mx-auto">
-          Select a date and time slot, then pay a 15% deposit to confirm your appointment
+          Select a date and time slot, then pay a 30% deposit to confirm your appointment
         </p>
       </div>
 
@@ -630,7 +630,7 @@ export const BookingSystem = () => {
                       </div>
                       {agreedPrice && parseFloat(agreedPrice) > 0 && (
                         <GlassCard className="p-4 text-center">
-                          <p className="text-xs text-muted-foreground">15% Deposit Required</p>
+                          <p className="text-xs text-muted-foreground">30% Deposit Required</p>
                           <p className="text-3xl font-heading font-bold text-primary mt-1">KES {calculatedDeposit.toLocaleString()}</p>
                           <p className="text-[10px] text-muted-foreground mt-1">
                             Balance KES {(parseFloat(agreedPrice) - calculatedDeposit).toLocaleString()} at appointment
@@ -697,13 +697,13 @@ export const BookingSystem = () => {
               
               <div className="space-y-6 text-left">
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">M-Pesa Pay Bill / Number</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">M-Pesa Pochi la Biashara</p>
                   <p className="text-2xl font-bold text-primary">0769138198</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">Send money directly to this number</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Send money via Pochi la Biashara to this number</p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Deposit Amount</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Deposit Amount (30%)</p>
                   <p className="text-2xl font-bold text-foreground">KES {depositAmount.toLocaleString()}</p>
                 </div>
 
@@ -712,7 +712,7 @@ export const BookingSystem = () => {
                   <ul className="text-sm text-muted-foreground space-y-2">
                     <li className="flex gap-2">
                       <span className="text-primary font-bold">1.</span>
-                      Go to M-Pesa &gt; Send Money
+                      Go to M-Pesa &gt; Lipa na M-Pesa &gt; Pochi la Biashara
                     </li>
                     <li className="flex gap-2">
                       <span className="text-primary font-bold">2.</span>

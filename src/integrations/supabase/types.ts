@@ -643,18 +643,30 @@ export type Database = {
           status: string
         }[]
       }
-      create_booking: {
-        Args: {
-          p_agreed_price: number
-          p_client_name: string
-          p_honeypot?: string
-          p_inspiration_image_url?: string
-          p_notes?: string
-          p_phone_number: string
-          p_slot_id: string
-        }
-        Returns: Json
-      }
+      create_booking:
+        | {
+            Args: {
+              p_agreed_price: number
+              p_client_name: string
+              p_honeypot?: string
+              p_inspiration_image_url?: string
+              p_notes?: string
+              p_phone_number: string
+              p_slot_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_agreed_price: number
+              p_client_name: string
+              p_inspiration_image_url?: string
+              p_notes?: string
+              p_phone_number: string
+              p_slot_id: string
+            }
+            Returns: Json
+          }
       generate_slots_for_date: {
         Args: { target_date: string }
         Returns: undefined
