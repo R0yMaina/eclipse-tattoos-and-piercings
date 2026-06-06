@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           "ui-vendor": ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-popover", "@radix-ui/react-toast"],
-          "motion-vendor": ["framer-motion", "gsap"],
+          "motion-vendor": ["gsap"],
           "supabase-vendor": ["@supabase/supabase-js"],
         },
       },
