@@ -94,7 +94,7 @@ serve(async (req: Request) => {
       );
     }
 
-    const depositAmount = Math.ceil(agreedPrice * 0.15);
+    const depositAmount = Math.ceil(agreedPrice * 0.30);
     const formattedPhone = formatPhoneNumber(phoneNumber);
 
     // Check for shortcode in multiple possible env var names
