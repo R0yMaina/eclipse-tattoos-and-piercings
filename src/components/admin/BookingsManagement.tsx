@@ -249,7 +249,8 @@ const BookingsManagement = () => {
           .from('bookings')
           .select('id')
           .eq('slot_id', chosenSlot.slot_id)
-          .not('status', 'in', '(cancelled,no_show)')
+          .neq('status', 'cancelled')
+          .neq('status', 'no_show')
           .maybeSingle();
 
         if (existingBookingError) throw existingBookingError;
