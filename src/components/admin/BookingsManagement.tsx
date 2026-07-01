@@ -562,16 +562,44 @@ const BookingsManagement = () => {
       </div>
 
       {/* Daily Revenue Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="glass-panel bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Today's Revenue</p>
-                <p className="text-2xl font-bold text-green-500">${totalRevenue.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Revenue (Completed)</p>
+                <p className="text-2xl font-bold text-green-500">KES {totalRevenue.toLocaleString()}</p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Collected Today</p>
+                <p className="text-2xl font-bold text-emerald-500">KES {totalCollectedToday.toLocaleString()}</p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-emerald-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Outstanding Balance</p>
+                <p className="text-2xl font-bold text-orange-500">KES {outstandingBalance.toLocaleString()}</p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-orange-500" />
               </div>
             </div>
           </CardContent>
@@ -591,26 +619,12 @@ const BookingsManagement = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-panel bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Upcoming</p>
-                <p className="text-2xl font-bold text-blue-500">{upcomingCount}</p>
-              </div>
-              <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="glass-panel bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Avg Value</p>
-                <p className="text-2xl font-bold text-yellow-500">${avgSessionValue.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-yellow-500">KES {avgSessionValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
                 <Star className="h-5 w-5 text-yellow-500" />
