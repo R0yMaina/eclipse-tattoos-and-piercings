@@ -233,11 +233,6 @@ const BookingsManagement = () => {
         return;
       }
 
-      if (!manualBookingForm.isWalkIn && !chosenSlot) {
-        toast({ title: 'No time slot selected', description: 'Please choose a valid available slot for this manual booking.', variant: 'destructive' });
-        setManualSubmitting(false);
-        return;
-      }
 
       if (!manualBookingForm.isWalkIn && chosenSlot) {
         const { data: existingBooking, error: existingBookingError } = await supabase
