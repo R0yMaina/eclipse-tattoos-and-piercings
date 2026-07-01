@@ -311,8 +311,13 @@ export const BookingSystem = () => {
 
   const handleManualPaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentBookingId || !transactionCode.trim() || !paymentPhone.trim()) {
+    const normalizedTransactionCode = transactionCode.trim().replace(/\s+/g, '').toUpperCase();
+    if (!currentBookingId || !normalizedTransactionCode || !paymentPhone.trim()) {
       toast({ title: 'Missing details', description: 'Please enter the M-Pesa transaction code and phone number used.', variant: 'destructive' });
+      return;
+    }
+    if (!/^[A-Z0-9]+$/.test(normalizedTransactionCode)) {
+      toast({ title: 'Invalid code', description: 'Please enter a valid M-Pesa transaction code without spaces or symbols.', variant: 'destructive' });
       return;
     }
 
@@ -339,7 +344,7 @@ export const BookingSystem = () => {
       const { data: rpcResult, error: rpcError } = await supabase.rpc('submit_payment', {
         p_booking_id: currentBookingId,
         p_client_token: storedToken,
-        p_transaction_code: transactionCode.trim().toUpperCase(),
+        p_transaction_code: normalizedTransactionCode,
         p_payment_phone: paymentPhone.trim() || null,
       });
 
