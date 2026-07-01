@@ -762,7 +762,7 @@ const BookingsManagement = () => {
                           {booking.price_charged && (
                             <div className="flex items-center gap-1 text-sm text-green-500">
                               <DollarSign className="h-4 w-4" />
-                              ${booking.price_charged}
+                              KES {booking.price_charged.toLocaleString()}
                             </div>
                           )}
                         </div>
