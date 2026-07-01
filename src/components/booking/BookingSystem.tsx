@@ -265,9 +265,8 @@ export const BookingSystem = () => {
         p_client_name: clientName.trim(),
         p_phone_number: phoneNumber.trim(),
         p_agreed_price: price,
-        p_inspiration_image_url: imageUrl,
         p_notes: notes.trim() || null,
-        p_honeypot: honeypot || null,
+        p_inspiration_image_url: imageUrl,
       });
 
       if (rpcError) throw rpcError;
