@@ -214,13 +214,8 @@ const BookingsManagement = () => {
       return;
     }
 
-    if (!manualBookingForm.isWalkIn && !selectedSlotOption) {
-      toast({ title: 'No time slot selected', description: 'Please choose an available slot for the manual booking.', variant: 'destructive' });
-      return;
-    }
-
-    if (manualBookingForm.isWalkIn && !manualAppointmentTime) {
-      toast({ title: 'Missing time', description: 'Please choose a time for the walk-in record.', variant: 'destructive' });
+    if (!manualAppointmentTime) {
+      toast({ title: 'Missing time', description: 'Please enter the exact appointment time.', variant: 'destructive' });
       return;
     }
 
@@ -228,7 +223,7 @@ const BookingsManagement = () => {
     try {
       const appointmentDate = format(selectedDate, 'yyyy-MM-dd');
       const chosenSlot = slotOptions.find(slot => slot.slot_id === selectedSlotOption);
-      const appointmentTime = manualBookingForm.isWalkIn ? manualAppointmentTime : chosenSlot?.start_time || manualAppointmentTime;
+      const appointmentTime = manualAppointmentTime || chosenSlot?.start_time || null;
       const agreedPrice = parseFloat(manualBookingForm.agreedPrice);
       const amountPaid = parseFloat(manualBookingForm.amountPaid);
 
@@ -238,18 +233,14 @@ const BookingsManagement = () => {
         return;
       }
 
-      if (!manualBookingForm.isWalkIn && !chosenSlot) {
-        toast({ title: 'No time slot selected', description: 'Please choose a valid available slot for this manual booking.', variant: 'destructive' });
-        setManualSubmitting(false);
-        return;
-      }
 
       if (!manualBookingForm.isWalkIn && chosenSlot) {
         const { data: existingBooking, error: existingBookingError } = await supabase
           .from('bookings')
           .select('id')
           .eq('slot_id', chosenSlot.slot_id)
-          .not('status', 'in', '(cancelled,no_show)')
+          .neq('status', 'cancelled')
+          .neq('status', 'no_show')
           .maybeSingle();
 
         if (existingBookingError) throw existingBookingError;
@@ -366,7 +357,20 @@ const BookingsManagement = () => {
 
   // Calculate daily revenue summary
   const completedBookings = bookings.filter(b => b.status === 'completed');
-  const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.price_charged || 0), 0);
+  const totalRevenue = completedBookings.reduce(
+    (sum, b) => sum + (b.price_charged ?? b.agreed_price ?? 0),
+    0
+  );
+  const totalCollectedToday = bookings
+    .filter(b => b.status !== 'cancelled' && b.status !== 'no_show')
+    .reduce((sum, b) => sum + (b.price_charged ?? b.deposit_amount ?? 0), 0);
+  const outstandingBalance = bookings
+    .filter(b => b.status !== 'cancelled' && b.status !== 'no_show')
+    .reduce((sum, b) => {
+      const price = b.price_charged ?? b.agreed_price ?? 0;
+      const paid = b.price_charged ? price : (b.deposit_amount ?? 0);
+      return sum + Math.max(0, price - paid);
+    }, 0);
   const sessionsCompleted = completedBookings.length;
   const avgSessionValue = sessionsCompleted > 0 ? totalRevenue / sessionsCompleted : 0;
 
@@ -484,11 +488,27 @@ const BookingsManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Appointment Time</Label>
-                {manualBookingForm.isWalkIn ? (
-                  <Input type="time" value={manualAppointmentTime} onChange={(e) => setManualAppointmentTime(e.target.value)} />
-                ) : (
-                  <Select value={selectedSlotOption} onValueChange={setSelectedSlotOption}>
+                <Label>Exact Appointment Time</Label>
+                <Input
+                  type="time"
+                  step={60}
+                  value={manualAppointmentTime ? manualAppointmentTime.slice(0, 5) : ''}
+                  onChange={(e) => setManualAppointmentTime(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">This exact time is what gets saved for the record.</p>
+              </div>
+
+              {!manualBookingForm.isWalkIn && (
+                <div className="space-y-2">
+                  <Label>Reserve Available Slot (optional)</Label>
+                  <Select
+                    value={selectedSlotOption}
+                    onValueChange={(value) => {
+                      setSelectedSlotOption(value);
+                      const slot = slotOptions.find(s => s.slot_id === value);
+                      if (slot) setManualAppointmentTime(slot.start_time.slice(0, 5));
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select an available slot" />
                     </SelectTrigger>
@@ -504,8 +524,8 @@ const BookingsManagement = () => {
                       )}
                     </SelectContent>
                   </Select>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
                 <input
@@ -542,16 +562,44 @@ const BookingsManagement = () => {
       </div>
 
       {/* Daily Revenue Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="glass-panel bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Today's Revenue</p>
-                <p className="text-2xl font-bold text-green-500">${totalRevenue.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Revenue (Completed)</p>
+                <p className="text-2xl font-bold text-green-500">KES {totalRevenue.toLocaleString()}</p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Collected Today</p>
+                <p className="text-2xl font-bold text-emerald-500">KES {totalCollectedToday.toLocaleString()}</p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-emerald-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Outstanding Balance</p>
+                <p className="text-2xl font-bold text-orange-500">KES {outstandingBalance.toLocaleString()}</p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-orange-500" />
               </div>
             </div>
           </CardContent>
@@ -571,26 +619,12 @@ const BookingsManagement = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-panel bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Upcoming</p>
-                <p className="text-2xl font-bold text-blue-500">{upcomingCount}</p>
-              </div>
-              <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="glass-panel bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Avg Value</p>
-                <p className="text-2xl font-bold text-yellow-500">${avgSessionValue.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-yellow-500">KES {avgSessionValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
                 <Star className="h-5 w-5 text-yellow-500" />
@@ -728,13 +762,13 @@ const BookingsManagement = () => {
                           {booking.price_charged && (
                             <div className="flex items-center gap-1 text-sm text-green-500">
                               <DollarSign className="h-4 w-4" />
-                              ${booking.price_charged}
+                              KES {booking.price_charged.toLocaleString()}
                             </div>
                           )}
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {(booking.status === 'upcoming' || booking.status === 'confirmed') && (
+                          {(booking.status === 'upcoming' || booking.status === 'confirmed' || booking.status === 'pending_payment' || booking.status === 'pending_verification') && (
                             <div className="flex flex-wrap items-center gap-2">
                               <Button
                                 size="sm"
@@ -771,6 +805,18 @@ const BookingsManagement = () => {
                                 Cancel
                               </Button>
                             </div>
+                          )}
+
+                          {booking.status === 'ongoing' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateBookingStatus(booking.id, 'no_show')}
+                              className="border-destructive text-destructive hover:bg-destructive/10"
+                            >
+                              <UserX className="h-4 w-4 mr-1" />
+                              No-Show
+                            </Button>
                           )}
 
                           {booking.status === 'ongoing' && (
