@@ -741,7 +741,7 @@ const BookingsManagement = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {(booking.status === 'upcoming' || booking.status === 'confirmed') && (
+                          {(booking.status === 'upcoming' || booking.status === 'confirmed' || booking.status === 'pending_payment' || booking.status === 'pending_verification') && (
                             <div className="flex flex-wrap items-center gap-2">
                               <Button
                                 size="sm"
@@ -778,6 +778,18 @@ const BookingsManagement = () => {
                                 Cancel
                               </Button>
                             </div>
+                          )}
+
+                          {booking.status === 'ongoing' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateBookingStatus(booking.id, 'no_show')}
+                              className="border-destructive text-destructive hover:bg-destructive/10"
+                            >
+                              <UserX className="h-4 w-4 mr-1" />
+                              No-Show
+                            </Button>
                           )}
 
                           {booking.status === 'ongoing' && (
