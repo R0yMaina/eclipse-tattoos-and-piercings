@@ -13,9 +13,10 @@ import MessageTemplates from "@/components/admin/MessageTemplates";
 import ReviewsManagement from "@/components/admin/ReviewsManagement";
 import TransactionsManagement from "@/components/admin/TransactionsManagement";
 import GalleryManagement from "@/components/admin/GalleryManagement";
+import PaymentVerification from "@/components/admin/PaymentVerification";
 import {
   Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
-  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon
+  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
@@ -28,8 +29,20 @@ export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
   const [reindexing, setReindexing] = useState(false);
 
-  const checkAdminAccess = useCallback(async (userId: string) => {
+  const checkAdminAccess = useCallback(async (userId: string, email: string | undefined) => {
     try {
+      // Hardened check: Only allow specific emails
+      const allowedEmails = ['roymaina395@gmail.com', 'jamingtonbuluma17@gmail.com'];
+      if (!email || !allowedEmails.includes(email.toLowerCase())) {
+        toast({ 
+          title: "Access Denied", 
+          description: "This account is not authorized to access the admin dashboard.", 
+          variant: "destructive" 
+        });
+        navigate("/auth");
+        return;
+      }
+
       const { data: roleData, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -52,21 +65,23 @@ export default function Admin() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user ?? null);
-        if (!session?.user) {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (!currentUser) {
           navigate("/auth");
         } else {
-          setTimeout(() => checkAdminAccess(session.user.id), 0);
+          setTimeout(() => checkAdminAccess(currentUser.id, currentUser.email), 0);
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (!currentUser) {
         navigate("/auth");
       } else {
-        checkAdminAccess(session.user.id);
+        checkAdminAccess(currentUser.id, currentUser.email);
       }
     });
 
@@ -141,7 +156,7 @@ export default function Admin() {
                 className="glass-panel hover:gold-glow transition-all duration-300"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${reindexing ? "animate-spin" : ""}`} />
-                Reindex KB
+                Refresh AI
               </Button>
               <Button
                 variant="ghost"
@@ -158,10 +173,17 @@ export default function Admin() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="transactions" className="space-y-8">
+        <Tabs defaultValue="payments" className="space-y-8">
           {/* Modern Tab Navigation */}
-          <div className="glass-panel rounded-2xl p-2">
-            <TabsList className="w-full flex flex-wrap gap-1 bg-transparent h-auto p-0">
+          <div className="glass-panel rounded-2xl p-2 overflow-x-auto no-scrollbar">
+            <TabsList className="w-full flex flex-nowrap gap-1 bg-transparent h-auto p-0 min-w-max">
+              <TabsTrigger
+                value="payments"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <Banknote className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Approvals</span>
+              </TabsTrigger>
               <TabsTrigger
                 value="transactions"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
@@ -202,7 +224,7 @@ export default function Admin() {
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
                 <TrendingUp className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Analytics</span>
+                <span className="hidden sm:inline">Reports</span>
               </TabsTrigger>
               <TabsTrigger
                 value="security"
@@ -237,6 +259,7 @@ export default function Admin() {
 
           {/* Tab Content with Animation */}
           <div className="animate-fade-in">
+            <TabsContent value="payments" className="mt-0"><PaymentVerification /></TabsContent>
             <TabsContent value="transactions" className="mt-0"><TransactionsManagement /></TabsContent>
             <TabsContent value="bookings" className="mt-0"><BookingsManagement /></TabsContent>
             <TabsContent value="slots" className="mt-0"><SlotConfiguration /></TabsContent>

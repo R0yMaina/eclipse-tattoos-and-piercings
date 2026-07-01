@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
@@ -34,15 +35,25 @@ serve(async (req: Request) => {
 
     console.log(`Callback for CheckoutRequestID: ${CheckoutRequestID}, ResultCode: ${ResultCode}, ResultDesc: ${ResultDesc}`);
 
-    // Find the booking by checkout ID
+    // Find the booking by checkout ID. Only accept callbacks for bookings that
+    // are currently awaiting payment — this blocks forged/duplicate callbacks
+    // from flipping an already-processed booking.
     const { data: booking, error: fetchError } = await supabase
       .from("bookings")
-      .select("id, client_name, phone_number, slot_id")
+      .select("id, client_name, phone_number, slot_id, payment_status, deposit_paid")
       .eq("mpesa_checkout_id", CheckoutRequestID)
       .single();
 
     if (fetchError || !booking) {
       console.error("Booking not found for CheckoutRequestID:", CheckoutRequestID, fetchError);
+      return new Response(
+        JSON.stringify({ ResultCode: 0, ResultDesc: "Accepted" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (booking.deposit_paid || booking.payment_status === "paid" || booking.payment_status === "failed") {
+      console.warn(`Ignoring duplicate/late callback for booking ${booking.id} (status=${booking.payment_status})`);
       return new Response(
         JSON.stringify({ ResultCode: 0, ResultDesc: "Accepted" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -88,6 +99,7 @@ serve(async (req: Request) => {
 
         if (slotData) {
           await supabase.functions.invoke("send-whatsapp", {
+            headers: { "x-internal-secret": supabaseServiceKey },
             body: {
               type: "confirmation",
               bookingId: booking.id,

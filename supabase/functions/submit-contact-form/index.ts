@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
@@ -22,7 +23,45 @@ const contactFormSchema = z.object({
   preferredContact: z.string().max(20, "Preferred contact must be less than 20 characters").optional().nullable(),
   message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000, "Message must be less than 2000 characters"),
   consent: z.boolean().refine(val => val === true, "You must agree to be contacted"),
+  // Honeypot — bots fill it, real users don't see it. Must be absent or empty.
+  website_url: z.string().max(0, "Bot detected").optional().nullable(),
 });
+
+// --- Rate limiting (reuses the same Upstash bucket pattern as chat) ---
+const RL_REQUESTS = 5;     // 5 contact submissions per IP
+const RL_WINDOW = 600;     // per 10 minutes
+
+function getClientIP(req: Request): string {
+  return (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() ||
+    "unknown"
+  );
+}
+
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean; resetIn: number }> {
+  const url = Deno.env.get("UPSTASH_REDIS_REST_URL");
+  const token = Deno.env.get("UPSTASH_REDIS_REST_TOKEN");
+  if (!url || !token) return { allowed: true, resetIn: 0 };
+  const key = `ratelimit:contact:${ip}`;
+  try {
+    const get = await fetch(`${url}/get/${key}`, { headers: { Authorization: `Bearer ${token}` } });
+    const current = parseInt((await get.json()).result || "0", 10);
+    if (current >= RL_REQUESTS) {
+      const ttl = await fetch(`${url}/ttl/${key}`, { headers: { Authorization: `Bearer ${token}` } });
+      return { allowed: false, resetIn: parseInt((await ttl.json()).result || "0", 10) };
+    }
+    if (current === 0) {
+      await fetch(`${url}/setex/${key}/${RL_WINDOW}/1`, { headers: { Authorization: `Bearer ${token}` } });
+    } else {
+      await fetch(`${url}/incr/${key}`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+    return { allowed: true, resetIn: RL_WINDOW };
+  } catch {
+    return { allowed: true, resetIn: 0 };
+  }
+}
 
 // HTML sanitization function to prevent XSS
 function sanitizeHtml(str: string | null | undefined): string {
@@ -42,6 +81,19 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Rate-limit by IP first
+    const ip = getClientIP(req);
+    const rl = await checkRateLimit(ip);
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Too many submissions. Please try again later." }),
+        {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": String(rl.resetIn), ...corsHeaders },
+        }
+      );
+    }
+
     const rawData = await req.json();
 
     // Validate input with zod

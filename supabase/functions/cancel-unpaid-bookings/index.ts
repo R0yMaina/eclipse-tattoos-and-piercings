@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
@@ -15,6 +16,30 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Authorize: internal secret header OR service role bearer OR admin JWT
+    const internalSecret = req.headers.get("x-internal-secret");
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+    const bearer = authHeader.replace(/^Bearer\s+/i, "");
+    let authorized = internalSecret === supabaseServiceKey || bearer === supabaseServiceKey;
+    if (!authorized && bearer) {
+      try {
+        const anon = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+        const { data: { user } } = await anon.auth.getUser(bearer);
+        if (user) {
+          const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+          const { data: role } = await adminClient.from("user_roles")
+            .select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+          authorized = !!role;
+        }
+      } catch { /* ignore */ }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const now = new Date().toISOString();
@@ -68,6 +93,7 @@ serve(async (req: Request) => {
       // Optionally notify client via WhatsApp
       try {
         await supabase.functions.invoke("send-whatsapp", {
+          headers: { "x-internal-secret": supabaseServiceKey },
           body: {
             type: "cancellation",
             bookingId: booking.id,

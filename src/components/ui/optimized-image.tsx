@@ -43,7 +43,7 @@ export const OptimizedImage = ({
         });
       },
       {
-        rootMargin: '100px', // Start loading 100px before entering viewport
+        rootMargin: '500px', // Start loading 500px before entering viewport
         threshold: 0.01,
       }
     );

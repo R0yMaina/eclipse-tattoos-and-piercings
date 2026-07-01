@@ -28,6 +28,8 @@ interface ContactFormData {
 export const ContactForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [honeypot, setHoneypot] = useState('');
+  const [mountedAt] = useState(() => Date.now());
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ContactFormData>();
 
   const consent = watch('consent');
@@ -58,6 +60,12 @@ export const ContactForm = () => {
   const onSubmit = async (data: ContactFormData) => {
     if (!data.consent) {
       toast.error('Please consent to be contacted');
+      return;
+    }
+
+    // Bot protection: honeypot must be empty + form must be on screen >2s
+    if (honeypot || Date.now() - mountedAt < 2000) {
+      toast.error('Submission rejected. Please try again.');
       return;
     }
 
@@ -106,6 +114,17 @@ export const ContactForm = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Honeypot — hidden from real users, bots fill anything */}
+        <input
+          type="text"
+          name="website_url"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          aria-hidden="true"
+          style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+        />
         {/* Full Name */}
         <div className="space-y-2">
           <Label htmlFor="fullName">Full Name *</Label>

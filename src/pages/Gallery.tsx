@@ -16,10 +16,15 @@ import tattoo8 from '@/assets/gallery/tattoo-8.jpg';
 import tattoo9 from '@/assets/gallery/tattoo-9.jpg';
 import tattoo10 from '@/assets/gallery/tattoo-10.jpg';
 import tattoo11 from '@/assets/gallery/tattoo-11.jpg';
+import tattoo12 from '@/assets/gallery/tattoo-12.jpg';
+import tattoo13 from '@/assets/gallery/tattoo-13.jpg';
+import tattoo14 from '@/assets/gallery/tattoo-14.jpg';
+import tattoo15 from '@/assets/gallery/tattoo-15.jpg';
+import tattoo16 from '@/assets/gallery/tattoo-16.jpg';
 
 const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
-type TattooStyle = 'all' | 'tribal' | 'floral' | 'realism' | 'symbolic' | 'script' | 'geometric' | 'minimalist' | 'traditional';
+type TattooStyle = 'all' | 'tribal' | 'floral' | 'realism' | 'symbolic' | 'script' | 'piercing' | 'geometric' | 'minimalist' | 'traditional';
 
 interface GalleryItem {
   src: string;
@@ -28,17 +33,22 @@ interface GalleryItem {
 }
 
 const staticGalleryItems: GalleryItem[] = [
-  { src: tattoo1, alt: "Intricate spiral tribal tattoo design", style: ['tribal', 'symbolic'] },
-  { src: tattoo2, alt: "Rose with butterflies tattoo", style: ['floral', 'realism'] },
-  { src: tattoo3, alt: "Lioness with flowers tattoo", style: ['realism', 'floral'] },
-  { src: tattoo4, alt: "Koi fish with stars tattoo", style: ['realism', 'symbolic'] },
-  { src: tattoo5, alt: "Ankh symbol back tattoo", style: ['symbolic', 'tribal'] },
-  { src: tattoo6, alt: "Clover and script tattoo", style: ['script', 'symbolic'] },
-  { src: tattoo7, alt: "Butterfly with face and 'Born to Die' script", style: ['symbolic', 'script'] },
-  { src: tattoo8, alt: "Minimalist fairy silhouette", style: ['symbolic'] },
-  { src: tattoo9, alt: "Butterfly with laurel wreath and 'BALANCE'", style: ['symbolic', 'script'] },
-  { src: tattoo10, alt: "Elegant floral line art on hip", style: ['floral'] },
-  { src: tattoo11, alt: "Surreal geometric design with hands and faces", style: ['realism', 'symbolic'] },
+  { src: tattoo1, alt: "Tribal Spiral Odyssey", style: ['tribal', 'symbolic'] },
+  { src: tattoo2, alt: "Crimson Rose & Monarchs", style: ['floral', 'realism'] },
+  { src: tattoo3, alt: "Majestic Floral Lioness", style: ['realism', 'floral'] },
+  { src: tattoo4, alt: "Celestial Koi Fish", style: ['realism', 'symbolic'] },
+  { src: tattoo5, alt: "Sacred Ankh Motif", style: ['symbolic', 'tribal'] },
+  { src: tattoo6, alt: "Lucky Clover Script", style: ['script', 'symbolic'] },
+  { src: tattoo7, alt: "Born to Die Butterfly", style: ['symbolic', 'script'] },
+  { src: tattoo8, alt: "Stardust Fairy Silhouette", style: ['symbolic'] },
+  { src: tattoo9, alt: "Balanced Wreath Butterfly", style: ['symbolic', 'script'] },
+  { src: tattoo10, alt: "Delicate Botanical Line Art", style: ['floral'] },
+  { src: tattoo11, alt: "Surreal Mindscape", style: ['realism', 'symbolic'] },
+  { src: tattoo12, alt: "Lotus & Butterfly Fusion", style: ['floral', 'symbolic'] },
+  { src: tattoo13, alt: "Classic Nose Stud", style: ['piercing'] },
+  { src: tattoo14, alt: "Ethereal Lotus Wing", style: ['floral', 'symbolic'] },
+  { src: tattoo15, alt: "Flowing Floral Vine", style: ['floral'] },
+  { src: tattoo16, alt: "Quantum Atom Concept", style: ['symbolic'] },
 ];
 
 const styleFilters: { value: TattooStyle; label: string }[] = [
@@ -48,6 +58,7 @@ const styleFilters: { value: TattooStyle; label: string }[] = [
   { value: 'realism', label: 'Realism' },
   { value: 'symbolic', label: 'Symbolic' },
   { value: 'script', label: 'Script' },
+  { value: 'piercing', label: 'Piercings' },
   { value: 'geometric', label: 'Geometric' },
   { value: 'minimalist', label: 'Minimalist' },
   { value: 'traditional', label: 'Traditional' },
@@ -101,25 +112,12 @@ const Gallery = () => {
           </div>
         </section>
 
-        {/* Filter Bar */}
+        {/* Intro */}
         <section className="py-8 px-4 sticky top-16 z-20 bg-background/80 backdrop-blur-xl border-b border-primary/10">
-          <div className="container max-w-6xl mx-auto">
-            <div className="flex flex-wrap justify-center gap-3">
-              {styleFilters.map((filter) => (
-                <Button
-                  key={filter.value}
-                  variant={activeFilter === filter.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveFilter(filter.value)}
-                  className={activeFilter === filter.value
-                    ? "bg-primary text-primary-foreground"
-                    : "border-primary/40 hover:border-primary hover:bg-primary/10"
-                  }
-                >
-                  {filter.label}
-                </Button>
-              ))}
-            </div>
+          <div className="container max-w-6xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-heading font-medium text-foreground">
+              Here is some of our work
+            </h2>
           </div>
         </section>
 
@@ -136,20 +134,9 @@ const Gallery = () => {
                   <OptimizedImage
                     src={item.src}
                     alt={item.alt}
+                    priority={index < 6}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <p className="text-sm text-foreground font-medium">{item.alt}</p>
-                      <div className="flex gap-2 mt-2">
-                        {item.style.map((s) => (
-                          <span key={s} className="text-xs text-primary capitalize">
-                            #{s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
@@ -202,16 +189,6 @@ const Gallery = () => {
               alt={selectedImage.alt}
               className="w-full h-full object-contain rounded-2xl"
             />
-            <div className="text-center mt-4">
-              <p className="text-foreground font-medium">{selectedImage.alt}</p>
-              <div className="flex justify-center gap-2 mt-2">
-                {selectedImage.style.map((s) => (
-                  <span key={s} className="text-sm text-primary capitalize">
-                    #{s}
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       )}

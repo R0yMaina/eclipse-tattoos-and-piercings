@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Nested duplicate repository
+eclipse-tattoos-and-piercings/
+vite.config.ts.timestamp-*
+

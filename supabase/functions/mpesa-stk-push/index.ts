@@ -1,4 +1,5 @@
-/// <reference lib="deno.ns" />
+// @ts-nocheck
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
@@ -84,16 +85,42 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { bookingId, phoneNumber, agreedPrice } = await req.json();
+    const { bookingId, phoneNumber, agreedPrice, clientToken } = await req.json();
 
-    if (!bookingId || !phoneNumber || !agreedPrice) {
+    if (!bookingId || !phoneNumber || !agreedPrice || !clientToken) {
       return new Response(
-        JSON.stringify({ error: "bookingId, phoneNumber, and agreedPrice are required" }),
+        JSON.stringify({ error: "bookingId, phoneNumber, agreedPrice and clientToken are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const depositAmount = Math.ceil(agreedPrice * 0.15);
+    // Validate ownership: clientToken must match the booking record.
+    const { data: bookingRow, error: bookingErr } = await supabase
+      .from("bookings")
+      .select("id, client_token, payment_status, deposit_paid")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (bookingErr || !bookingRow) {
+      return new Response(
+        JSON.stringify({ error: "Booking not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (!bookingRow.client_token || bookingRow.client_token !== clientToken) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (bookingRow.deposit_paid || bookingRow.payment_status === "paid") {
+      return new Response(
+        JSON.stringify({ error: "Booking already paid" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const depositAmount = Math.ceil(agreedPrice * 0.30);
     const formattedPhone = formatPhoneNumber(phoneNumber);
 
     // Check for shortcode in multiple possible env var names
@@ -134,7 +161,7 @@ serve(async (req: Request) => {
         PhoneNumber: formattedPhone,
         CallBackURL: callbackUrl,
         AccountReference: `Eclipse-${bookingId.substring(0, 8)}`,
-        TransactionDesc: `Booking deposit for Eclipse Tattoo`,
+        TransactionDesc: `eclipse tattoo and piercings`,
       }),
     });
 

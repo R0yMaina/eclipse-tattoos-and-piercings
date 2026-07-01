@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference lib="deno.ns" />
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -39,6 +40,28 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const openrouterKey = Deno.env.get('OPENROUTER_API_KEY')!;
+
+    // Auth: service role bearer (used by rag-reindex) or admin JWT
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    let authorized = token === supabaseKey;
+    if (!authorized && token) {
+      try {
+        const anon = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!);
+        const { data: { user } } = await anon.auth.getUser(token);
+        if (user) {
+          const admin = createClient(supabaseUrl, supabaseKey);
+          const { data: role } = await admin.from('user_roles')
+            .select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
+          authorized = !!role;
+        }
+      } catch { /* ignore */ }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 

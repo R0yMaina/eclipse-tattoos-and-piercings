@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+        }
+        Relationships: []
+      }
       booking_slots: {
         Row: {
           created_at: string
@@ -51,6 +84,7 @@ export type Database = {
           appointment_time: string | null
           booking_source: string
           client_name: string
+          client_token: string | null
           confirmation_sent: boolean | null
           created_at: string
           deposit_amount: number | null
@@ -63,14 +97,25 @@ export type Database = {
           mpesa_receipt: string | null
           notes: string | null
           payment_expires_at: string | null
+<<<<<<< HEAD
           payment_method: string
+=======
+          payment_phone: string | null
+          payment_screenshot_url: string | null
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           payment_status: string | null
           phone_number: string
           price_charged: number | null
           reminder_sent: boolean | null
+<<<<<<< HEAD
           service_type: string | null
           slot_id: string | null
+=======
+          screenshot_payment_url: string | null
+          slot_id: string
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           status: Database["public"]["Enums"]["booking_status"]
+          transaction_code: string | null
           updated_at: string
         }
         Insert: {
@@ -82,6 +127,7 @@ export type Database = {
           appointment_time?: string | null
           booking_source?: string
           client_name: string
+          client_token?: string | null
           confirmation_sent?: boolean | null
           created_at?: string
           deposit_amount?: number | null
@@ -94,14 +140,25 @@ export type Database = {
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+<<<<<<< HEAD
           payment_method?: string
+=======
+          payment_phone?: string | null
+          payment_screenshot_url?: string | null
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           payment_status?: string | null
           phone_number: string
           price_charged?: number | null
           reminder_sent?: boolean | null
+<<<<<<< HEAD
           service_type?: string | null
           slot_id?: string | null
+=======
+          screenshot_payment_url?: string | null
+          slot_id: string
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           status?: Database["public"]["Enums"]["booking_status"]
+          transaction_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -113,6 +170,7 @@ export type Database = {
           appointment_time?: string | null
           booking_source?: string
           client_name?: string
+          client_token?: string | null
           confirmation_sent?: boolean | null
           created_at?: string
           deposit_amount?: number | null
@@ -125,14 +183,25 @@ export type Database = {
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+<<<<<<< HEAD
           payment_method?: string
+=======
+          payment_phone?: string | null
+          payment_screenshot_url?: string | null
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           payment_status?: string | null
           phone_number?: string
           price_charged?: number | null
           reminder_sent?: boolean | null
+<<<<<<< HEAD
           service_type?: string | null
           slot_id?: string | null
+=======
+          screenshot_payment_url?: string | null
+          slot_id?: string
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           status?: Database["public"]["Enums"]["booking_status"]
+          transaction_code?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -244,6 +313,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_errors: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          message: string
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          message: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          message?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       contact_submissions: {
         Row: {
@@ -571,6 +673,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_booking_status: {
+        Args: { booking_id: string }
+        Returns: {
+          deposit_paid: boolean
+          id: string
+          payment_status: string
+          status: string
+        }[]
+      }
+      create_booking:
+        | {
+            Args: {
+              p_agreed_price: number
+              p_client_name: string
+              p_honeypot?: string
+              p_inspiration_image_url?: string
+              p_notes?: string
+              p_phone_number: string
+              p_slot_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_agreed_price: number
+              p_client_name: string
+              p_inspiration_image_url?: string
+              p_notes?: string
+              p_phone_number: string
+              p_slot_id: string
+            }
+            Returns: Json
+          }
       generate_slots_for_date: {
         Args: { target_date: string }
         Returns: undefined
@@ -631,6 +766,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      health_check: { Args: never; Returns: Json }
       match_chunks: {
         Args: {
           match_count?: number
@@ -645,6 +781,15 @@ export type Database = {
           url: string
         }[]
       }
+      submit_payment: {
+        Args: {
+          p_booking_id: string
+          p_client_token: string
+          p_payment_phone?: string
+          p_transaction_code: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -654,6 +799,9 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_show"
+        | "pending_payment"
+        | "pending_verification"
+        | "confirmed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -788,6 +936,9 @@ export const Constants = {
         "completed",
         "cancelled",
         "no_show",
+        "pending_payment",
+        "pending_verification",
+        "confirmed",
       ],
     },
   },

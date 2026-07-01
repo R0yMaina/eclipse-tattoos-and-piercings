@@ -88,30 +88,22 @@ const ReviewsManagement = () => {
   const sendReviewRequest = async (item: ReviewQueueItem) => {
     setSending(item.id);
     try {
-      await supabase.functions.invoke('send-whatsapp', {
-        body: {
-          type: 'review_request',
-          phoneNumber: item.client_phone,
-          clientName: item.bookings.client_name
-        }
-      });
-      
       await supabase
         .from('review_queue')
         .update({ request_sent: true })
         .eq('id', item.id);
       
       toast({
-        title: 'Review request sent',
-        description: `Request sent to ${item.bookings.client_name}`,
+        title: 'Review request marked',
+        description: `Marked as sent for ${item.bookings.client_name}`,
       });
       
       fetchQueue();
     } catch (error) {
-      console.error('Error sending review request:', error);
+      console.error('Error updating review request:', error);
       toast({
         title: 'Error',
-        description: 'Failed to send review request',
+        description: 'Failed to update review request',
         variant: 'destructive'
       });
     } finally {

@@ -20,7 +20,7 @@ interface Booking {
   phone_number: string;
   inspiration_image_url: string | null;
   notes: string | null;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled' | 'no_show';
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled' | 'no_show' | 'pending_payment' | 'pending_verification' | 'confirmed';
   actual_start_time: string | null;
   actual_end_time: string | null;
   price_charged: number | null;
@@ -172,6 +172,7 @@ const BookingsManagement = () => {
   const handleStartSession = async (booking: Booking) => {
     await updateBookingStatus(booking.id, 'ongoing');
 
+<<<<<<< HEAD
     // Send late warning check after 15 minutes
     setTimeout(async () => {
       const { data: currentBooking } = await supabase
@@ -192,6 +193,8 @@ const BookingsManagement = () => {
         });
       }
     }, 15 * 60 * 1000);
+=======
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
   };
 
   const handleCreateManualBooking = async (event: FormEvent) => {
@@ -311,6 +314,7 @@ const BookingsManagement = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+<<<<<<< HEAD
   const getBookingTimeRange = (booking: Booking) => {
     const startTime = booking.appointment_time || booking.booking_slots?.start_time;
     const endTime = booking.booking_slots?.end_time || null;
@@ -324,13 +328,35 @@ const BookingsManagement = () => {
       completed: { variant: 'default', className: 'bg-green-500' },
       cancelled: { variant: 'destructive', className: '' },
       no_show: { variant: 'destructive', className: '' }
+=======
+  const getStatusBadge = (booking: Booking) => {
+    const status = booking.status;
+    
+    // Check if session time is over
+    const now = new Date();
+    const [endH, endM] = booking.booking_slots.end_time.split(':').map(Number);
+    const slotEndTime = parseISO(booking.booking_slots.slot_date);
+    slotEndTime.setHours(endH, endM, 0);
+    
+    const isOver = now > slotEndTime;
+
+    const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
+      pending_payment: { label: 'PENDING', variant: 'outline', className: 'border-blue-500 text-blue-500' },
+      pending_verification: { label: 'WAITING APPROVAL', variant: 'default', className: 'bg-yellow-500' },
+      confirmed: { label: isOver ? 'DONE' : 'APPROVED', variant: 'default', className: isOver ? 'bg-green-600' : 'bg-green-600' },
+      upcoming: { label: isOver ? 'DONE' : 'APPROVED', variant: 'default', className: isOver ? 'bg-green-600' : 'bg-blue-500' },
+      ongoing: { label: 'IN PROGRESS', variant: 'default', className: 'bg-yellow-500' },
+      completed: { label: 'FINISHED', variant: 'default', className: 'bg-green-500' },
+      cancelled: { label: 'CANCELLED', variant: 'destructive', className: '' },
+      no_show: { label: 'MISSED', variant: 'destructive', className: '' }
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
     };
 
-    const config = variants[status] || { variant: 'secondary', className: '' };
+    const config = variants[status] || { label: status.toUpperCase(), variant: 'secondary', className: '' };
 
     return (
-      <Badge variant={config.variant} className={config.className}>
-        {status.replace('_', ' ').toUpperCase()}
+      <Badge variant={config.variant} className={cn("font-bold tracking-tight", config.className)}>
+        {config.label}
       </Badge>
     );
   };
@@ -605,6 +631,7 @@ const BookingsManagement = () => {
                               <Clock className="h-4 w-4 text-primary" />
                               {formatTime(booking.appointment_time || booking.booking_slots?.start_time || '00:00')} - {formatTime(booking.booking_slots?.end_time || booking.appointment_time || booking.appointment_time || '00:00')}
                             </div>
+<<<<<<< HEAD
                             {getStatusBadge(booking.status)}
                             <Badge variant="outline" className="text-[11px] uppercase tracking-wide">
                               {booking.booking_source === 'manual' ? 'Manual' : 'Online'}
@@ -612,6 +639,9 @@ const BookingsManagement = () => {
                             {booking.is_walk_in && (
                               <Badge variant="secondary" className="text-[11px] uppercase tracking-wide">Walk-in</Badge>
                             )}
+=======
+                            {getStatusBadge(booking)}
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
@@ -664,7 +694,7 @@ const BookingsManagement = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {booking.status === 'upcoming' && (
+                          {(booking.status === 'upcoming' || booking.status === 'confirmed') && (
                             <div className="flex flex-wrap items-center gap-2">
                               <Button
                                 size="sm"

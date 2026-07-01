@@ -21,7 +21,7 @@ interface SlotAvailability {
   client_name: string | null;
 }
 
-type BookingStep = 'details' | 'payment' | 'waiting' | 'confirmed' | 'failed';
+type BookingStep = 'details' | 'payment' | 'waiting' | 'confirmed' | 'failed' | 'manual_details';
 
 /* ─── Reusable glass card ─── */
 const GlassCard = ({ children, className, elevated = false }: { children: React.ReactNode; className?: string; elevated?: boolean }) => (
@@ -51,7 +51,55 @@ export const BookingSystem = () => {
   const [currentBookingId, setCurrentBookingId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState(0);
   const [paymentPolling, setPaymentPolling] = useState(false);
+  const [transactionCode, setTransactionCode] = useState('');
+  const [paymentPhone, setPaymentPhone] = useState('');
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const { toast } = useToast();
+  const [hasRestored, setHasRestored] = useState(false);
+  const [honeypot, setHoneypot] = useState(''); // bot trap — must remain empty
+  const formMountedAt = useRef<number>(Date.now());
+
+  // Restore booking session from localStorage
+  useEffect(() => {
+    if (hasRestored) return;
+    const savedBookingId = localStorage.getItem('eclipse_current_booking_id');
+    const savedDeposit = localStorage.getItem('eclipse_current_deposit');
+    const savedPrice = localStorage.getItem('eclipse_current_price');
+
+    if (savedBookingId) {
+      setCurrentBookingId(savedBookingId);
+      if (savedDeposit) setDepositAmount(parseInt(savedDeposit));
+      if (savedPrice) setAgreedPrice(savedPrice);
+      
+      // Fetch latest status to determine step
+      const checkStatus = async () => {
+        const { data } = await supabase
+          .from('bookings')
+          .select('status, payment_status, transaction_code')
+          .eq('id', savedBookingId)
+          .maybeSingle();
+        
+        if (data) {
+          if (data.status === 'confirmed' || data.status === 'upcoming') {
+            setBookingStep('confirmed');
+          } else if (data.status === 'pending_verification' || data.transaction_code) {
+            setBookingStep('waiting');
+            setTransactionCode(data.transaction_code || '');
+            setPaymentPolling(true);
+          } else {
+            setBookingStep('payment');
+          }
+        } else {
+          setBookingStep('waiting'); // Fallback
+          setPaymentPolling(true);
+        }
+      };
+      
+      checkStatus();
+    }
+    setHasRestored(true);
+  }, [hasRestored]);
 
   // GSAP refs
   const heroRef = useRef<HTMLDivElement>(null);
@@ -111,22 +159,45 @@ export const BookingSystem = () => {
     if (!paymentPolling || !currentBookingId) return;
     const interval = setInterval(async () => {
       try {
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('payment_status, deposit_paid, mpesa_receipt')
-          .eq('id', currentBookingId)
-          .single();
-        if (error) return;
-        if (data?.payment_status === 'paid' && data?.deposit_paid) {
+        const { data: rows, error } = await supabase
+          .rpc('check_booking_status', { booking_id: currentBookingId });
+        const data = rows?.[0] ?? null;
+
+        if (error) {
+          console.error('Polling error:', error);
+          return;
+        }
+
+        if (!data) return;
+
+        // Either confirmed/paid OR the status changed to confirmed/upcoming
+        if (
+          data.payment_status === 'confirmed' ||
+          data.payment_status === 'paid' ||
+          data.status === 'confirmed' ||
+          data.status === 'upcoming'
+        ) {
           setPaymentPolling(false);
           setBookingStep('confirmed');
-          toast({ title: 'Payment received! ✅', description: `Deposit of KES ${depositAmount} confirmed. Receipt: ${data.mpesa_receipt || 'Processing'}` });
-        } else if (data?.payment_status === 'failed') {
+          toast({
+            title: 'Payment verified! ✅',
+            description: `Deposit of KES ${depositAmount} confirmed.`,
+          });
+          // Clear persistence on success
+          localStorage.removeItem('eclipse_current_booking_id');
+          localStorage.removeItem('eclipse_current_booking_token');
+        } else if (data.payment_status === 'rejected' || data.payment_status === 'failed' || data.status === 'cancelled') {
           setPaymentPolling(false);
           setBookingStep('failed');
-          toast({ title: 'Payment failed', description: 'The M-Pesa payment was not completed. You can retry.', variant: 'destructive' });
+          toast({
+            title: 'Verification failed',
+            description: 'The M-Pesa payment details could not be verified by the admin.',
+            variant: 'destructive'
+          });
         }
-      } catch (err) { console.error('Payment polling error:', err); }
+      } catch (err) {
+        console.error('Payment polling error:', err);
+      }
     }, 5000);
     return () => clearInterval(interval);
   }, [paymentPolling, currentBookingId, depositAmount, toast]);
@@ -170,6 +241,12 @@ export const BookingSystem = () => {
     const phoneRegex = /^[\d\s\-+()]{10,}$/;
     if (!phoneRegex.test(phoneNumber)) { toast({ title: 'Invalid phone number', description: 'Please enter a valid phone number.', variant: 'destructive' }); return; }
 
+    // Bot protection: honeypot must stay empty + form must be on screen > 2s
+    if (honeypot || Date.now() - formMountedAt.current < 2000) {
+      toast({ title: 'Submission rejected', description: 'Please try again.', variant: 'destructive' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       let imageUrl = null;
@@ -178,9 +255,9 @@ export const BookingSystem = () => {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('inspiration-images').upload(fileName, inspirationImage);
         if (uploadError) throw uploadError;
-        // Store the file path only; admins access via signed URLs
         imageUrl = fileName;
       }
+<<<<<<< HEAD
       const newBookingId = crypto.randomUUID();
     const deposit = Math.ceil(price * 0.30);
       const { error: bookingError } = await supabase.from('bookings').insert({
@@ -191,13 +268,51 @@ export const BookingSystem = () => {
         booking_source: 'online', payment_method: 'mpesa', service_type: null,
         appointment_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
         appointment_time: selectedSlot.start_time, is_walk_in: false,
+=======
+
+      // Atomic, race-safe booking creation via SECURITY DEFINER RPC.
+      // The DB locks the slot row and rejects duplicates even under concurrent load.
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('create_booking', {
+        p_slot_id: selectedSlot.slot_id,
+        p_client_name: clientName.trim(),
+        p_phone_number: phoneNumber.trim(),
+        p_agreed_price: price,
+        p_inspiration_image_url: imageUrl,
+        p_notes: notes.trim() || null,
+        p_honeypot: honeypot || null,
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
       });
-      if (bookingError) {
-        if (bookingError.message.includes('duplicate') || bookingError.message.includes('already exists')) throw new Error('This slot has already been booked. Please select another time.');
-        throw bookingError;
+
+      if (rpcError) throw rpcError;
+      const result = rpcResult as { success: boolean; error?: string; booking_id?: string; client_token?: string; deposit_amount?: number };
+      if (!result?.success) {
+        throw new Error(result?.error || 'Could not create booking');
       }
+
+      const newBookingId = result.booking_id!;
+      const clientToken = result.client_token!;
+      const deposit = result.deposit_amount ?? Math.ceil(price * 0.30);
+
       setCurrentBookingId(newBookingId);
       setDepositAmount(deposit);
+
+      // Fire-and-forget WhatsApp confirmation
+      supabase.functions.invoke('send-whatsapp', {
+        body: {
+          type: 'booking_created',
+          phoneNumber: phoneNumber.trim(),
+          clientName: clientName.trim(),
+          date: selectedDate ? format(selectedDate, 'MMMM d, yyyy') : '',
+          time: selectedSlot.start_time,
+          depositAmount: deposit,
+        },
+      }).catch((err) => console.error('WhatsApp send failed:', err));
+
+      localStorage.setItem('eclipse_current_booking_id', newBookingId);
+      localStorage.setItem('eclipse_current_booking_token', clientToken);
+      localStorage.setItem('eclipse_current_deposit', deposit.toString());
+      localStorage.setItem('eclipse_current_price', price.toString());
+
       setBookingStep('payment');
       setTimeout(() => {
         paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -208,29 +323,79 @@ export const BookingSystem = () => {
     } finally { setSubmitting(false); }
   };
 
-  const handlePayDeposit = async () => {
-    if (!currentBookingId) return;
+  const handleManualPaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentBookingId || !transactionCode.trim() || !paymentPhone.trim()) {
+      toast({ title: 'Missing details', description: 'Please enter the M-Pesa transaction code and phone number used.', variant: 'destructive' });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
-        body: { bookingId: currentBookingId, phoneNumber: phoneNumber.trim(), agreedPrice: parseFloat(agreedPrice) }
+      let screenshotUrl = null;
+      if (paymentScreenshot) {
+        try {
+          const fileExt = paymentScreenshot.name.split('.').pop();
+          const fileName = `payment-${currentBookingId}-${Date.now()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage.from('payment-screenshots').upload(fileName, paymentScreenshot);
+          if (uploadError) throw uploadError;
+          screenshotUrl = fileName;
+        } catch (uploadError) {
+          console.error('Screenshot upload error:', uploadError);
+          // Don't fail the whole submission if screenshot fails
+        }
+      }
+
+      const storedToken = localStorage.getItem('eclipse_current_booking_token');
+      if (!storedToken) {
+        throw new Error('Booking session expired. Please create a new booking.');
+      }
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('submit_payment', {
+        p_booking_id: currentBookingId,
+        p_client_token: storedToken,
+        p_transaction_code: transactionCode.trim().toUpperCase(),
+        p_payment_phone: paymentPhone.trim() || null,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast({ title: 'M-Pesa prompt sent! 📱', description: 'Check your phone and enter your M-Pesa PIN to complete the payment.' });
+
+      if (rpcError) throw rpcError;
+      if (rpcResult && !(rpcResult as any).success) {
+        throw new Error((rpcResult as any).error || 'Payment submission failed');
+      }
+
+      toast({ title: 'Details submitted! 🚀', description: 'Our team is verifying your payment. Keep this page open.' });
       setBookingStep('waiting');
       setPaymentPolling(true);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to send M-Pesa prompt. Please try again.';
-      toast({ title: 'Payment initiation failed', description: message, variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      const message = error.message || error.error_description || 'Failed to submit payment details. Please try again.';
+      toast({ title: 'Submission failed', description: message, variant: 'destructive' });
     } finally { setSubmitting(false); }
+  };
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) { toast({ title: 'Invalid file type', description: 'Please upload an image file.', variant: 'destructive' }); return; }
+      setPaymentScreenshot(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setScreenshotPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleRetryPayment = () => setBookingStep('payment');
   const handleResetBooking = () => {
     setClientName(''); setPhoneNumber(''); setNotes(''); setAgreedPrice('');
     setInspirationImage(null); setImagePreview(null); setSelectedSlot(null);
+    setTransactionCode(''); setPaymentPhone(''); setPaymentScreenshot(null); setScreenshotPreview(null);
     setBookingStep('details'); setCurrentBookingId(null); setDepositAmount(0); setPaymentPolling(false);
+    
+    // Clear all persistence
+    localStorage.removeItem('eclipse_current_booking_id');
+    localStorage.removeItem('eclipse_current_booking_token');
+    localStorage.removeItem('eclipse_current_deposit');
+    localStorage.removeItem('eclipse_current_price');
+    
     if (selectedDate) fetchSlots(selectedDate);
   };
 
@@ -261,7 +426,7 @@ export const BookingSystem = () => {
 
   const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.30) : 0;
 
-  const stepLabels = ['Select Slot', 'Your Details', 'Pay Deposit', 'Confirmed'];
+  const stepLabels = ['Select Slot', 'Your Details', 'Payment', 'Confirmed'];
   const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
     bookingStep === 'payment' ? 2 : bookingStep === 'waiting' ? 2 : bookingStep === 'confirmed' ? 3 : 1;
 
@@ -432,6 +597,17 @@ export const BookingSystem = () => {
                 </div>
 
                 <form onSubmit={handleSubmitBooking} className="space-y-6">
+                  {/* Honeypot — hidden from real users, irresistible to bots */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    aria-hidden="true"
+                    style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                  />
                   <div className="grid md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <Label htmlFor="clientName" className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -521,26 +697,24 @@ export const BookingSystem = () => {
         </>
       )}
 
-      {/* ── Payment Step ── */}
+      {/* ── Payment Step (Instructions & Form) ── */}
       {bookingStep === 'payment' && (
         <div ref={paymentRef}>
-          <GlassCard elevated className="max-w-lg mx-auto p-8 text-center">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 gold-glow">
-              <Smartphone className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Pay Deposit via M-Pesa</h3>
-            <p className="text-sm text-muted-foreground mb-6">A payment prompt will be sent to your phone</p>
-
-            <div className="p-5 rounded-xl glass-panel space-y-3 text-left mb-6">
-              {[
-                ['Booking date', selectedDate ? format(selectedDate, 'MMMM d, yyyy') : ''],
-                ['Time slot', selectedSlot ? `${formatTime(selectedSlot.start_time)} – ${formatTime(selectedSlot.end_time)}` : ''],
-                ['Total price', `KES ${parseFloat(agreedPrice).toLocaleString()}`],
-              ].map(([l, v]) => (
-                <div key={l} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{l}</span>
-                  <span className="font-medium text-foreground">{v}</span>
+          <div className="grid lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Instructions */}
+            <GlassCard elevated className="p-8">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
+                <Smartphone className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-heading text-2xl font-bold text-foreground mb-4 text-left">Payment Instructions</h3>
+              
+              <div className="space-y-6 text-left">
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">M-Pesa Pochi la Biashara</p>
+                  <p className="text-2xl font-bold text-primary">0769138198</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Send money via Pochi la Biashara to this number</p>
                 </div>
+<<<<<<< HEAD
               ))}
               <div className="h-px bg-border/30" />
               <div className="flex justify-between items-center">
@@ -552,21 +726,84 @@ export const BookingSystem = () => {
                 <span className="font-medium text-foreground">{phoneNumber}</span>
               </div>
             </div>
+=======
+>>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
 
-            <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3 text-left mb-6">
-              <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <p className="font-medium text-yellow-500">Payment expires in 24 hours</p>
-                <p className="text-muted-foreground mt-0.5">If not paid, your booking will be cancelled.</p>
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Deposit Amount (30%)</p>
+                  <p className="text-2xl font-bold text-foreground">KES {depositAmount.toLocaleString()}</p>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">Next steps:</p>
+                  <ul className="text-sm text-muted-foreground space-y-2">
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">1.</span>
+                      Go to M-Pesa &gt; Lipa na M-Pesa &gt; Pochi la Biashara
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">2.</span>
+                      Enter number <span className="font-mono font-bold text-foreground">0769138198</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">3.</span>
+                      Enter amount <span className="font-bold text-foreground">KES {depositAmount.toLocaleString()}</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary font-bold">4.</span>
+                      Enter your M-Pesa PIN and send
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-yellow-500">Important:</span> Enter your M-Pesa transaction code in the form to confirm your booking.
+                  </p>
+                </div>
               </div>
-            </div>
+            </GlassCard>
 
-            <Button onClick={handlePayDeposit} size="lg" disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold">
-              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</> : <><Smartphone className="mr-2 h-5 w-5" />Pay KES {depositAmount.toLocaleString()} via M-Pesa</>}
-            </Button>
-            <Button variant="ghost" onClick={handleResetBooking} className="w-full mt-2 text-muted-foreground hover:text-foreground">Cancel booking</Button>
-          </GlassCard>
+            {/* Confirmation Form */}
+            <GlassCard elevated className="p-8">
+              <h3 className="font-heading text-xl font-bold text-foreground mb-6 text-left">Confirm Payment</h3>
+              <form onSubmit={handleManualPaymentSubmit} className="space-y-5 text-left">
+                <div className="space-y-2">
+                  <Label htmlFor="paymentPhone" className="text-sm text-muted-foreground">M-Pesa Phone Number</Label>
+                  <Input id="paymentPhone" value={paymentPhone} onChange={(e) => setPaymentPhone(e.target.value)}
+                    placeholder="Number used to pay" required
+                    className="bg-input/50 border-border/40 focus:border-primary/60" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="transactionCode" className="text-sm text-muted-foreground text-left">M-Pesa Transaction Code</Label>
+                  <Input id="transactionCode" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)}
+                    placeholder="e.g. RBT1234567" required maxLength={12}
+                    className="bg-input/50 border-border/40 focus:border-primary/60 uppercase font-mono" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="screenshot" className="text-sm text-muted-foreground">Screenshot (Optional)</Label>
+                  <div className="flex items-center gap-3">
+                    <Input id="screenshot" type="file" accept="image/*" onChange={handleScreenshotChange}
+                      className="bg-input/50 border-border/40" />
+                    {screenshotPreview && (
+                      <div className="relative w-12 h-12 rounded border border-border/30 overflow-hidden">
+                        <img src={screenshotPreview} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Button type="submit" size="lg" disabled={submitting}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold">
+                  {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</> : "Submit for Verification"}
+                </Button>
+                <Button variant="ghost" type="button" onClick={() => setBookingStep('details')} className="w-full text-muted-foreground">Back to details</Button>
+              </form>
+            </GlassCard>
+          </div>
         </div>
       )}
 
@@ -577,30 +814,31 @@ export const BookingSystem = () => {
             <div className="mx-auto w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-5">
               <Loader2 className="h-8 w-8 text-yellow-500 animate-spin" />
             </div>
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Waiting for Payment</h3>
-            <p className="text-sm text-muted-foreground mb-6">Check your phone for the M-Pesa prompt</p>
+            <h3 className="font-heading text-2xl font-bold text-foreground mb-1">Verifying Payment</h3>
+            <p className="text-sm text-muted-foreground mb-6">Our admin is manually verifying your transaction</p>
 
             <div className="p-5 rounded-xl glass-panel text-center mb-6">
-              <p className="text-xs text-muted-foreground">Amount</p>
-              <p className="text-4xl font-heading font-bold text-primary mt-1">KES {depositAmount.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">to {phoneNumber}</p>
+              <p className="text-xs text-muted-foreground">Transaction Code</p>
+              <p className="text-2xl font-mono font-bold text-primary mt-1 uppercase">{transactionCode}</p>
+              <div className="mt-4 pt-4 border-t border-border/30">
+                <p className="text-xs text-muted-foreground">Amount</p>
+                <p className="text-xl font-bold text-foreground">KES {depositAmount.toLocaleString()}</p>
+              </div>
             </div>
 
             <div className="space-y-3 text-sm text-left mb-6">
-              {['Check your phone for the Safaricom M-Pesa pop-up', 'Enter your M-Pesa PIN to authorize', 'This page updates automatically once confirmed'].map((txt, i) => (
+              {['Verification usually takes 5-10 minutes', 'Keep this page open to receive confirmation', 'You will be notified once verified'].map((txt, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 font-semibold",
-                    i < 2 ? "bg-primary text-primary-foreground" : "glass-panel text-muted-foreground"
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 font-semibold bg-primary text-primary-foreground"
                   )}>{i + 1}</div>
                   <p className="text-muted-foreground">{txt}</p>
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleRetryPayment} className="flex-1 border-border/40">Retry Payment</Button>
-              <Button variant="ghost" onClick={handleResetBooking} className="flex-1 text-muted-foreground">Cancel</Button>
+            <div className="flex flex-col gap-2">
+              <Button variant="ghost" onClick={handleRetryPayment} className="text-muted-foreground">Correction? Edit Details</Button>
             </div>
           </GlassCard>
         </div>
@@ -638,7 +876,7 @@ export const BookingSystem = () => {
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground mb-6">You'll receive a confirmation on WhatsApp shortly. Please arrive on time.</p>
+            <p className="text-xs text-muted-foreground mb-6">Your booking is confirmed. Please arrive on time.</p>
 
             <Button onClick={handleResetBooking} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gold-glow font-semibold">
               Book Another Session

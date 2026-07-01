@@ -117,7 +117,7 @@ const MessageTemplates = () => {
             <MessageSquare className="h-5 w-5 text-primary" />
             Message Templates
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">Configure automated WhatsApp messages</p>
+          <p className="text-sm text-muted-foreground mt-1">Configure message templates</p>
         </div>
       </div>
 
