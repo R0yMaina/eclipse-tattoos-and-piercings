@@ -24,6 +24,24 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const ACTIVE_DAYS = [1, 2, 3, 4, 5, 6]; // Monday through Saturday
 
+const padTime = (value: number) => String(value).padStart(2, '0');
+
+const addOneHour = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return time;
+  const date = new Date(0, 0, 0, hours, minutes);
+  date.setHours(date.getHours() + 1);
+  return `${padTime(date.getHours())}:${padTime(date.getMinutes())}`;
+};
+
+const subtractOneHour = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return time;
+  const date = new Date(0, 0, 0, hours, minutes);
+  date.setHours(date.getHours() - 1);
+  return `${padTime(date.getHours())}:${padTime(date.getMinutes())}`;
+};
+
 const SlotConfiguration = () => {
   const [slots, setSlots] = useState<SlotConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +58,11 @@ const SlotConfiguration = () => {
         .order('slot_number', { ascending: true });
 
       if (error) throw error;
-      setSlots((data as SlotConfig[]) || []);
+      setSlots(((data as SlotConfig[]) || []).map((slot) => ({
+        ...slot,
+        duration_minutes: 60,
+        end_time: addOneHour(slot.start_time),
+      })));
     } catch (error) {
       console.error('Error fetching slot configuration:', error);
       toast({
@@ -58,9 +80,38 @@ const SlotConfiguration = () => {
   }, [fetchSlotConfiguration]);
 
   const updateSlot = (id: string, field: keyof SlotConfig, value: string | boolean | number) => {
-    setSlots(prev => prev.map(slot =>
-      slot.id === id ? { ...slot, [field]: value } : slot
-    ));
+    setSlots(prev => prev.map((slot) => {
+      if (slot.id !== id) return slot;
+
+      if (field === 'start_time') {
+        const start_time = value as string;
+        return {
+          ...slot,
+          start_time,
+          end_time: addOneHour(start_time),
+          duration_minutes: 60,
+        };
+      }
+
+      if (field === 'end_time') {
+        const end_time = value as string;
+        return {
+          ...slot,
+          end_time,
+          start_time: subtractOneHour(end_time),
+          duration_minutes: 60,
+        };
+      }
+
+      if (field === 'duration_minutes') {
+        return {
+          ...slot,
+          duration_minutes: 60,
+        };
+      }
+
+      return { ...slot, [field]: value };
+    }));
   };
 
   const saveConfiguration = async () => {
@@ -238,10 +289,10 @@ const SlotConfiguration = () => {
                               type="number"
                               min={60}
                               max={60}
-                              value={slot.duration_minutes}
-                              onChange={(e) => updateSlot(slot.id, 'duration_minutes', parseInt(e.target.value) || 60)}
+                              value={60}
+                              readOnly
+                              disabled
                               className="w-16 bg-background/50"
-                              disabled={!slot.is_active}
                             />
                             <span className="text-xs text-muted-foreground">min</span>
                           </div>
