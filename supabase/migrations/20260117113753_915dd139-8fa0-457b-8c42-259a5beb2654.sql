@@ -152,23 +152,18 @@ INSERT INTO public.message_templates (template_type, template_content) VALUES
 ('reminder', 'Reminder: {{client_name}}, your appointment at Eclipse Tattoo & Piercings is coming up on {{date}} at {{time}}. Please arrive on time!'),
 ('late_warning', 'Hi {{client_name}}, we noticed you''re running late for your {{time}} appointment. Please let us know if you need to reschedule. Your slot may be released after 15 minutes.');
 
--- Insert default slot configuration (9 AM to 6 PM, 1 hour slots = 9 slots, we'll use configurable times)
+-- Insert default slot configuration (10 AM to 8 PM, 1 hour slots = 10 slots)
 INSERT INTO public.slot_configuration (slot_number, start_time, end_time) VALUES
-(1, '09:00', '10:00'),
-(2, '10:00', '11:00'),
-(3, '11:00', '12:00'),
-(4, '12:00', '13:00'),
-(5, '13:00', '14:00'),
-(6, '14:00', '15:00'),
-(7, '15:00', '16:00'),
-(8, '16:00', '17:00'),
-(9, '17:00', '18:00'),
-(10, '18:00', '19:00'),
-(11, '19:00', '20:00'),
-(12, '20:00', '21:00'),
-(13, '21:00', '22:00'),
-(14, '22:00', '23:00'),
-(15, '23:00', '00:00');
+(1, '10:00', '11:00'),
+(2, '11:00', '12:00'),
+(3, '12:00', '13:00'),
+(4, '13:00', '14:00'),
+(5, '14:00', '15:00'),
+(6, '15:00', '16:00'),
+(7, '16:00', '17:00'),
+(8, '17:00', '18:00'),
+(9, '18:00', '19:00'),
+(10, '19:00', '20:00');
 
 -- Create function to generate slots for a date
 CREATE OR REPLACE FUNCTION public.generate_slots_for_date(target_date DATE)

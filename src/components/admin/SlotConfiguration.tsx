@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,12 @@ const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const ACTIVE_DAYS = [1, 2, 3, 4, 5, 6]; // Monday through Saturday
 
 const padTime = (value: number) => String(value).padStart(2, '0');
+
+const formatTimeLabel = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return time;
+  return format(new Date(0, 0, 0, hours, minutes), 'h:mm a');
+};
 
 const addOneHour = (time: string) => {
   const [hours, minutes] = time.split(':').map(Number);
@@ -152,8 +159,15 @@ const SlotConfiguration = () => {
   };
 
   const getDayHours = (dayOfWeek: number) => {
-    if (dayOfWeek === 6) return "11:00 AM - 5:30 PM";
-    return "10:00 AM - 6:30 PM";
+    const activeSlots = getDaySlots(dayOfWeek)
+      .filter((slot) => slot.is_active)
+      .sort((a, b) => a.slot_number - b.slot_number);
+
+    if (activeSlots.length === 0) return 'No active slots';
+
+    const start = activeSlots[0].start_time;
+    const end = activeSlots[activeSlots.length - 1].end_time;
+    return `${formatTimeLabel(start)} - ${formatTimeLabel(end)}`;
   };
 
   const getActiveSlotCount = (dayOfWeek: number) => {

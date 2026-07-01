@@ -493,7 +493,7 @@ export const BookingSystem = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-4 text-center">
-                Mon-Fri: 10am – 6:30pm · Sat: 11am – 5:30pm · Closed Sundays
+                All booking slots are 1-hour appointments. Select a date to see available hourly slots.
               </p>
             </GlassCard>
 

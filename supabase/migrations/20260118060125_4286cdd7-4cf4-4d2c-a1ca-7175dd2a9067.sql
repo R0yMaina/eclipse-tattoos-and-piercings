@@ -16,7 +16,7 @@ ADD CONSTRAINT slot_configuration_slot_day_unique UNIQUE (slot_number, day_of_we
 -- Delete old slot configuration
 DELETE FROM public.slot_configuration;
 
--- Monday to Friday slots (10:00 AM - 9:00 PM, 1-hour slots = 11 slots)
+-- Monday to Friday slots (10:00 AM - 8:00 PM, 1-hour slots = 10 slots)
 INSERT INTO public.slot_configuration (slot_number, start_time, end_time, is_active, day_of_week, duration_minutes) VALUES
 -- Monday (day 1)
 (1, '10:00', '11:00', true, 1, 60),
@@ -27,9 +27,8 @@ INSERT INTO public.slot_configuration (slot_number, start_time, end_time, is_act
 (6, '15:00', '16:00', true, 1, 60),
 (7, '16:00', '17:00', true, 1, 60),
 (8, '17:00', '18:00', true, 1, 60),
-(9, '18:00', '19:00', false, 1, 60),
-(10, '19:00', '20:00', false, 1, 60),
-(11, '20:00', '21:00', false, 1, 60),
+(9, '18:00', '19:00', true, 1, 60),
+(10, '19:00', '20:00', true, 1, 60),
 -- Tuesday (day 2)
 (1, '10:00', '11:00', true, 2, 60),
 (2, '11:00', '12:00', true, 2, 60),
@@ -39,9 +38,8 @@ INSERT INTO public.slot_configuration (slot_number, start_time, end_time, is_act
 (6, '15:00', '16:00', true, 2, 60),
 (7, '16:00', '17:00', true, 2, 60),
 (8, '17:00', '18:00', true, 2, 60),
-(9, '18:00', '19:00', false, 2, 60),
-(10, '19:00', '20:00', false, 2, 60),
-(11, '20:00', '21:00', false, 2, 60),
+(9, '18:00', '19:00', true, 2, 60),
+(10, '19:00', '20:00', true, 2, 60),
 -- Wednesday (day 3)
 (1, '10:00', '11:00', true, 3, 60),
 (2, '11:00', '12:00', true, 3, 60),
@@ -51,9 +49,8 @@ INSERT INTO public.slot_configuration (slot_number, start_time, end_time, is_act
 (6, '15:00', '16:00', true, 3, 60),
 (7, '16:00', '17:00', true, 3, 60),
 (8, '17:00', '18:00', true, 3, 60),
-(9, '18:00', '19:00', false, 3, 60),
-(10, '19:00', '20:00', false, 3, 60),
-(11, '20:00', '21:00', false, 3, 60),
+(9, '18:00', '19:00', true, 3, 60),
+(10, '19:00', '20:00', true, 3, 60),
 -- Thursday (day 4)
 (1, '10:00', '11:00', true, 4, 60),
 (2, '11:00', '12:00', true, 4, 60),
@@ -63,9 +60,8 @@ INSERT INTO public.slot_configuration (slot_number, start_time, end_time, is_act
 (6, '15:00', '16:00', true, 4, 60),
 (7, '16:00', '17:00', true, 4, 60),
 (8, '17:00', '18:00', true, 4, 60),
-(9, '18:00', '19:00', false, 4, 60),
-(10, '19:00', '20:00', false, 4, 60),
-(11, '20:00', '21:00', false, 4, 60),
+(9, '18:00', '19:00', true, 4, 60),
+(10, '19:00', '20:00', true, 4, 60),
 -- Friday (day 5)
 (1, '10:00', '11:00', true, 5, 60),
 (2, '11:00', '12:00', true, 5, 60),
@@ -75,19 +71,17 @@ INSERT INTO public.slot_configuration (slot_number, start_time, end_time, is_act
 (6, '15:00', '16:00', true, 5, 60),
 (7, '16:00', '17:00', true, 5, 60),
 (8, '17:00', '18:00', true, 5, 60),
-(9, '18:00', '19:00', false, 5, 60),
-(10, '19:00', '20:00', false, 5, 60),
-(11, '20:00', '21:00', false, 5, 60),
--- Saturday (day 6): 11:00 AM - 7:00 PM = 9 slots
+(9, '18:00', '19:00', true, 5, 60),
+(10, '19:00', '20:00', true, 5, 60),
+-- Saturday (day 6): 11:00 AM - 7:00 PM = 8 slots
 (1, '11:00', '12:00', true, 6, 60),
 (2, '12:00', '13:00', true, 6, 60),
 (3, '13:00', '14:00', true, 6, 60),
 (4, '14:00', '15:00', true, 6, 60),
 (5, '15:00', '16:00', true, 6, 60),
 (6, '16:00', '17:00', true, 6, 60),
-(7, '17:00', '18:00', false, 6, 60),
-(8, '18:00', '19:00', false, 6, 60),
-(9, '19:00', '20:00', false, 6, 60);
+(7, '17:00', '18:00', true, 6, 60),
+(8, '18:00', '19:00', true, 6, 60);
 
 -- Update the generate_slots_for_date function to use day_of_week
 CREATE OR REPLACE FUNCTION public.generate_slots_for_date(target_date date)
