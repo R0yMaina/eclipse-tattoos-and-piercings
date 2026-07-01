@@ -214,13 +214,8 @@ const BookingsManagement = () => {
       return;
     }
 
-    if (!manualBookingForm.isWalkIn && !selectedSlotOption) {
-      toast({ title: 'No time slot selected', description: 'Please choose an available slot for the manual booking.', variant: 'destructive' });
-      return;
-    }
-
-    if (manualBookingForm.isWalkIn && !manualAppointmentTime) {
-      toast({ title: 'Missing time', description: 'Please choose a time for the walk-in record.', variant: 'destructive' });
+    if (!manualAppointmentTime) {
+      toast({ title: 'Missing time', description: 'Please enter the exact appointment time.', variant: 'destructive' });
       return;
     }
 
