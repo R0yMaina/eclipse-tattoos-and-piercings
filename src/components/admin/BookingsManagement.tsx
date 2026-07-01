@@ -357,7 +357,20 @@ const BookingsManagement = () => {
 
   // Calculate daily revenue summary
   const completedBookings = bookings.filter(b => b.status === 'completed');
-  const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.price_charged || 0), 0);
+  const totalRevenue = completedBookings.reduce(
+    (sum, b) => sum + (b.price_charged ?? b.agreed_price ?? 0),
+    0
+  );
+  const totalCollectedToday = bookings
+    .filter(b => b.status !== 'cancelled' && b.status !== 'no_show')
+    .reduce((sum, b) => sum + (b.price_charged ?? b.deposit_amount ?? 0), 0);
+  const outstandingBalance = bookings
+    .filter(b => b.status !== 'cancelled' && b.status !== 'no_show')
+    .reduce((sum, b) => {
+      const price = b.price_charged ?? b.agreed_price ?? 0;
+      const paid = b.price_charged ? price : (b.deposit_amount ?? 0);
+      return sum + Math.max(0, price - paid);
+    }, 0);
   const sessionsCompleted = completedBookings.length;
   const avgSessionValue = sessionsCompleted > 0 ? totalRevenue / sessionsCompleted : 0;
 
