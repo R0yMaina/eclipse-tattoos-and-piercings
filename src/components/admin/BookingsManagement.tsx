@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { format, parseISO, differenceInMinutes } from 'date-fns';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
+import { format, differenceInMinutes } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Phone, Clock, User, FileImage, Play, Square, CheckCircle, DollarSign, Star, UserCheck, UserX } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, Phone, Clock, User, FileImage, Play, Square, CheckCircle, DollarSign, Star, UserCheck, UserX, Plus } from 'lucide-react';
 
 interface Booking {
   id: string;
-  slot_id: string;
+  slot_id: string | null;
   client_name: string;
   phone_number: string;
   inspiration_image_url: string | null;
@@ -27,23 +26,51 @@ interface Booking {
   price_charged: number | null;
   admin_notes: string | null;
   created_at: string;
+  booking_source: 'online' | 'manual';
+  payment_method: string | null;
+  service_type: string | null;
+  appointment_date: string | null;
+  appointment_time: string | null;
+  is_walk_in: boolean | null;
   booking_slots: {
     slot_date: string;
     start_time: string;
     end_time: string;
     slot_number: number;
-  };
+  } | null;
+}
+
+interface SlotAvailability {
+  slot_id: string;
+  slot_number: number;
+  start_time: string;
+  end_time: string;
+  status: string;
+  client_name: string | null;
 }
 
 const BookingsManagement = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [slotOptions, setSlotOptions] = useState<SlotAvailability[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [priceCharged, setPriceCharged] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [addToReviewQueue, setAddToReviewQueue] = useState(true);
+  const [selectedSlotOption, setSelectedSlotOption] = useState('');
+  const [manualAppointmentTime, setManualAppointmentTime] = useState('');
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [manualBookingForm, setManualBookingForm] = useState({
+    clientName: '',
+    phoneNumber: '',
+    serviceType: '',
+    notes: '',
+    paymentMethod: 'cash',
+    isWalkIn: false,
+  });
   const { toast } = useToast();
 
   const fetchBookings = useCallback(async () => {
@@ -55,18 +82,22 @@ const BookingsManagement = () => {
         .from('bookings')
         .select(`
           *,
-          booking_slots!inner (
+          booking_slots!left (
             slot_date,
             start_time,
             end_time,
             slot_number
           )
         `)
-        .eq('booking_slots.slot_date', formattedDate)
-        .order('booking_slots(start_time)', { ascending: true });
+        .or(`appointment_date.eq.${formattedDate},booking_slots.slot_date.eq.${formattedDate}`);
 
       if (error) throw error;
-      setBookings((data as unknown as Booking[]) || []);
+      const sortedBookings = ((data as unknown as Booking[]) || []).sort((a, b) => {
+        const aTime = a.appointment_time || a.booking_slots?.start_time || '00:00';
+        const bTime = b.appointment_time || b.booking_slots?.start_time || '00:00';
+        return aTime.localeCompare(bTime);
+      });
+      setBookings(sortedBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -79,9 +110,25 @@ const BookingsManagement = () => {
     }
   }, [selectedDate, toast]);
 
+  const fetchSlotAvailability = useCallback(async (date: Date) => {
+    try {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      await supabase.functions.invoke('generate-slots', { body: { date: formattedDate } });
+      const { data, error } = await supabase.rpc('get_slot_availability', { target_date: formattedDate });
+      if (error) throw error;
+      const availableSlots = ((data as SlotAvailability[]) || []).filter(slot => slot.status === 'available');
+      setSlotOptions(availableSlots);
+      setSelectedSlotOption(availableSlots[0]?.slot_id ?? '');
+      setManualAppointmentTime(availableSlots[0]?.start_time ?? '');
+    } catch (error) {
+      console.error('Error fetching slot availability:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchBookings();
-  }, [fetchBookings]);
+    fetchSlotAvailability(selectedDate);
+  }, [fetchBookings, fetchSlotAvailability, selectedDate]);
 
 
 
@@ -140,11 +187,92 @@ const BookingsManagement = () => {
             bookingId: booking.id,
             clientName: booking.client_name,
             phoneNumber: booking.phone_number,
-            time: formatTime(booking.booking_slots.start_time)
+            time: formatTime(booking.booking_slots?.start_time)
           }
         });
       }
     }, 15 * 60 * 1000);
+  };
+
+  const handleCreateManualBooking = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!manualBookingForm.clientName.trim() || !manualBookingForm.phoneNumber.trim() || !manualBookingForm.serviceType.trim()) {
+      toast({ title: 'Missing information', description: 'Please fill in the customer name, phone number, and service type.', variant: 'destructive' });
+      return;
+    }
+
+    if (!manualBookingForm.isWalkIn && !selectedSlotOption) {
+      toast({ title: 'No time slot selected', description: 'Please choose an available slot for the manual booking.', variant: 'destructive' });
+      return;
+    }
+
+    if (manualBookingForm.isWalkIn && !manualAppointmentTime) {
+      toast({ title: 'Missing time', description: 'Please choose a time for the walk-in record.', variant: 'destructive' });
+      return;
+    }
+
+    setManualSubmitting(true);
+    try {
+      const appointmentDate = format(selectedDate, 'yyyy-MM-dd');
+      const chosenSlot = slotOptions.find(slot => slot.slot_id === selectedSlotOption);
+      const appointmentTime = manualBookingForm.isWalkIn ? manualAppointmentTime : chosenSlot?.start_time || manualAppointmentTime;
+
+      if (!manualBookingForm.isWalkIn && chosenSlot) {
+        const { data: existingBooking, error: existingBookingError } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('slot_id', chosenSlot.slot_id)
+          .in('status', ['upcoming', 'ongoing'])
+          .maybeSingle();
+
+        if (existingBookingError) throw existingBookingError;
+        if (existingBooking) {
+          throw new Error('This time slot is already booked. Please pick another available time.');
+        }
+      }
+
+      const paymentStatus = manualBookingForm.paymentMethod === 'cash' ? 'paid' : 'pending';
+      const depositPaid = manualBookingForm.paymentMethod === 'cash';
+      const { error: bookingError } = await supabase.from('bookings').insert({
+        id: crypto.randomUUID(),
+        slot_id: manualBookingForm.isWalkIn ? null : chosenSlot?.slot_id ?? null,
+        client_name: manualBookingForm.clientName.trim(),
+        phone_number: manualBookingForm.phoneNumber.trim(),
+        service_type: manualBookingForm.serviceType.trim(),
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime || null,
+        notes: manualBookingForm.notes.trim() || null,
+        status: 'upcoming',
+        booking_source: 'manual',
+        payment_method: manualBookingForm.paymentMethod,
+        is_walk_in: manualBookingForm.isWalkIn,
+        payment_status: paymentStatus,
+        deposit_paid: depositPaid,
+        deposit_amount: null,
+        agreed_price: null,
+        payment_expires_at: null,
+      });
+
+      if (bookingError) throw bookingError;
+
+      toast({
+        title: 'Manual booking created',
+        description: manualBookingForm.isWalkIn ? 'Walk-in record saved successfully.' : 'Booking added to the selected slot.',
+      });
+
+      setManualBookingForm({ clientName: '', phoneNumber: '', serviceType: '', notes: '', paymentMethod: 'cash', isWalkIn: false });
+      setSelectedSlotOption('');
+      setManualAppointmentTime('');
+      setManualDialogOpen(false);
+      fetchBookings();
+      fetchSlotAvailability(selectedDate);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to create the manual booking.';
+      toast({ title: 'Booking failed', description: message, variant: 'destructive' });
+    } finally {
+      setManualSubmitting(false);
+    }
   };
 
   const handleCompleteSession = async () => {
@@ -174,12 +302,19 @@ const BookingsManagement = () => {
     setAdminNotes('');
   };
 
-  const formatTime = (time: string) => {
+  const formatTime = (time: string | null | undefined) => {
+    if (!time) return '—';
     const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
+    const hour = parseInt(hours, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  const getBookingTimeRange = (booking: Booking) => {
+    const startTime = booking.appointment_time || booking.booking_slots?.start_time;
+    const endTime = booking.booking_slots?.end_time || null;
+    return { startTime, endTime };
   };
 
   const getStatusBadge = (status: string) => {
@@ -221,6 +356,131 @@ const BookingsManagement = () => {
           </h2>
           <p className="text-sm text-muted-foreground mt-1">Manage daily appointments and sessions</p>
         </div>
+        <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Manual Booking
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-xl glass-panel-elevated border-primary/20">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                Create Manual Booking
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateManualBooking} className="space-y-4 pt-2">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="manual-client-name">Customer Name</Label>
+                  <Input
+                    id="manual-client-name"
+                    value={manualBookingForm.clientName}
+                    onChange={(e) => setManualBookingForm(prev => ({ ...prev, clientName: e.target.value }))}
+                    placeholder="Jane Doe"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="manual-phone">Phone Number</Label>
+                  <Input
+                    id="manual-phone"
+                    value={manualBookingForm.phoneNumber}
+                    onChange={(e) => setManualBookingForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                    placeholder="0712 345678"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="manual-service">Service / Tattoo Type</Label>
+                <Input
+                  id="manual-service"
+                  value={manualBookingForm.serviceType}
+                  onChange={(e) => setManualBookingForm(prev => ({ ...prev, serviceType: e.target.value }))}
+                  placeholder="Small linework / Piercing"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Appointment Date</Label>
+                  <Input type="date" value={format(selectedDate, 'yyyy-MM-dd')} onChange={(e) => setSelectedDate(new Date(e.target.value))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Payment Method</Label>
+                  <Select value={manualBookingForm.paymentMethod} onValueChange={(value) => setManualBookingForm(prev => ({ ...prev, paymentMethod: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="mpesa">M-Pesa</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Appointment Time</Label>
+                {manualBookingForm.isWalkIn ? (
+                  <Input type="time" value={manualAppointmentTime} onChange={(e) => setManualAppointmentTime(e.target.value)} />
+                ) : (
+                  <Select value={selectedSlotOption} onValueChange={setSelectedSlotOption}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an available slot" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {slotOptions.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">No available slots for this date.</div>
+                      ) : (
+                        slotOptions.map(slot => (
+                          <SelectItem key={slot.slot_id} value={slot.slot_id}>
+                            {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
+                <input
+                  type="checkbox"
+                  id="manual-walk-in"
+                  checked={manualBookingForm.isWalkIn}
+                  onChange={(e) => setManualBookingForm(prev => ({ ...prev, isWalkIn: e.target.checked }))}
+                  className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
+                />
+                <Label htmlFor="manual-walk-in" className="cursor-pointer text-sm">Record as walk-in (does not occupy a booked slot)</Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="manual-notes">Optional Notes</Label>
+                <Textarea
+                  id="manual-notes"
+                  value={manualBookingForm.notes}
+                  onChange={(e) => setManualBookingForm(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Any special notes for the studio team"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setManualDialogOpen(false)}>Cancel</Button>
+                <Button type="submit" disabled={manualSubmitting}>
+                  {manualSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  Save Booking
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Daily Revenue Summary */}
@@ -340,15 +600,21 @@ const BookingsManagement = () => {
                     <CardContent className="p-4">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
                             <div className="font-semibold text-lg flex items-center gap-2">
                               <Clock className="h-4 w-4 text-primary" />
-                              {formatTime(booking.booking_slots.start_time)} - {formatTime(booking.booking_slots.end_time)}
+                              {formatTime(booking.appointment_time || booking.booking_slots?.start_time || '00:00')} - {formatTime(booking.booking_slots?.end_time || booking.appointment_time || booking.appointment_time || '00:00')}
                             </div>
                             {getStatusBadge(booking.status)}
+                            <Badge variant="outline" className="text-[11px] uppercase tracking-wide">
+                              {booking.booking_source === 'manual' ? 'Manual' : 'Online'}
+                            </Badge>
+                            {booking.is_walk_in && (
+                              <Badge variant="secondary" className="text-[11px] uppercase tracking-wide">Walk-in</Badge>
+                            )}
                           </div>
 
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <User className="h-4 w-4" />
                               {booking.client_name}
@@ -359,9 +625,21 @@ const BookingsManagement = () => {
                             </span>
                           </div>
 
+                          {booking.service_type && (
+                            <p className="text-sm text-muted-foreground">
+                              Service: <span className="font-medium text-foreground">{booking.service_type}</span>
+                            </p>
+                          )}
+
                           {booking.notes && (
                             <p className="text-sm text-muted-foreground italic">
                               "{booking.notes}"
+                            </p>
+                          )}
+
+                          {booking.payment_method && (
+                            <p className="text-sm text-muted-foreground">
+                              Payment: <span className="font-medium text-foreground">{booking.payment_method === 'cash' ? 'Cash' : booking.payment_method}</span>
                             </p>
                           )}
 
@@ -458,7 +736,7 @@ const BookingsManagement = () => {
                                       <span className="font-medium">
                                         {selectedBooking?.actual_start_time
                                           ? format(new Date(selectedBooking.actual_start_time), 'h:mm a')
-                                          : formatTime(booking.booking_slots.start_time)}
+                                          : formatTime(booking.booking_slots?.start_time || booking.appointment_time || '00:00')}
                                       </span>
                                     </div>
                                     <div className="flex items-center justify-between">

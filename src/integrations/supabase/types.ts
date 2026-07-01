@@ -47,6 +47,9 @@ export type Database = {
           actual_start_time: string | null
           admin_notes: string | null
           agreed_price: number | null
+          appointment_date: string | null
+          appointment_time: string | null
+          booking_source: string
           client_name: string
           confirmation_sent: boolean | null
           created_at: string
@@ -54,16 +57,19 @@ export type Database = {
           deposit_paid: boolean | null
           id: string
           inspiration_image_url: string | null
+          is_walk_in: boolean
           late_warning_sent: boolean | null
           mpesa_checkout_id: string | null
           mpesa_receipt: string | null
           notes: string | null
           payment_expires_at: string | null
+          payment_method: string
           payment_status: string | null
           phone_number: string
           price_charged: number | null
           reminder_sent: boolean | null
-          slot_id: string
+          service_type: string | null
+          slot_id: string | null
           status: Database["public"]["Enums"]["booking_status"]
           updated_at: string
         }
@@ -72,6 +78,9 @@ export type Database = {
           actual_start_time?: string | null
           admin_notes?: string | null
           agreed_price?: number | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          booking_source?: string
           client_name: string
           confirmation_sent?: boolean | null
           created_at?: string
@@ -79,16 +88,19 @@ export type Database = {
           deposit_paid?: boolean | null
           id?: string
           inspiration_image_url?: string | null
+          is_walk_in?: boolean
           late_warning_sent?: boolean | null
           mpesa_checkout_id?: string | null
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+          payment_method?: string
           payment_status?: string | null
           phone_number: string
           price_charged?: number | null
           reminder_sent?: boolean | null
-          slot_id: string
+          service_type?: string | null
+          slot_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
         }
@@ -97,6 +109,9 @@ export type Database = {
           actual_start_time?: string | null
           admin_notes?: string | null
           agreed_price?: number | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          booking_source?: string
           client_name?: string
           confirmation_sent?: boolean | null
           created_at?: string
@@ -104,16 +119,19 @@ export type Database = {
           deposit_paid?: boolean | null
           id?: string
           inspiration_image_url?: string | null
+          is_walk_in?: boolean
           late_warning_sent?: boolean | null
           mpesa_checkout_id?: string | null
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+          payment_method?: string
           payment_status?: string | null
           phone_number?: string
           price_charged?: number | null
           reminder_sent?: boolean | null
-          slot_id?: string
+          service_type?: string | null
+          slot_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
         }

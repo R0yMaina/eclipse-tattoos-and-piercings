@@ -182,12 +182,15 @@ export const BookingSystem = () => {
         imageUrl = fileName;
       }
       const newBookingId = crypto.randomUUID();
-      const deposit = Math.ceil(price * 0.15);
+    const deposit = Math.ceil(price * 0.30);
       const { error: bookingError } = await supabase.from('bookings').insert({
         id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
         inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'upcoming', agreed_price: price,
         deposit_amount: deposit, payment_status: 'pending', deposit_paid: false,
         payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        booking_source: 'online', payment_method: 'mpesa', service_type: null,
+        appointment_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
+        appointment_time: selectedSlot.start_time, is_walk_in: false,
       });
       if (bookingError) {
         if (bookingError.message.includes('duplicate') || bookingError.message.includes('already exists')) throw new Error('This slot has already been booked. Please select another time.');
@@ -256,7 +259,7 @@ export const BookingSystem = () => {
     }
   };
 
-  const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.15) : 0;
+  const calculatedDeposit = agreedPrice ? Math.ceil(parseFloat(agreedPrice) * 0.30) : 0;
 
   const stepLabels = ['Select Slot', 'Your Details', 'Pay Deposit', 'Confirmed'];
   const currentIndex = bookingStep === 'details' ? (selectedSlot ? 1 : 0) :
@@ -277,7 +280,7 @@ export const BookingSystem = () => {
           Book Your Session
         </h2>
         <p className="booking-hero-sub text-muted-foreground max-w-md mx-auto">
-          Select a date and time slot, then pay a 15% deposit to confirm your appointment
+          Select a date and time slot, then pay a 30% deposit to confirm your appointment
         </p>
       </div>
 
@@ -464,7 +467,7 @@ export const BookingSystem = () => {
                       </div>
                       {agreedPrice && parseFloat(agreedPrice) > 0 && (
                         <GlassCard className="p-4 text-center">
-                          <p className="text-xs text-muted-foreground">15% Deposit Required</p>
+                          <p className="text-xs text-muted-foreground">30% Deposit Required</p>
                           <p className="text-3xl font-heading font-bold text-primary mt-1">KES {calculatedDeposit.toLocaleString()}</p>
                           <p className="text-[10px] text-muted-foreground mt-1">
                             Balance KES {(parseFloat(agreedPrice) - calculatedDeposit).toLocaleString()} at appointment
@@ -541,7 +544,7 @@ export const BookingSystem = () => {
               ))}
               <div className="h-px bg-border/30" />
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-foreground">Deposit (15%)</span>
+                <span className="font-semibold text-foreground">Deposit (30%)</span>
                 <span className="text-2xl font-heading font-bold text-primary">KES {depositAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">

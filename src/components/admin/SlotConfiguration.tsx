@@ -236,10 +236,10 @@ const SlotConfiguration = () => {
                           <div className="flex items-center gap-1">
                             <Input
                               type="number"
-                              min={30}
-                              max={120}
+                              min={60}
+                              max={60}
                               value={slot.duration_minutes}
-                              onChange={(e) => updateSlot(slot.id, 'duration_minutes', parseInt(e.target.value) || 45)}
+                              onChange={(e) => updateSlot(slot.id, 'duration_minutes', parseInt(e.target.value) || 60)}
                               className="w-16 bg-background/50"
                               disabled={!slot.is_active}
                             />
