@@ -97,23 +97,16 @@ export type Database = {
           mpesa_receipt: string | null
           notes: string | null
           payment_expires_at: string | null
-<<<<<<< HEAD
           payment_method: string
-=======
           payment_phone: string | null
           payment_screenshot_url: string | null
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
+          screenshot_payment_url: string | null
           payment_status: string | null
           phone_number: string
           price_charged: number | null
           reminder_sent: boolean | null
-<<<<<<< HEAD
           service_type: string | null
-          slot_id: string | null
-=======
-          screenshot_payment_url: string | null
           slot_id: string
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           status: Database["public"]["Enums"]["booking_status"]
           transaction_code: string | null
           updated_at: string
@@ -140,23 +133,16 @@ export type Database = {
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
-<<<<<<< HEAD
           payment_method?: string
-=======
           payment_phone?: string | null
           payment_screenshot_url?: string | null
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
+          screenshot_payment_url?: string | null
           payment_status?: string | null
           phone_number: string
           price_charged?: number | null
           reminder_sent?: boolean | null
-<<<<<<< HEAD
           service_type?: string | null
-          slot_id?: string | null
-=======
-          screenshot_payment_url?: string | null
           slot_id: string
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           status?: Database["public"]["Enums"]["booking_status"]
           transaction_code?: string | null
           updated_at?: string
@@ -183,23 +169,16 @@ export type Database = {
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
-<<<<<<< HEAD
           payment_method?: string
-=======
           payment_phone?: string | null
           payment_screenshot_url?: string | null
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
+          screenshot_payment_url?: string | null
           payment_status?: string | null
           phone_number?: string
           price_charged?: number | null
           reminder_sent?: boolean | null
-<<<<<<< HEAD
           service_type?: string | null
-          slot_id?: string | null
-=======
-          screenshot_payment_url?: string | null
           slot_id?: string
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
           status?: Database["public"]["Enums"]["booking_status"]
           transaction_code?: string | null
           updated_at?: string

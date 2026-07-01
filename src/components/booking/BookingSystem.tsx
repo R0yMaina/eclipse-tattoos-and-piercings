@@ -257,18 +257,6 @@ export const BookingSystem = () => {
         if (uploadError) throw uploadError;
         imageUrl = fileName;
       }
-<<<<<<< HEAD
-      const newBookingId = crypto.randomUUID();
-    const deposit = Math.ceil(price * 0.30);
-      const { error: bookingError } = await supabase.from('bookings').insert({
-        id: newBookingId, slot_id: selectedSlot.slot_id, client_name: clientName.trim(), phone_number: phoneNumber.trim(),
-        inspiration_image_url: imageUrl, notes: notes.trim() || null, status: 'upcoming', agreed_price: price,
-        deposit_amount: deposit, payment_status: 'pending', deposit_paid: false,
-        payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        booking_source: 'online', payment_method: 'mpesa', service_type: null,
-        appointment_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
-        appointment_time: selectedSlot.start_time, is_walk_in: false,
-=======
 
       // Atomic, race-safe booking creation via SECURITY DEFINER RPC.
       // The DB locks the slot row and rejects duplicates even under concurrent load.
@@ -280,7 +268,6 @@ export const BookingSystem = () => {
         p_inspiration_image_url: imageUrl,
         p_notes: notes.trim() || null,
         p_honeypot: honeypot || null,
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
       });
 
       if (rpcError) throw rpcError;
@@ -714,20 +701,6 @@ export const BookingSystem = () => {
                   <p className="text-2xl font-bold text-primary">0769138198</p>
                   <p className="text-[10px] text-muted-foreground mt-1">Send money via Pochi la Biashara to this number</p>
                 </div>
-<<<<<<< HEAD
-              ))}
-              <div className="h-px bg-border/30" />
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-foreground">Deposit (30%)</span>
-                <span className="text-2xl font-heading font-bold text-primary">KES {depositAmount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">M-Pesa number</span>
-                <span className="font-medium text-foreground">{phoneNumber}</span>
-              </div>
-            </div>
-=======
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
 
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Deposit Amount (30%)</p>

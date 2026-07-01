@@ -89,11 +89,7 @@ const Contact = () => {
             <div className="mb-12 max-w-3xl mx-auto text-center">
               <h2 className="text-3xl font-heading font-bold text-foreground mb-4">How Booking Works</h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
-<<<<<<< HEAD
-                Start by reaching out to us — via call, WhatsApp, or the chat — to discuss your tattoo idea and get a price quote from our artists. Once you've agreed on the design and cost, come back here to pick a date and time slot. Confirm your booking by paying a 30% deposit via M-Pesa, and you're all set. We'll send you a reminder before your session.
-=======
                 Start by reaching out to us — via call or the chat — to discuss your tattoo idea and get a price quote from our artists. Once you've agreed on the design and cost, come back here to pick a date and time slot. Confirm your booking by paying a 30% deposit via M-Pesa Pochi la Biashara (0769138198), and you're all set.
->>>>>>> 2d364eae26340382e2fab59a8f3b37ef748f9b97
               </p>
             </div>
 
