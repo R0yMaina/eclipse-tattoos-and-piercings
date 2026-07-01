@@ -30,6 +30,8 @@ interface Booking {
   booking_source: 'online' | 'manual';
   payment_method: string | null;
   service_type: string | null;
+  agreed_price: number | null;
+  deposit_amount: number | null;
   appointment_date: string | null;
   appointment_time: string | null;
   is_walk_in: boolean | null;
@@ -71,6 +73,8 @@ const BookingsManagement = () => {
     notes: '',
     paymentMethod: 'cash',
     isWalkIn: false,
+    agreedPrice: '',
+    amountPaid: '',
   });
   const { toast } = useToast();
 
@@ -203,6 +207,16 @@ const BookingsManagement = () => {
       return;
     }
 
+    if (!manualBookingForm.agreedPrice.trim() || isNaN(Number(manualBookingForm.agreedPrice)) || Number(manualBookingForm.agreedPrice) <= 0) {
+      toast({ title: 'Missing amount', description: 'Please enter a valid total price for the booking.', variant: 'destructive' });
+      return;
+    }
+
+    if (!manualBookingForm.amountPaid.trim() || isNaN(Number(manualBookingForm.amountPaid)) || Number(manualBookingForm.amountPaid) < 0) {
+      toast({ title: 'Missing amount paid', description: 'Please enter a valid amount paid so far.', variant: 'destructive' });
+      return;
+    }
+
     if (!manualBookingForm.isWalkIn && !selectedSlotOption) {
       toast({ title: 'No time slot selected', description: 'Please choose an available slot for the manual booking.', variant: 'destructive' });
       return;
@@ -218,6 +232,14 @@ const BookingsManagement = () => {
       const appointmentDate = format(selectedDate, 'yyyy-MM-dd');
       const chosenSlot = slotOptions.find(slot => slot.slot_id === selectedSlotOption);
       const appointmentTime = manualBookingForm.isWalkIn ? manualAppointmentTime : chosenSlot?.start_time || manualAppointmentTime;
+      const agreedPrice = parseFloat(manualBookingForm.agreedPrice);
+      const amountPaid = parseFloat(manualBookingForm.amountPaid);
+
+      if (amountPaid > agreedPrice) {
+        toast({ title: 'Invalid payment', description: 'Amount paid cannot exceed the total price.', variant: 'destructive' });
+        setManualSubmitting(false);
+        return;
+      }
 
       if (!manualBookingForm.isWalkIn && chosenSlot) {
         const { data: existingBooking, error: existingBookingError } = await supabase
@@ -233,8 +255,9 @@ const BookingsManagement = () => {
         }
       }
 
-      const paymentStatus = manualBookingForm.paymentMethod === 'cash' ? 'paid' : 'pending';
-      const depositPaid = manualBookingForm.paymentMethod === 'cash';
+      const isFullyPaid = amountPaid >= agreedPrice;
+      const paymentStatus = isFullyPaid ? 'paid' : 'pending';
+      const depositPaid = amountPaid > 0;
       const { error: bookingError } = await supabase.from('bookings').insert({
         id: crypto.randomUUID(),
         slot_id: manualBookingForm.isWalkIn ? null : chosenSlot?.slot_id ?? null,
@@ -250,8 +273,8 @@ const BookingsManagement = () => {
         is_walk_in: manualBookingForm.isWalkIn,
         payment_status: paymentStatus,
         deposit_paid: depositPaid,
-        deposit_amount: null,
-        agreed_price: null,
+        deposit_amount: amountPaid,
+        agreed_price: agreedPrice,
         payment_expires_at: null,
       });
 
@@ -262,7 +285,7 @@ const BookingsManagement = () => {
         description: manualBookingForm.isWalkIn ? 'Walk-in record saved successfully.' : 'Booking added to the selected slot.',
       });
 
-      setManualBookingForm({ clientName: '', phoneNumber: '', serviceType: '', notes: '', paymentMethod: 'cash', isWalkIn: false });
+      setManualBookingForm({ clientName: '', phoneNumber: '', serviceType: '', notes: '', paymentMethod: 'cash', isWalkIn: false, agreedPrice: '', amountPaid: '' });
       setSelectedSlotOption('');
       setManualAppointmentTime('');
       setManualDialogOpen(false);
@@ -420,6 +443,35 @@ const BookingsManagement = () => {
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="manual-price">Total Price (KES)</Label>
+                  <Input
+                    id="manual-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={manualBookingForm.agreedPrice}
+                    onChange={(e) => setManualBookingForm(prev => ({ ...prev, agreedPrice: e.target.value }))}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="manual-paid">Amount Paid (KES)</Label>
+                  <Input
+                    id="manual-paid"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={manualBookingForm.amountPaid}
+                    onChange={(e) => setManualBookingForm(prev => ({ ...prev, amountPaid: e.target.value }))}
+                    placeholder="0.00"
+                    required
+                  />
                 </div>
               </div>
 
@@ -638,6 +690,18 @@ const BookingsManagement = () => {
                           {booking.payment_method && (
                             <p className="text-sm text-muted-foreground">
                               Payment: <span className="font-medium text-foreground">{booking.payment_method === 'cash' ? 'Cash' : booking.payment_method}</span>
+                            </p>
+                          )}
+
+                          {booking.deposit_amount !== null && booking.deposit_amount !== undefined && (
+                            <p className="text-sm text-muted-foreground">
+                              Amount Paid: <span className="font-medium text-foreground">KES {booking.deposit_amount.toLocaleString()}</span>
+                            </p>
+                          )}
+
+                          {booking.agreed_price !== null && booking.deposit_amount !== null && (
+                            <p className="text-sm text-muted-foreground">
+                              Balance: <span className="font-medium text-foreground">KES {(booking.agreed_price - booking.deposit_amount).toLocaleString()}</span>
                             </p>
                           )}
 
