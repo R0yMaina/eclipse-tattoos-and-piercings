@@ -228,7 +228,7 @@ const BookingsManagement = () => {
     try {
       const appointmentDate = format(selectedDate, 'yyyy-MM-dd');
       const chosenSlot = slotOptions.find(slot => slot.slot_id === selectedSlotOption);
-      const appointmentTime = manualBookingForm.isWalkIn ? manualAppointmentTime : chosenSlot?.start_time || manualAppointmentTime;
+      const appointmentTime = manualAppointmentTime || chosenSlot?.start_time || null;
       const agreedPrice = parseFloat(manualBookingForm.agreedPrice);
       const amountPaid = parseFloat(manualBookingForm.amountPaid);
 
