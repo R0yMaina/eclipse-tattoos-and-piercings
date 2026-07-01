@@ -90,7 +90,7 @@ const BookingsManagement = () => {
             slot_number
           )
         `)
-        .or(`appointment_date.eq.${formattedDate},booking_slots.slot_date.eq.${formattedDate}`);
+        .eq('appointment_date', formattedDate);
 
       if (error) throw error;
       const sortedBookings = ((data as unknown as Booking[]) || []).sort((a, b) => {

@@ -46,10 +46,12 @@ BEGIN
 
   INSERT INTO bookings (
     slot_id, client_name, phone_number, notes, inspiration_image_url,
+    appointment_date, appointment_time,
     status, agreed_price, deposit_amount, payment_status, deposit_paid,
     client_token, payment_expires_at
   ) VALUES (
     p_slot_id, p_client_name, p_phone_number, p_notes, p_inspiration_image_url,
+    v_slot.slot_date, v_slot.start_time,
     'pending_payment', p_agreed_price, v_deposit, 'pending_payment', false,
     v_client_token, now() + interval '24 hours'
   ) RETURNING id INTO v_booking_id;
