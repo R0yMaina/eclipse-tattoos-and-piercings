@@ -485,11 +485,27 @@ const BookingsManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Appointment Time</Label>
-                {manualBookingForm.isWalkIn ? (
-                  <Input type="time" value={manualAppointmentTime} onChange={(e) => setManualAppointmentTime(e.target.value)} />
-                ) : (
-                  <Select value={selectedSlotOption} onValueChange={setSelectedSlotOption}>
+                <Label>Exact Appointment Time</Label>
+                <Input
+                  type="time"
+                  step={60}
+                  value={manualAppointmentTime ? manualAppointmentTime.slice(0, 5) : ''}
+                  onChange={(e) => setManualAppointmentTime(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">This exact time is what gets saved for the record.</p>
+              </div>
+
+              {!manualBookingForm.isWalkIn && (
+                <div className="space-y-2">
+                  <Label>Reserve Available Slot (optional)</Label>
+                  <Select
+                    value={selectedSlotOption}
+                    onValueChange={(value) => {
+                      setSelectedSlotOption(value);
+                      const slot = slotOptions.find(s => s.slot_id === value);
+                      if (slot) setManualAppointmentTime(slot.start_time.slice(0, 5));
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select an available slot" />
                     </SelectTrigger>
@@ -505,8 +521,8 @@ const BookingsManagement = () => {
                       )}
                     </SelectContent>
                   </Select>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
                 <input
