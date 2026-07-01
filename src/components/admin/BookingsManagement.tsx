@@ -53,6 +53,10 @@ interface SlotAvailability {
   client_name: string | null;
 }
 
+type BookingInsertPayload = Omit<Database['public']['Tables']['bookings']['Insert'], 'slot_id'> & {
+  slot_id?: string | null;
+};
+
 const BookingsManagement = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -86,15 +90,7 @@ const BookingsManagement = () => {
 
       const { data, error } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          booking_slots!left (
-            slot_date,
-            start_time,
-            end_time,
-            slot_number
-          )
-        `)
+        .select('*')
         .eq('appointment_date', formattedDate);
 
       if (error) throw error;
@@ -262,10 +258,9 @@ const BookingsManagement = () => {
         }
       }
 
-      const isFullyPaid = amountPaid >= agreedPrice;
-      const paymentStatus = isFullyPaid ? 'paid' : 'pending';
+      const paymentStatus = 'pending';
       const depositPaid = amountPaid > 0;
-      const bookingPayload: Database['public']['Tables']['bookings']['Insert'] = {
+      const bookingPayload: BookingInsertPayload = {
         id: crypto.randomUUID(),
         client_name: manualBookingForm.clientName.trim(),
         phone_number: manualBookingForm.phoneNumber.trim(),
@@ -282,7 +277,7 @@ const BookingsManagement = () => {
         deposit_amount: amountPaid,
         agreed_price: agreedPrice,
         payment_expires_at: null,
-        slot_id: manualBookingForm.isWalkIn ? undefined : chosenSlot?.slot_id ?? undefined,
+        slot_id: manualBookingForm.isWalkIn ? null : chosenSlot?.slot_id ?? null,
       };
 
       const { error: bookingError } = await supabase.from('bookings').insert(bookingPayload);
