@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Phone, Clock, User, FileImage, Play, Square, CheckCircle, DollarSign, Star, UserCheck, UserX, Plus } from 'lucide-react';
 
@@ -241,12 +242,18 @@ const BookingsManagement = () => {
         return;
       }
 
+      if (!manualBookingForm.isWalkIn && !chosenSlot) {
+        toast({ title: 'No time slot selected', description: 'Please choose a valid available slot for this manual booking.', variant: 'destructive' });
+        setManualSubmitting(false);
+        return;
+      }
+
       if (!manualBookingForm.isWalkIn && chosenSlot) {
         const { data: existingBooking, error: existingBookingError } = await supabase
           .from('bookings')
           .select('id')
           .eq('slot_id', chosenSlot.slot_id)
-          .in('status', ['upcoming', 'ongoing'])
+          .not('status', 'in', ['cancelled', 'no_show'])
           .maybeSingle();
 
         if (existingBookingError) throw existingBookingError;
@@ -258,12 +265,11 @@ const BookingsManagement = () => {
       const isFullyPaid = amountPaid >= agreedPrice;
       const paymentStatus = isFullyPaid ? 'paid' : 'pending';
       const depositPaid = amountPaid > 0;
-      const { error: bookingError } = await supabase.from('bookings').insert({
+      const bookingPayload: Database['public']['Tables']['bookings']['Insert'] = {
         id: crypto.randomUUID(),
-        slot_id: manualBookingForm.isWalkIn ? null : chosenSlot?.slot_id ?? null,
         client_name: manualBookingForm.clientName.trim(),
         phone_number: manualBookingForm.phoneNumber.trim(),
-        service_type: manualBookingForm.serviceType.trim(),
+        service_type: manualBookingForm.serviceType.trim() || null,
         appointment_date: appointmentDate,
         appointment_time: appointmentTime || null,
         notes: manualBookingForm.notes.trim() || null,
@@ -276,7 +282,10 @@ const BookingsManagement = () => {
         deposit_amount: amountPaid,
         agreed_price: agreedPrice,
         payment_expires_at: null,
-      });
+        slot_id: manualBookingForm.isWalkIn ? undefined : chosenSlot?.slot_id ?? undefined,
+      };
+
+      const { error: bookingError } = await supabase.from('bookings').insert(bookingPayload);
 
       if (bookingError) throw bookingError;
 
@@ -292,7 +301,11 @@ const BookingsManagement = () => {
       fetchBookings();
       fetchSlotAvailability(selectedDate);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to create the manual booking.';
+      const message = error instanceof Error
+        ? error.message
+        : error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string'
+          ? (error as any).message
+          : 'Failed to create the manual booking.';
       toast({ title: 'Booking failed', description: message, variant: 'destructive' });
     } finally {
       setManualSubmitting(false);
