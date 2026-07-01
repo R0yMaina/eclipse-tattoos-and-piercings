@@ -80,6 +80,10 @@ export type Database = {
           actual_start_time: string | null
           admin_notes: string | null
           agreed_price: number | null
+          amount_paid: number | null
+          appointment_date: string | null
+          appointment_time: string | null
+          booking_source: string
           client_name: string
           client_token: string | null
           confirmation_sent: boolean | null
@@ -88,11 +92,13 @@ export type Database = {
           deposit_paid: boolean | null
           id: string
           inspiration_image_url: string | null
+          is_walk_in: boolean
           late_warning_sent: boolean | null
           mpesa_checkout_id: string | null
           mpesa_receipt: string | null
           notes: string | null
           payment_expires_at: string | null
+          payment_method: string | null
           payment_phone: string | null
           payment_screenshot_url: string | null
           payment_status: string | null
@@ -100,7 +106,8 @@ export type Database = {
           price_charged: number | null
           reminder_sent: boolean | null
           screenshot_payment_url: string | null
-          slot_id: string
+          service_type: string | null
+          slot_id: string | null
           status: Database["public"]["Enums"]["booking_status"]
           transaction_code: string | null
           updated_at: string
@@ -110,6 +117,10 @@ export type Database = {
           actual_start_time?: string | null
           admin_notes?: string | null
           agreed_price?: number | null
+          amount_paid?: number | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          booking_source?: string
           client_name: string
           client_token?: string | null
           confirmation_sent?: boolean | null
@@ -118,11 +129,13 @@ export type Database = {
           deposit_paid?: boolean | null
           id?: string
           inspiration_image_url?: string | null
+          is_walk_in?: boolean
           late_warning_sent?: boolean | null
           mpesa_checkout_id?: string | null
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+          payment_method?: string | null
           payment_phone?: string | null
           payment_screenshot_url?: string | null
           payment_status?: string | null
@@ -130,7 +143,8 @@ export type Database = {
           price_charged?: number | null
           reminder_sent?: boolean | null
           screenshot_payment_url?: string | null
-          slot_id: string
+          service_type?: string | null
+          slot_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           transaction_code?: string | null
           updated_at?: string
@@ -140,6 +154,10 @@ export type Database = {
           actual_start_time?: string | null
           admin_notes?: string | null
           agreed_price?: number | null
+          amount_paid?: number | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          booking_source?: string
           client_name?: string
           client_token?: string | null
           confirmation_sent?: boolean | null
@@ -148,11 +166,13 @@ export type Database = {
           deposit_paid?: boolean | null
           id?: string
           inspiration_image_url?: string | null
+          is_walk_in?: boolean
           late_warning_sent?: boolean | null
           mpesa_checkout_id?: string | null
           mpesa_receipt?: string | null
           notes?: string | null
           payment_expires_at?: string | null
+          payment_method?: string | null
           payment_phone?: string | null
           payment_screenshot_url?: string | null
           payment_status?: string | null
@@ -160,7 +180,8 @@ export type Database = {
           price_charged?: number | null
           reminder_sent?: boolean | null
           screenshot_payment_url?: string | null
-          slot_id?: string
+          service_type?: string | null
+          slot_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           transaction_code?: string | null
           updated_at?: string
@@ -643,30 +664,18 @@ export type Database = {
           status: string
         }[]
       }
-      create_booking:
-        | {
-            Args: {
-              p_agreed_price: number
-              p_client_name: string
-              p_honeypot?: string
-              p_inspiration_image_url?: string
-              p_notes?: string
-              p_phone_number: string
-              p_slot_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_agreed_price: number
-              p_client_name: string
-              p_inspiration_image_url?: string
-              p_notes?: string
-              p_phone_number: string
-              p_slot_id: string
-            }
-            Returns: Json
-          }
+      create_booking: {
+        Args: {
+          p_agreed_price: number
+          p_client_name: string
+          p_honeypot?: string
+          p_inspiration_image_url?: string
+          p_notes?: string
+          p_phone_number: string
+          p_slot_id: string
+        }
+        Returns: Json
+      }
       generate_slots_for_date: {
         Args: { target_date: string }
         Returns: undefined
