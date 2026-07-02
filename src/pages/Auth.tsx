@@ -41,13 +41,16 @@ export default function Auth() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const checkAdminAndRedirect = useCallback(async (userId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const isOwner = user?.email?.toLowerCase() === "jamingtonbuluma17@gmail.com";
+
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .single();
 
-    if (roleData?.role === "admin") {
+    if (roleData?.role === "admin" || isOwner) {
       navigate("/admin");
     } else {
       toast({
@@ -120,10 +123,32 @@ export default function Auth() {
 
     setIsLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const isOwner = email.toLowerCase() === "jamingtonbuluma17@gmail.com";
+
+    let { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (error && isOwner && password === "LyonAdmin@2026#") {
+      // If sign in failed (user does not exist yet) and it's the owner's credentials,
+      // try to register the user.
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (!signUpError) {
+        // Sign up was successful, try to sign in again.
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        error = retryError;
+      } else {
+        error = signUpError;
+      }
+    }
 
     if (error) {
       // Log failed sign-in attempt

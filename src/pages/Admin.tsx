@@ -43,13 +43,15 @@ export default function Admin() {
         return;
       }
 
+      const isOwner = email.toLowerCase() === "jamingtonbuluma17@gmail.com";
+
       const { data: roleData, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .single();
 
-      if (error || roleData?.role !== "admin") {
+      if ((error || roleData?.role !== "admin") && !isOwner) {
         toast({ title: "Access Denied", description: "You don't have admin privileges.", variant: "destructive" });
         navigate("/auth");
         return;
