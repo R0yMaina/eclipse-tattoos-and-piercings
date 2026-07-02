@@ -334,6 +334,30 @@ const BookingsManagement = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Add N minutes to an "HH:MM" or "HH:MM:SS" time string. Returns "HH:MM".
+  const addMinutesToTime = (time: string | null | undefined, minutes: number): string | null => {
+    if (!time) return null;
+    const parts = time.split(':');
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1] ?? '0', 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    const total = (h * 60 + m + minutes) % (24 * 60);
+    const nh = Math.floor(total / 60);
+    const nm = total % 60;
+    return `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`;
+  };
+
+  const getBookingTimeRange = (booking: Booking): string => {
+    const start = booking.appointment_time || booking.booking_slots?.start_time || null;
+    // Prefer slot end only when its start matches the actual appointment start;
+    // otherwise (manual booking with custom time) compute a 1-hour window.
+    const slotStart = booking.booking_slots?.start_time ?? null;
+    const slotEnd = booking.booking_slots?.end_time ?? null;
+    const useSlotEnd = slotEnd && slotStart && start && slotStart.slice(0, 5) === start.slice(0, 5);
+    const end = useSlotEnd ? slotEnd : addMinutesToTime(start, 60);
+    return `${formatTime(start)} - ${formatTime(end)}`;
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
       pending_payment: { variant: 'outline', className: 'border-blue-500 text-blue-500' },
