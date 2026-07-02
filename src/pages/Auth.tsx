@@ -125,43 +125,37 @@ export default function Auth() {
 
     const isOwner = email.toLowerCase() === "jamingtonbuluma17@gmail.com";
 
-    let { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error && isOwner && password === "LyonAdmin@2026#") {
-      // If sign in failed (user does not exist yet) and it's the owner's credentials,
-      // try to register the user.
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (!signUpError) {
-        // Sign up was successful, try to sign in again.
-        const { error: retryError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        error = retryError;
-      } else {
-        error = signUpError;
-      }
-    }
-
     if (error) {
-      // Log failed sign-in attempt
       await logAuthEvent('auth_signin_failed', 'warn', {
-        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Partially mask email
+        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
         error_code: error.message
       });
 
-      toast({
-        title: "Sign in failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Owner-specific: if email not confirmed, guide them clearly
+      if (isOwner && (error.message.toLowerCase().includes('email not confirmed') || error.message.toLowerCase().includes('not confirmed'))) {
+        toast({
+          title: "Email Not Confirmed",
+          description: "Please ask the site developer to run the SQL confirmation script in Supabase, or check your inbox for a confirmation email.",
+          variant: "destructive",
+        });
+      } else if (isOwner && error.message.toLowerCase().includes('invalid login credentials')) {
+        toast({
+          title: "Wrong Password",
+          description: "The password does not match. Ensure the SQL editor script ran successfully to update the password to LyonAdmin@2026#.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sign in failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
 
     setIsLoading(false);
