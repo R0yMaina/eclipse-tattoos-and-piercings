@@ -719,7 +719,7 @@ const BookingsManagement = () => {
                           <div className="flex items-center gap-3 flex-wrap">
                             <div className="font-semibold text-lg flex items-center gap-2">
                               <Clock className="h-4 w-4 text-primary" />
-                              {formatTime(booking.appointment_time || booking.booking_slots?.start_time || '00:00')} - {formatTime(booking.booking_slots?.end_time || booking.appointment_time || booking.appointment_time || '00:00')}
+                              {getBookingTimeRange(booking)}
                             </div>
                             {getStatusBadge(booking.status)}
                             <Badge variant="outline" className="text-[11px] uppercase tracking-wide">
