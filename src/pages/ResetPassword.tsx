@@ -19,21 +19,57 @@ export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<{ password?: string; confirm?: string }>({});
-  const [isRecovery, setIsRecovery] = useState(false);
+  const [status, setStatus] = useState<"loading" | "ready" | "invalid">("loading");
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
+    let cancelled = false;
+
+    const activate = async () => {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+      const queryParams = new URLSearchParams(search);
+
+      // 1) PKCE flow: ?code=... — exchange for a session
+      const code = queryParams.get("code");
+      if (code) {
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!cancelled && !error) {
+            setStatus("ready");
+            return;
+          }
+        } catch { /* fall through */ }
+      }
+
+      // 2) Implicit flow: #access_token=...&type=recovery
+      // supabase-js with detectSessionInUrl:true will auto-persist the session.
+      const typeIndicator =
+        hashParams.get("type") === "recovery" ||
+        queryParams.get("type") === "recovery";
+
+      // 3) If a session already exists (recovery just landed), accept it
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!cancelled && (sessionData.session || typeIndicator)) {
+        setStatus("ready");
+        return;
+      }
+
+      if (!cancelled) setStatus("invalid");
+    };
+
+    activate();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setIsRecovery(true);
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        setStatus("ready");
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
@@ -41,12 +77,8 @@ export default function ResetPassword() {
     const newErrors: { password?: string; confirm?: string } = {};
 
     const result = passwordSchema.safeParse(password);
-    if (!result.success) {
-      newErrors.password = result.error.errors[0].message;
-    }
-    if (password !== confirmPassword) {
-      newErrors.confirm = "Passwords do not match";
-    }
+    if (!result.success) newErrors.password = result.error.errors[0].message;
+    if (password !== confirmPassword) newErrors.confirm = "Passwords do not match";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
@@ -58,18 +90,29 @@ export default function ResetPassword() {
       toast({ title: "Reset failed", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Password updated", description: "You can now sign in with your new password." });
+      await supabase.auth.signOut();
       navigate("/auth");
     }
     setIsLoading(false);
   };
 
-  if (!isRecovery) {
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (status === "invalid") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-border/50 bg-card/50 backdrop-blur">
           <CardHeader className="text-center">
-            <CardTitle>Invalid Link</CardTitle>
-            <CardDescription>This password reset link is invalid or has expired.</CardDescription>
+            <CardTitle>Invalid or Expired Link</CardTitle>
+            <CardDescription>
+              This password reset link is invalid or has expired. Please request a new one from the sign-in page.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Link to="/auth">
