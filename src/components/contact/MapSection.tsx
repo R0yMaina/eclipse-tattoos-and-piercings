@@ -1,13 +1,16 @@
 import { MapPin, ExternalLink } from 'lucide-react';
 
 // Eclipse Tattoo & Piercings location - The Bazaar House, Nairobi
+const BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
 const SHOP_LOCATION = {
   lat: -1.2864,
   lng: 36.8172,
   address: "The Bazaar House, Suite M4",
   city: "Nairobi, Kenya",
   googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=The+Bazaar+Nairobi+Kenya",
-  embedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8176!2d36.8172!3d-1.2864!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sThe%20Bazaar%20Nairobi!5e0!3m2!1sen!2ske!4v1234567890"
+  embedUrl: BROWSER_KEY
+    ? `https://www.google.com/maps/embed/v1/place?key=${BROWSER_KEY}&q=${encodeURIComponent('The Bazaar, Moi Avenue, Nairobi, Kenya')}&zoom=17`
+    : `https://maps.google.com/maps?q=${encodeURIComponent('The Bazaar Nairobi Kenya')}&z=17&output=embed`,
 };
 
 export const MapSection = () => {
