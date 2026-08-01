@@ -66,6 +66,22 @@ const styleFilters: { value: TattooStyle; label: string }[] = [
 ];
 
 const Gallery = () => {
+  usePageSeo({
+    title: 'Portfolio | Eclipse Tattoo & Piercings',
+    description:
+      'Browse our tattoo and piercing portfolio — tribal, floral, realism, script, geometric and minimalist work from our Nairobi studio.',
+    path: '/gallery',
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Tattoo & Piercing Portfolio',
+        url: `${SITE_URL}/gallery`,
+        description: 'A collection of custom tattoo and piercing work by Eclipse Tattoo & Piercings, Nairobi.',
+      },
+    ],
+  });
+
   const [activeFilter, setActiveFilter] = useState<TattooStyle>('all');
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(staticGalleryItems);
