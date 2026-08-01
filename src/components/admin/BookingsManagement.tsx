@@ -876,7 +876,7 @@ const BookingsManagement = () => {
                                       <span className="font-medium">
                                         {selectedBooking?.actual_start_time
                                           ? format(new Date(selectedBooking.actual_start_time), 'h:mm a')
-                                          : formatTime(booking.booking_slots?.start_time || booking.appointment_time || '00:00')}
+                                          : formatTime(booking.appointment_time || booking.booking_slots?.start_time || '00:00')}
                                       </span>
                                     </div>
                                     <div className="flex items-center justify-between">
