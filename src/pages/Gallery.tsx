@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { usePageSeo, SITE_URL } from '@/hooks/usePageSeo';
 
 // Static fallback imports
 import tattoo1 from '@/assets/gallery/tattoo-1.jpg';
@@ -104,7 +105,7 @@ const Gallery = () => {
         <section className="pt-32 pb-16 px-4">
           <div className="container max-w-6xl mx-auto text-center">
             <h1 className="text-5xl md:text-7xl font-heading font-bold mb-6">
-              <span className="text-gradient-gold">Portfolio</span>
+              <span className="text-gradient-gold">Our Tattoo &amp; Piercing Portfolio</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Explore our collection of custom tattoo work. Each piece tells a unique story.
@@ -178,6 +179,7 @@ const Gallery = () => {
           onClick={() => setSelectedImage(null)}
         >
           <button
+            aria-label="Close gallery"
             className="absolute top-6 right-6 p-2 rounded-full bg-muted/50 hover:bg-muted transition-colors"
             onClick={() => setSelectedImage(null)}
           >
