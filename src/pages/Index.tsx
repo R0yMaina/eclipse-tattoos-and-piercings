@@ -1,43 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { usePageSeo, SITE_URL } from "@/hooks/usePageSeo";
 
 const Scene3D = lazy(() => import("@/components/home/Scene3D"));
 
 const Index = () => {
   const navigate = useNavigate();
-
-  usePageSeo({
-    title: "Eclipse Tattoo & Piercings | Tattoo Studio in Nairobi",
-    description:
-      "Custom tattoos and expert piercings in Nairobi. Browse our portfolio, view pricing, and book your session online at Eclipse Tattoo & Piercings.",
-    path: "/",
-    jsonLd: [
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: "Eclipse Tattoo & Piercings",
-        url: SITE_URL,
-      },
-      {
-        "@context": "https://schema.org",
-        "@type": "TattooParlor",
-        name: "Eclipse Tattoo & Piercings",
-        url: SITE_URL,
-        image: `${SITE_URL}/og-image.jpg`,
-        telephone: "+254705025961",
-        priceRange: "KES",
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "THE BAZAAR, Floor M4, Suite 6, Room 6",
-          addressLocality: "Nairobi",
-          addressRegion: "Nairobi",
-          addressCountry: "KE",
-        },
-      },
-    ],
-  });
 
   return (
     <div className="relative flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background overflow-hidden">
@@ -62,7 +30,7 @@ const Index = () => {
         </div>
 
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white mb-2 md:mb-4 leading-tight [text-shadow:_0_2px_4px_rgba(0,0,0,0.9),_0_4px_16px_rgba(0,0,0,0.8),_0_8px_32px_rgba(0,0,0,0.6)]">
-          Eclipse Tattoo & Piercings — Professional Body Art in Nairobi
+          Eclipse Tattoo & Piercings
         </h1>
         <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-6 md:mb-8 font-light [text-shadow:_0_2px_4px_rgba(0,0,0,0.9),_0_4px_12px_rgba(0,0,0,0.7)]">
           Perfection is thee aim

@@ -1,5 +1,4 @@
-import { lazy, Suspense } from 'react';
-import { usePageSeo, SITE_URL } from '@/hooks/usePageSeo';
+import { useEffect, lazy, Suspense } from 'react';
 import { ContactHero } from '@/components/contact/ContactHero';
 import { BookingSystem } from '@/components/booking/BookingSystem';
 import { ContactDetails } from '@/components/contact/ContactDetails';
@@ -14,46 +13,65 @@ const ReviewSubmission = lazy(() => import('@/components/contact/ReviewSubmissio
 const Scene3DBroad = lazy(() => import('@/components/home/Scene3DBroad'));
 
 const Contact = () => {
-  usePageSeo({
-    title: 'Book & Contact | Eclipse Tattoo & Piercings Nairobi',
-    description:
-      'Book your tattoo or piercing at Eclipse in Nairobi. Find our studio location, hours, contact details and answers to common booking questions.',
-    path: '/contact',
-    jsonLd: [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'TattooParlor',
-        name: 'Eclipse Tattoo & Piercings',
-        url: `${SITE_URL}/contact`,
-        telephone: '+254705025961',
-        email: 'jamingtonbuluma17@gmail.com',
-        address: {
-          '@type': 'PostalAddress',
-          streetAddress: 'THE BAZAAR, Floor M4, Suite 6, Room 6',
-          addressLocality: 'Nairobi',
-          addressRegion: 'Nairobi',
-          addressCountry: 'KE',
+  useEffect(() => {
+    // Update page title and meta description
+    document.title = 'Contact | Eclipse Tattoo & Piercings';
+
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute(
+        'content',
+        'Book your tattoo or piercing at Eclipse. Contact us to plan your next piece—precision, artistry, and a premium studio experience.'
+      );
+    }
+
+    // Add JSON-LD structured data for local business
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "TattooParlor",
+      "name": "Eclipse Tattoo & Piercings",
+      "url": "https://eclipse-tattoo-and-piercings.lovable.app/contact",
+      "telephone": "+254705025961",
+      "email": "jamingtonbuluma17@gmail.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "THE BAZAAR, Floor M4, Suite 6, Room 6",
+        "addressLocality": "Nairobi",
+        "addressRegion": "Nairobi",
+        "postalCode": "",
+        "addressCountry": "KE"
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+          "opens": "11:00",
+          "closes": "19:00"
         },
-        openingHoursSpecification: [
-          { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday'], opens: '11:00', closes: '19:00' },
-          { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Friday', 'Saturday'], opens: '11:00', closes: '21:00' },
-        ],
-        priceRange: 'KES',
-        description: 'Premium tattoo and piercing studio offering custom artwork, expert piercings, and a luxury experience.',
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: [
-          { '@type': 'Question', name: 'Do you accept walk-ins?', acceptedAnswer: { '@type': 'Answer', text: 'Yes, subject to artist availability. Appointments are recommended for custom work to ensure dedicated time with your preferred artist and proper planning for your piece.' } },
-          { '@type': 'Question', name: 'What should I bring to my appointment?', acceptedAnswer: { '@type': 'Answer', text: 'Please bring a valid ID, reference images if you have them, and any notes on placement and sizing. We also recommend wearing comfortable clothing that provides easy access to the area being tattooed or pierced.' } },
-          { '@type': 'Question', name: 'How do deposits work?', acceptedAnswer: { '@type': 'Answer', text: 'A 30% non-refundable deposit secures your booking and goes toward your final session cost, paid via M-Pesa Pochi la Biashara.' } },
-          { '@type': 'Question', name: 'What is your cancellation policy?', acceptedAnswer: { '@type': 'Answer', text: 'We require at least 48 hours notice for cancellations or rescheduling. Late cancellations or no-shows will forfeit the deposit.' } },
-          { '@type': 'Question', name: 'Do you offer touch-ups?', acceptedAnswer: { '@type': 'Answer', text: 'Yes, one complimentary touch-up is included within 6 months of your original session. Additional touch-ups are charged at our standard rates.' } }
-        ],
-      },
-    ],
-  });
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Friday", "Saturday"],
+          "opens": "11:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "12:00",
+          "closes": "18:00"
+        }
+      ],
+      "priceRange": "$$",
+      "description": "Premium tattoo and piercing studio offering custom artwork, expert piercings, and a luxury experience."
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen relative">

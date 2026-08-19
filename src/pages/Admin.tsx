@@ -14,9 +14,10 @@ import ReviewsManagement from "@/components/admin/ReviewsManagement";
 import TransactionsManagement from "@/components/admin/TransactionsManagement";
 import GalleryManagement from "@/components/admin/GalleryManagement";
 import PaymentVerification from "@/components/admin/PaymentVerification";
+import DailyServiceLog from "@/components/admin/DailyServiceLog";
 import {
   Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
-  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote, Plus
+  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote, Plus, ClipboardList
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
@@ -201,6 +202,13 @@ export default function Admin() {
                 <span className="hidden sm:inline">Bookings</span>
               </TabsTrigger>
               <TabsTrigger
+                value="daily-log"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <ClipboardList className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Daily Log</span>
+              </TabsTrigger>
+              <TabsTrigger
                 value="manual-booking"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
@@ -271,6 +279,7 @@ export default function Admin() {
             <TabsContent value="payments" className="mt-0"><PaymentVerification /></TabsContent>
             <TabsContent value="transactions" className="mt-0"><TransactionsManagement /></TabsContent>
             <TabsContent value="bookings" className="mt-0"><BookingsManagement /></TabsContent>
+            <TabsContent value="daily-log" className="mt-0"><DailyServiceLog /></TabsContent>
             <TabsContent value="manual-booking" className="mt-0"><BookingsManagement /></TabsContent>
             <TabsContent value="slots" className="mt-0"><SlotConfiguration /></TabsContent>
             <TabsContent value="messages" className="mt-0"><MessageTemplates /></TabsContent>
