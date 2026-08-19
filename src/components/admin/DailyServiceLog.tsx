@@ -21,6 +21,7 @@ interface LogEntry {
   amount_paid: number;
   payment_method: string | null;
   notes: string | null;
+  service_rating: number | null;
   created_at: string;
 }
 
