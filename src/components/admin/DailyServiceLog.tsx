@@ -41,6 +41,8 @@ const DailyServiceLog = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [rating, setRating] = useState(0);
+  const [hoveredStar, setHoveredStar] = useState(0);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
