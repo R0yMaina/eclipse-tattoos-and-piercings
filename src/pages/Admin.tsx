@@ -14,6 +14,7 @@ import ReviewsManagement from "@/components/admin/ReviewsManagement";
 import TransactionsManagement from "@/components/admin/TransactionsManagement";
 import GalleryManagement from "@/components/admin/GalleryManagement";
 import PaymentVerification from "@/components/admin/PaymentVerification";
+import DailyServiceLog from "@/components/admin/DailyServiceLog";
 import {
   Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
   ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote, Plus
