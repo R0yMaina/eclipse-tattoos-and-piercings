@@ -17,7 +17,7 @@ import PaymentVerification from "@/components/admin/PaymentVerification";
 import DailyServiceLog from "@/components/admin/DailyServiceLog";
 import {
   Shield, TrendingUp, MessageSquare, Star, LogOut, RefreshCw,
-  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote, Plus
+  ShieldAlert, Calendar, Clock, Mail, Sparkles, CreditCard, ImageIcon, Banknote, Plus, ClipboardList
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
@@ -279,6 +279,7 @@ export default function Admin() {
             <TabsContent value="payments" className="mt-0"><PaymentVerification /></TabsContent>
             <TabsContent value="transactions" className="mt-0"><TransactionsManagement /></TabsContent>
             <TabsContent value="bookings" className="mt-0"><BookingsManagement /></TabsContent>
+            <TabsContent value="daily-log" className="mt-0"><DailyServiceLog /></TabsContent>
             <TabsContent value="manual-booking" className="mt-0"><BookingsManagement /></TabsContent>
             <TabsContent value="slots" className="mt-0"><SlotConfiguration /></TabsContent>
             <TabsContent value="messages" className="mt-0"><MessageTemplates /></TabsContent>
