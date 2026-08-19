@@ -368,6 +368,48 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_service_log: {
+        Row: {
+          amount_paid: number
+          client_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          log_date: string
+          notes: string | null
+          payment_method: string | null
+          phone_number: string | null
+          service_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          log_date?: string
+          notes?: string | null
+          payment_method?: string | null
+          phone_number?: string | null
+          service_type: string
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          log_date?: string
+          notes?: string | null
+          payment_method?: string | null
+          phone_number?: string | null
+          service_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           chunk_count: number | null
