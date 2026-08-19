@@ -12,5 +12,3 @@ Allow: /
 
 User-agent: *
 Allow: /
-
-Sitemap: https://eclipse-tattoos-and-piercings.lovable.app/sitemap.xml
