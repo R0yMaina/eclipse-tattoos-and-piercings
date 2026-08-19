@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logAdminAction } from '@/lib/auditLog';
-import { Loader2, Plus, Trash2, Banknote, ClipboardList, Users } from 'lucide-react';
+import { Loader2, Plus, Trash2, Banknote, ClipboardList, Users, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface LogEntry {
   id: string;
