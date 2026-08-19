@@ -97,6 +97,7 @@ const DailyServiceLog = () => {
     }
     await logAdminAction('daily_log_entry_created', 'daily_service_log', null, { log_date: date, amount });
     setForm(emptyForm);
+    setRating(0);
     toast({ title: 'Recorded', description: 'Entry added to the day\u2019s log.' });
     fetchEntries();
   };
