@@ -202,6 +202,13 @@ export default function Admin() {
                 <span className="hidden sm:inline">Bookings</span>
               </TabsTrigger>
               <TabsTrigger
+                value="daily-log"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
+              >
+                <ClipboardList className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Daily Log</span>
+              </TabsTrigger>
+              <TabsTrigger
                 value="manual-booking"
                 className="flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl py-3 transition-all duration-200"
               >
