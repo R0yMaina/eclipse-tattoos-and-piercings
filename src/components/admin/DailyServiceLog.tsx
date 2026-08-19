@@ -87,6 +87,7 @@ const DailyServiceLog = () => {
       amount_paid: amount,
       payment_method: form.payment_method.trim().slice(0, 40) || null,
       notes: form.notes.trim().slice(0, 500) || null,
+      service_rating: rating > 0 ? rating : null,
       created_by: user?.id ?? null,
     }]);
     setSaving(false);
