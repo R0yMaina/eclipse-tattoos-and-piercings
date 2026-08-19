@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logAdminAction } from '@/lib/auditLog';
-import { Loader2, Plus, Trash2, Banknote, ClipboardList, Users } from 'lucide-react';
+import { Loader2, Plus, Trash2, Banknote, ClipboardList, Users, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface LogEntry {
   id: string;
@@ -20,6 +21,7 @@ interface LogEntry {
   amount_paid: number;
   payment_method: string | null;
   notes: string | null;
+  service_rating: number | null;
   created_at: string;
 }
 
@@ -39,6 +41,8 @@ const DailyServiceLog = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [rating, setRating] = useState(0);
+  const [hoveredStar, setHoveredStar] = useState(0);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -83,6 +87,7 @@ const DailyServiceLog = () => {
       amount_paid: amount,
       payment_method: form.payment_method.trim().slice(0, 40) || null,
       notes: form.notes.trim().slice(0, 500) || null,
+      service_rating: rating > 0 ? rating : null,
       created_by: user?.id ?? null,
     }]);
     setSaving(false);
@@ -92,6 +97,7 @@ const DailyServiceLog = () => {
     }
     await logAdminAction('daily_log_entry_created', 'daily_service_log', null, { log_date: date, amount });
     setForm(emptyForm);
+    setRating(0);
     toast({ title: 'Recorded', description: 'Entry added to the day\u2019s log.' });
     fetchEntries();
   };
