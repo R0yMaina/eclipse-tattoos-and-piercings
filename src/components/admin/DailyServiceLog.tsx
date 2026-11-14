@@ -10,7 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logAdminAction } from '@/lib/auditLog';
 import { Loader2, Plus, Trash2, Banknote, ClipboardList, Users, Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface LogEntry {
   id: string;
@@ -54,7 +53,7 @@ const DailyServiceLog = () => {
     if (error) {
       toast({ title: 'Error', description: 'Failed to load the day\u2019s records', variant: 'destructive' });
     } else {
-      setEntries((data as LogEntry[]) ?? []);
+      setEntries((data as unknown as LogEntry[]) ?? []);
     }
     setLoading(false);
   }, [date, toast]);
@@ -89,7 +88,7 @@ const DailyServiceLog = () => {
       notes: form.notes.trim().slice(0, 500) || null,
       service_rating: rating > 0 ? rating : null,
       created_by: user?.id ?? null,
-    }]);
+    } as never]);
     setSaving(false);
     if (error) {
       toast({ title: 'Could not save', description: error.message, variant: 'destructive' });
@@ -180,6 +179,28 @@ const DailyServiceLog = () => {
               <Textarea id="dsl-notes" rows={1} value={form.notes} maxLength={500}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Quality of service (optional)</legend>
+              <div className="flex items-center gap-1" onMouseLeave={() => setHoveredStar(0)}>
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
+                    aria-pressed={rating === value}
+                    onMouseEnter={() => setHoveredStar(value)}
+                    onFocus={() => setHoveredStar(value)}
+                    onBlur={() => setHoveredStar(0)}
+                    onClick={() => setRating(value)}
+                  >
+                    <Star className={`h-5 w-5 ${(hoveredStar || rating) >= value ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                  </Button>
+                ))}
+                <span className="ml-2 text-sm text-muted-foreground">{rating ? `${rating}/5` : 'Not rated'}</span>
+              </div>
+            </fieldset>
             <div className="md:col-span-2">
               <Button type="submit" disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
@@ -208,6 +229,7 @@ const DailyServiceLog = () => {
                     <TableHead>Client</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Method</TableHead>
+                    <TableHead>Service rating</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead />
                   </TableRow>
@@ -219,6 +241,13 @@ const DailyServiceLog = () => {
                       <TableCell>{e.client_name}</TableCell>
                       <TableCell>{e.phone_number ?? '—'}</TableCell>
                       <TableCell>{e.payment_method ?? '—'}</TableCell>
+                      <TableCell>
+                        {e.service_rating ? (
+                          <span className="inline-flex items-center gap-1" aria-label={`${e.service_rating} out of 5 stars`}>
+                            <Star className="h-4 w-4 fill-primary text-primary" /> {e.service_rating}/5
+                          </span>
+                        ) : '—'}
+                      </TableCell>
                       <TableCell className="text-right">{kes(Number(e.amount_paid))}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" aria-label="Delete record"
@@ -229,7 +258,7 @@ const DailyServiceLog = () => {
                     </TableRow>
                   ))}
                   <TableRow>
-                    <TableCell colSpan={4} className="font-semibold">Day total</TableCell>
+                    <TableCell colSpan={5} className="font-semibold">Day total</TableCell>
                     <TableCell className="text-right font-bold text-primary">{kes(total)}</TableCell>
                     <TableCell />
                   </TableRow>
