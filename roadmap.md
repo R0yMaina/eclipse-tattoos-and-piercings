@@ -1,0 +1,3 @@
+- [ ] Finish daily service-log 1–5 star quality rating UI and correct type handling.
+- [ ] Diagnose and fix the admin sign-in “cannot be fetched” error; verify login flow where possible.
+- [ ] Check the current build/preview diagnostics and summarize what is ready to push; publishing is not yet authorized.

@@ -125,10 +125,23 @@ export default function Auth() {
 
     const isOwner = email.toLowerCase() === "jamingtonbuluma17@gmail.com";
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    let signInResult: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>;
+    try {
+      signInResult = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+    } catch {
+      toast({
+        title: "Can't reach sign-in",
+        description: "Check your internet connection and try again.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = signInResult;
 
     if (error) {
       await logAuthEvent('auth_signin_failed', 'warn', {
@@ -136,17 +149,23 @@ export default function Auth() {
         error_code: error.message
       });
 
-      // Owner-specific: if email not confirmed, guide them clearly
-      if (isOwner && (error.message.toLowerCase().includes('email not confirmed') || error.message.toLowerCase().includes('not confirmed'))) {
+      const normalizedError = error.message.toLowerCase();
+      if (normalizedError.includes('failed to fetch') || normalizedError.includes('network')) {
         toast({
-          title: "Email Not Confirmed",
-          description: "Please ask the site developer to run the SQL confirmation script in Supabase, or check your inbox for a confirmation email.",
+          title: "Can't reach sign-in",
+          description: "Check your internet connection and try again.",
           variant: "destructive",
         });
-      } else if (isOwner && error.message.toLowerCase().includes('invalid login credentials')) {
+      } else if (normalizedError.includes('email not confirmed') || normalizedError.includes('not confirmed')) {
         toast({
-          title: "Wrong Password",
-          description: "The password does not match. Ensure the SQL editor script ran successfully to update the password to LyonAdmin@2026#.",
+          title: "Email Not Confirmed",
+          description: "Please confirm your email address, then try signing in again.",
+          variant: "destructive",
+        });
+      } else if (normalizedError.includes('invalid login credentials')) {
+        toast({
+          title: "Sign-in details don't match",
+          description: "Check your email and password, then try again.",
           variant: "destructive",
         });
       } else {
