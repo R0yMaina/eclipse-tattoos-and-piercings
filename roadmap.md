@@ -1,3 +1,5 @@
-- [x] Finish daily service-log 1–5 star quality rating UI and correct type handling.
-- [x] Diagnose and fix the admin sign-in “cannot be fetched” error; verify dashboard access.
-- [x] Check the current build/preview diagnostics and commit the completed changes; publishing is not authorized.
+- [x] Enable leaked-password protection and tighten the selected public review, availability, contact, and security-log policies.
+- [x] Remove public reads for private inspiration and payment files.
+- [ ] Align admin inspiration-image links and sign-in logging with the tightened policies.
+- [ ] Replace anonymous booking/payment uploads with a token-verified flow after user confirmation.
+- [ ] Verify only the requested findings, update their statuses, and commit the fixes.

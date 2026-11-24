@@ -57,6 +57,20 @@ type BookingInsertPayload = Omit<Database['public']['Tables']['bookings']['Inser
   slot_id?: string | null;
 };
 
+const getInspirationObjectPath = (value: string) => {
+  const markers = [
+    '/storage/v1/object/public/inspiration-images/',
+    '/storage/v1/object/sign/inspiration-images/',
+  ];
+  const marker = markers.find((candidate) => value.includes(candidate));
+  const path = marker ? value.slice(value.indexOf(marker) + marker.length).split('?')[0] : value.split('?')[0];
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+};
+
 const BookingsManagement = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -99,7 +113,18 @@ const BookingsManagement = () => {
         const bTime = b.appointment_time || b.booking_slots?.start_time || '00:00';
         return aTime.localeCompare(bTime);
       });
-      setBookings(sortedBookings);
+      const bookingsWithSignedImages = await Promise.all(sortedBookings.map(async (booking) => {
+        if (!booking.inspiration_image_url) return booking;
+        const { data: signedImage, error: signedUrlError } = await supabase.storage
+          .from('inspiration-images')
+          .createSignedUrl(getInspirationObjectPath(booking.inspiration_image_url), 60 * 60);
+        if (signedUrlError || !signedImage?.signedUrl) {
+          console.error('Could not create a private inspiration-image link:', signedUrlError);
+          return { ...booking, inspiration_image_url: null };
+        }
+        return { ...booking, inspiration_image_url: signedImage.signedUrl };
+      }));
+      setBookings(bookingsWithSignedImages);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({

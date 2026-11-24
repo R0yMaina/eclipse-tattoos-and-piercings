@@ -22,6 +22,23 @@ interface SlotAvailability {
 }
 
 type BookingStep = 'details' | 'payment' | 'waiting' | 'confirmed' | 'failed' | 'manual_details';
+type BookingUploadKind = 'inspiration' | 'payment';
+
+const allowedBookingImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+
+const uploadBookingImage = async (bookingId: string, clientToken: string, file: File, uploadKind: BookingUploadKind) => {
+  const formData = new FormData();
+  formData.append('booking_id', bookingId);
+  formData.append('client_token', clientToken);
+  formData.append('upload_kind', uploadKind);
+  formData.append('file', file);
+
+  const { data, error } = await supabase.functions.invoke('secure-booking-upload', { body: formData });
+  if (error) throw error;
+  if (!data || data.success !== true) {
+    throw new Error(typeof data?.error === 'string' ? data.error : 'Could not save this image');
+  }
+};
 
 /* ─── Reusable glass card ─── */
 const GlassCard = ({ children, className, elevated = false }: { children: React.ReactNode; className?: string; elevated?: boolean }) => (
@@ -222,7 +239,7 @@ export const BookingSystem = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) { toast({ title: 'Invalid file type', description: 'Please upload an image file (JPEG, PNG, etc.)', variant: 'destructive' }); return; }
+      if (!allowedBookingImageTypes.includes(file.type)) { toast({ title: 'Invalid file type', description: 'Please upload a JPEG, PNG, GIF, WebP, or AVIF image.', variant: 'destructive' }); return; }
       if (file.size > 5 * 1024 * 1024) { toast({ title: 'File too large', description: 'Please upload an image smaller than 5MB', variant: 'destructive' }); return; }
       setInspirationImage(file);
       const reader = new FileReader();
@@ -249,15 +266,6 @@ export const BookingSystem = () => {
 
     setSubmitting(true);
     try {
-      let imageUrl = null;
-      if (inspirationImage) {
-        const fileExt = inspirationImage.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('inspiration-images').upload(fileName, inspirationImage);
-        if (uploadError) throw uploadError;
-        imageUrl = fileName;
-      }
-
       // Atomic, race-safe booking creation via SECURITY DEFINER RPC.
       // The DB locks the slot row and rejects duplicates even under concurrent load.
       const { data: rpcResult, error: rpcError } = await supabase.rpc('create_booking', {
@@ -266,17 +274,17 @@ export const BookingSystem = () => {
         p_phone_number: phoneNumber.trim(),
         p_agreed_price: price,
         p_notes: notes.trim() || null,
-        p_inspiration_image_url: imageUrl,
+        p_inspiration_image_url: null,
       });
 
       if (rpcError) throw rpcError;
       const result = rpcResult as { success: boolean; error?: string; booking_id?: string; client_token?: string; deposit_amount?: number };
-      if (!result?.success) {
+      if (!result?.success || !result.booking_id || !result.client_token) {
         throw new Error(result?.error || 'Could not create booking');
       }
 
-      const newBookingId = result.booking_id!;
-      const clientToken = result.client_token!;
+      const newBookingId = result.booking_id;
+      const clientToken = result.client_token;
       const deposit = result.deposit_amount ?? Math.ceil(price * 0.30);
 
       setCurrentBookingId(newBookingId);
@@ -298,6 +306,19 @@ export const BookingSystem = () => {
       localStorage.setItem('eclipse_current_booking_token', clientToken);
       localStorage.setItem('eclipse_current_deposit', deposit.toString());
       localStorage.setItem('eclipse_current_price', price.toString());
+
+      if (inspirationImage) {
+        try {
+          await uploadBookingImage(newBookingId, clientToken, inspirationImage, 'inspiration');
+        } catch (uploadError) {
+          console.error('Inspiration image upload failed:', uploadError);
+          toast({
+            title: 'Image not saved',
+            description: 'Your booking is saved. You can continue without the optional image.',
+            variant: 'destructive',
+          });
+        }
+      }
 
       setBookingStep('payment');
       setTimeout(() => {
@@ -323,24 +344,20 @@ export const BookingSystem = () => {
 
     setSubmitting(true);
     try {
-      let screenshotUrl = null;
-      if (paymentScreenshot) {
-        try {
-          const fileExt = paymentScreenshot.name.split('.').pop();
-          const fileName = `payment-${currentBookingId}-${Date.now()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage.from('payment-screenshots').upload(fileName, paymentScreenshot);
-          if (uploadError) throw uploadError;
-          screenshotUrl = fileName;
-        } catch (uploadError) {
-          console.error('Screenshot upload error:', uploadError);
-          // Don't fail the whole submission if screenshot fails
-        }
-      }
-
       const storedToken = localStorage.getItem('eclipse_current_booking_token');
       if (!storedToken) {
         throw new Error('Booking session expired. Please create a new booking.');
       }
+
+      if (paymentScreenshot) {
+        try {
+          await uploadBookingImage(currentBookingId, storedToken, paymentScreenshot, 'payment');
+        } catch (uploadError) {
+          console.error('Screenshot upload error:', uploadError);
+          // Keep the existing manual payment flow available if optional proof upload fails.
+        }
+      }
+
       const { data: rpcResult, error: rpcError } = await supabase.rpc('submit_payment', {
         p_booking_id: currentBookingId,
         p_client_token: storedToken,
@@ -366,7 +383,8 @@ export const BookingSystem = () => {
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) { toast({ title: 'Invalid file type', description: 'Please upload an image file.', variant: 'destructive' }); return; }
+      if (!allowedBookingImageTypes.includes(file.type)) { toast({ title: 'Invalid file type', description: 'Please upload a JPEG, PNG, GIF, WebP, or AVIF image.', variant: 'destructive' }); return; }
+      if (file.size > 5 * 1024 * 1024) { toast({ title: 'File too large', description: 'Please upload an image smaller than 5MB.', variant: 'destructive' }); return; }
       setPaymentScreenshot(file);
       const reader = new FileReader();
       reader.onloadend = () => setScreenshotPreview(reader.result as string);

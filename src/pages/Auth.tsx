@@ -1,24 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
-
-// Log security events for monitoring
-const logAuthEvent = async (
-  eventType: string,
-  severity: 'info' | 'warn' | 'error',
-  details: Record<string, unknown>
-) => {
-  try {
-    await supabase.from('security_events').insert({
-      event_type: eventType,
-      severity,
-      details: details as Json
-    });
-  } catch (error) {
-    console.error('Failed to log auth event:', error);
-  }
-};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,11 +126,6 @@ export default function Auth() {
     const { error } = signInResult;
 
     if (error) {
-      await logAuthEvent('auth_signin_failed', 'warn', {
-        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
-        error_code: error.message
-      });
-
       const normalizedError = error.message.toLowerCase();
       if (normalizedError.includes('failed to fetch') || normalizedError.includes('network')) {
         toast({
@@ -197,12 +174,6 @@ export default function Auth() {
     });
 
     if (error) {
-      // Log failed sign-up attempt
-      await logAuthEvent('auth_signup_failed', 'warn', {
-        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
-        error_code: error.message
-      });
-
       toast({
         title: "Sign up failed",
         description: error.message,

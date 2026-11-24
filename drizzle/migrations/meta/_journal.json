@@ -8,6 +8,20 @@
       "when": 1795555861355,
       "tag": "0000_add_daily_service_service_rating",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795556145369,
+      "tag": "0001_tighten_selected_public_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795556667597,
+      "tag": "0002_secure_booking_media_uploads",
+      "breakpoints": true
     }
   ]
 }
