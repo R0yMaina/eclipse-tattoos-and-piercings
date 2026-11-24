@@ -379,6 +379,7 @@ export type Database = {
           notes: string | null
           payment_method: string | null
           phone_number: string | null
+          service_rating: number | null
           service_type: string
           updated_at: string
         }
@@ -392,6 +393,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           phone_number?: string | null
+          service_rating?: number | null
           service_type: string
           updated_at?: string
         }
@@ -405,6 +407,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           phone_number?: string | null
+          service_rating?: number | null
           service_type?: string
           updated_at?: string
         }

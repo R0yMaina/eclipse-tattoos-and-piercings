@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_service_log ADD COLUMN IF NOT EXISTS service_rating integer CHECK (service_rating IS NULL OR (service_rating >= 1 AND service_rating <= 5));

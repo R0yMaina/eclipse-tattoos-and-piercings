@@ -53,7 +53,7 @@ const DailyServiceLog = () => {
     if (error) {
       toast({ title: 'Error', description: 'Failed to load the day\u2019s records', variant: 'destructive' });
     } else {
-      setEntries((data as unknown as LogEntry[]) ?? []);
+      setEntries(data ?? []);
     }
     setLoading(false);
   }, [date, toast]);
@@ -88,7 +88,7 @@ const DailyServiceLog = () => {
       notes: form.notes.trim().slice(0, 500) || null,
       service_rating: rating > 0 ? rating : null,
       created_by: user?.id ?? null,
-    } as never]);
+    }]);
     setSaving(false);
     if (error) {
       toast({ title: 'Could not save', description: error.message, variant: 'destructive' });
