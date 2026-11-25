@@ -1,5 +1,5 @@
 - [x] Enable leaked-password protection and tighten the selected public review, availability, contact, and security-log policies.
 - [x] Remove public reads for private inspiration and payment files.
-- [ ] Align admin inspiration-image links and sign-in logging with the tightened policies.
-- [ ] Replace anonymous booking/payment uploads with a token-verified flow after user confirmation.
-- [ ] Verify only the requested findings, update their statuses, and commit the fixes.
+- [x] Align admin inspiration-image links and sign-in logging with the tightened policies.
+- [x] Replace anonymous booking/payment uploads with a token-verified flow.
+- [x] Verify only the requested findings, update their statuses, and commit the fixes.
